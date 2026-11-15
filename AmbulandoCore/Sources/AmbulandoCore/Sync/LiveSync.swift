@@ -419,6 +419,7 @@ extension WorkspaceSync {
             let list = try await api.reactions(workspaceId: w, appNpub: app, targetType: "message", targetId: message)
             try await store.writer.replaceReactions(workspaceId: w, targets: [message], list)
         case .inbox:
+            await refreshAttentionTypes(connection, workspace, force: true)
             let states = try await api.viewStates(workspaceId: w, appNpub: app)
             try await store.writer.upsertViewStates(workspaceId: w, states, complete: true)
             // The same snapshot the Inbox job reads: a connection failure recorded for that job is now obsolete.

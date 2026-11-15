@@ -63,7 +63,7 @@ struct NotificationsView: View {
                     HStack {
                         Text("\(snapshot.value.unread) unread").font(.amb(.footnote)).foregroundStyle(Amb.mutedForeground)
                         Spacer()
-                        Button("Mark all read") { model.markAllNotificationsRead(upToSeq: snapshot.value.status.localSeq, category: category) }
+                        Button("Mark all read") { model.markVisibleNotificationsRead(snapshot.value.items) }
                             .font(.amb(.footnote).weight(.semibold))
                             .accessibilityIdentifier("notifications.markAll")
                     }
@@ -106,7 +106,7 @@ struct NotificationsView: View {
             }
             return states
         }
-        snapshot.start(store: store, matches: { $0.workspaceId == workspaceId && $0.table == .notifications }) {
+        snapshot.start(store: store, matches: { ($0.workspaceId == workspaceId && $0.table == .notifications) || $0.table == .appState }) {
             try await store.reader.notificationSnapshot(connectionId: connectionId, workspaceId: workspaceId, filter: filter, category: category)
         }
     }

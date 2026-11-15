@@ -502,8 +502,10 @@ struct DeckInboxCard: View {
     }
 
     private func markAll(_ kinds: Set<DeckActivity.Kind>, label: String) {
-        let states = DeckActivity.readResources(Array(snapshot.value.viewStates.values), kinds: kinds, context: model.context,
-                                               channelScopes: Dictionary(model.navigation.value.groups.flatMap(\.channels).map { ($0.id, $0.scopeId) }, uniquingKeysWith: { a, _ in a }))
+        let displayed = Array(DeckActivity.filter(snapshot.value.items, kinds: self.kinds, query: query).prefix(visible))
+        let states = DeckActivity.visibleReadResources(Array(snapshot.value.viewStates.values), items: displayed,
+            kinds: self.kinds.intersection(kinds), query: "", limit: displayed.count, context: model.context,
+            channelScopes: Dictionary(model.navigation.value.groups.flatMap(\.channels).map { ($0.id, $0.scopeId) }, uniquingKeysWith: { a, _ in a }))
         guard !states.isEmpty else { notice = "No unread \(label) here."; return }
         model.markRead(states, in: workspace)
         notice = "Marked \(states.count) \(label) as read."
@@ -543,7 +545,7 @@ struct DeckInboxCard: View {
             // for every incoming reply. Sync and the focused conversation continue normally. Access
             // invalidation remains live even behind the modal; closing always reloads the current feed.
             (key.workspaceId == w || key.workspaceId == nil) &&
-                (key.table == .access || (liveInbox && [.threads, .messages, .tasks, .docs, .files, .viewStates, .comments, .channels, .agents, .members].contains(key.table)))
+                (key.table == .access || (liveInbox && [.threads, .messages, .tasks, .docs, .files, .viewStates, .comments, .channels, .agents, .members, .appState].contains(key.table)))
         }) {
             var sources = DeckActivity.Sources()
             async let channels = store.reader.channels(workspaceId: w)
@@ -568,7 +570,8 @@ struct DeckInboxCard: View {
             sources.docComments = try await docComments
             sources.activities = try await activities
             sources.now = ServerClock.shared.now(origin: origin)
-            return DeckInboxSnapshot(items: DeckActivity.inbox(sources, context: context),
+            let types = try await store.reader.attentionTypes(workspaceId: w)
+            return DeckInboxSnapshot(items: types.deck(DeckActivity.inbox(sources, context: context)),
                                      viewStates: Dictionary(sources.viewStates.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a }),
                                      channelLabels: Dictionary(channelRows.map { ($0.id, SidebarNavigation.label($0, viewerNpub: viewer, names: names)) }, uniquingKeysWith: { a, _ in a }))
         }

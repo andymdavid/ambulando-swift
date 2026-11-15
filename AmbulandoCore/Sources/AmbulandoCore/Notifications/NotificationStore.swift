@@ -325,24 +325,33 @@ extension StoreReader {
          ORDER BY occurred_at DESC, id DESC LIMIT ?
         """)
         try s.bind([.text(connectionId), .text(workspaceId), category.sql, category.sql, .int(Int64(limit * 2))])
+        let types = try attentionTypes(workspaceId: workspaceId, connectionId: connectionId)
         var rows: [NotificationItem] = []
         while try s.step() {
             guard let stored = Self.stored(s) else { continue }
             let item = stored.effective
-            if filter.includes(item) { rows.append(item) }
+            if filter.includes(item) && ((filter != .unread && category != "mention" && category != "comment_tag") || types.allows(item)) { rows.append(item) }
             if rows.count == limit { break }
         }
         return rows
     }
 
     /// Unread items in the inbox partition, pending changes applied.
-    public func notificationUnreadCount(connectionId: String, workspaceId: String) throws -> Int {
-        let s = try db.prepare("""
-        SELECT COUNT(*) FROM notification_items WHERE connection_id = ? AND workspace_id = ?
-          AND COALESCE(pending_dismissed, is_dismissed) = 0 AND COALESCE(pending_archived, is_archived) = 0 AND COALESCE(pending_read, is_read) = 0
-        """)
+    public func notificationUnreadCount(connectionId: String, workspaceId: String, attentionFiltered: Bool = true) throws -> Int {
+        if !attentionFiltered {
+            let s = try db.prepare("""
+            SELECT COUNT(*) FROM notification_items WHERE connection_id = ? AND workspace_id = ?
+              AND COALESCE(pending_dismissed, is_dismissed) = 0 AND COALESCE(pending_archived, is_archived) = 0 AND COALESCE(pending_read, is_read) = 0
+            """)
+            try s.bind([.text(connectionId), .text(workspaceId)])
+            return try s.step() ? Int(s.int(0)) : 0
+        }
+        let types = try attentionTypes(workspaceId: workspaceId, connectionId: connectionId)
+        let s = try db.prepare(Self.notificationSelect + " WHERE connection_id = ? AND workspace_id = ?")
         try s.bind([.text(connectionId), .text(workspaceId)])
-        return try s.step() ? Int(s.int(0)) : 0
+        var count = 0
+        while try s.step() { if let item = Self.stored(s)?.effective, item.isUnread, types.allows(item) { count += 1 } }
+        return count
     }
 
     public func notificationItem(connectionId: String, workspaceId: String, id: String) throws -> NotificationItem? {

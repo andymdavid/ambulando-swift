@@ -283,7 +283,11 @@ struct NotificationHarness {
     }
 
     @discardableResult
-    func run(force: Bool = false) async throws -> WorkspaceSync.NotificationRun { try await sync.runNotifications(connection, workspace, force: force) }
+    // Direct harness steps must not race an automatically scheduled continuation. Production scheduling is
+    // exercised separately through refreshNotifications; pagination tests likewise use continueListing: false.
+    func run(force: Bool = false) async throws -> WorkspaceSync.NotificationRun {
+        try await sync.runNotifications(connection, workspace, force: force, continueListing: false)
+    }
 
     func items(_ filter: NotificationFilter = .all) async throws -> [NotificationItem] {
         try await store.reader.notifications(connectionId: connection.id, workspaceId: workspace.id, filter: filter)
@@ -542,12 +546,12 @@ final class NotificationSyncTests: XCTestCase {
         try await h.store.writer.confirmNotificationPending(connectionId: h.connection.id, workspaceId: h.workspace.id, ids: [wrong.id])
         var unread = try await h.unread()
         XCTAssertEqual(unread, 1)
-        try await h.run()
+        await h.sync.refreshNotifications(h.connection, h.workspace, force: true)
         await h.chat.engine.waitUntilIdle()
         unread = try await h.unread()
         XCTAssertEqual(unread, 2, "Tower's count won: the inbox was listed again")
         let listings = h.tower.recordedRequests.filter { $0.hasPrefix("GET /items") }.count
-        try await h.run()
+        await h.sync.refreshNotifications(h.connection, h.workspace, force: true)
         await h.chat.engine.waitUntilIdle()
         XCTAssertEqual(h.tower.recordedRequests.filter { $0.hasPrefix("GET /items") }.count, listings, "no loop once they agree")
     }

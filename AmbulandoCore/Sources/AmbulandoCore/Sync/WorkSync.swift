@@ -112,6 +112,7 @@ extension WorkspaceSync {
 
     /// View states (unread and attention), then the few records they point at that are not stored yet.
     public func refreshInbox(_ connection: ConnectionRecord, _ workspace: WorkspaceRecord, priority: SyncPriority = .visible, force: Bool = false) async {
+        await refreshAttentionTypes(connection, workspace, force: force)
         let sync = self
         await engine.enqueue(Self.inboxKey(workspace.id), priority: priority, force: force, retries: SyncBackoff.readRetries) {
             try await sync.identity.requireReader(npub: connection.signerNpub)

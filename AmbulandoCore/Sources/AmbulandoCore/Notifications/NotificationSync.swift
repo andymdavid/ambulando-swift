@@ -203,7 +203,7 @@ extension WorkspaceSync {
     private func repairDrift(_ connection: ConnectionRecord, _ workspace: WorkspaceRecord, counts: NotificationCounts, continueListing: Bool = true) async throws {
         let c = connection.id, w = workspace.id
         guard try await store.reader.pendingNotificationIds(connectionId: c, workspaceId: w).isEmpty else { return }
-        let local = try await store.reader.notificationUnreadCount(connectionId: c, workspaceId: w)
+        let local = try await store.reader.notificationUnreadCount(connectionId: c, workspaceId: w, attentionFiltered: false)
         guard local != min(counts.unreadTotal, counts.cappedAt), counts.unreadTotal < counts.cappedAt else { return }
         let status = try await store.reader.notificationStatus(connectionId: c, workspaceId: w)
         if let last = Self.parseStamp(status.resetAt), Date().timeIntervalSince(last) < Self.notificationDriftResetInterval { return }

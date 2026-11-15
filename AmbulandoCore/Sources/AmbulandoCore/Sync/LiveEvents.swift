@@ -253,6 +253,8 @@ public struct EventPlan: Sendable, Equatable {
             case "reaction":
                 if deleted, let id = e.entityId { plan.tombstones.insert(.reaction(id)) }
                 if let target = e.parentId, let channel, !fold { plan.refreshes.insert(.reactions(channelId: channel, messageId: target)) }
+            case "private_preference":
+                plan.refreshes.insert(.inbox)
             case "resource_view_state":
                 plan.refreshes.insert(.inbox)
             case "scope", "channel":

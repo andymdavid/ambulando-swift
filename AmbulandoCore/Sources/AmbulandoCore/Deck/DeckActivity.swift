@@ -79,8 +79,8 @@ public enum DeckActivity {
     static let completedStates: Set<String> = ["done", "complete", "completed"]
     static let terminalStates: Set<String> = ["done", "complete", "completed", "archive", "archived", "cancelled", "canceled"]
 
-    /// Explicit bulk read uses persisted positions, never the searched/paged cards.
-    /// Include off-deck activity so a later restore cannot resurrect an acknowledged update.
+    /// Resolve persisted read positions for caller-selected resources within the context.
+    /// UI bulk actions use `visibleReadResources` to bound this selection to displayed rows.
     public static func readResources(_ states: [ViewStateRecord], kinds: Set<Kind>, context: WorkContext,
                                      channelScopes: [String: String]) -> [ViewStateRecord] {
         states.filter { state in
@@ -90,6 +90,17 @@ public enum DeckActivity {
             if let channel = context.channelId { return state.channelId == channel }
             return (state.scopeId ?? state.channelId.flatMap { channelScopes[$0] }) == scope
         }
+    }
+
+    /// A UI bulk acknowledgement is bounded by the rows actually displayed after preference, type, search and paging filters.
+    public static func visibleReadResources(_ states: [ViewStateRecord], items: [Item], kinds: Set<Kind>, query: String,
+                                            limit: Int, context: WorkContext, channelScopes: [String: String]) -> [ViewStateRecord] {
+        let ids = Set(filter(items, kinds: kinds, query: query).prefix(max(0, limit)).map(\.id))
+        let visible = states.filter { state in
+            let kind = state.resourceType == .thread ? "chat" : state.resourceType.rawValue
+            return ids.contains("\(kind):\(state.resourceId)")
+        }
+        return readResources(visible, kinds: kinds, context: context, channelScopes: channelScopes)
     }
 
     /// Every Deck Inbox item in `context`, newest first.

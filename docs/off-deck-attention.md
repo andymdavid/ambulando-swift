@@ -11,13 +11,30 @@ reopening the cache. Sidebar observers include parent lifecycle changes on iPhon
 and Mac. Restoring an item restores retained unread attention unless explicitly
 acknowledged in the meantime.
 
-Deck mark-all reads persisted resource positions within the selected context,
-including hidden items and active resources absent from the rendered cards. Search,
-family filters and page limits do not narrow the explicit action. Existing signed
-read commands preserve other readers' state. Mark-all before restoring a resource
-keeps previously acknowledged activity read; newer activity can become unread.
+The iPhone and Mac Settings “Unread and Mentions” section shares the private
+`ambulando.attention-types` preference with other clients through WorkspaceSync.
+Its cache is scoped to the exact Tower, signed actor, application and workspace.
+Missing, malformed or future values show all types; unsupported schemas are not
+overwritten. Version 1 toggles preserve unknown object fields and disabled names.
+
+Unread/Mentions notifications, notification badges, sidebar attention and unread
+Deck rows use the same projection. Read Deck activity and explicit section
+navigation remain available. Filtering never advances a read position or dismisses
+a notification. Deck mark-all is now limited to the displayed cards after type,
+search and paging filters; notification mark-all sends individual changes for the
+displayed rows and their observed versions.
+
+The last confirmed preference persists offline. A pending CAS mutation keeps its
+original value, base version and mutation ID across retries and relaunch. Swift
+serializes switch edits until confirmation: during an uncertain save all switches
+are disabled and Settings offers Retry. Conflicts show the latest server choice
+and require an explicit new choice. An authoritative null clears a stale cache.
+Private-preference SSE hints, workspace catch-up, foreground/reconnect and Settings
+refresh all reuse the keyed sync job; no second polling owner is introduced.
 
 `UnreadAttentionTests` covers hidden-only and mixed channel attention, missing
 parents, stale view-state sync, reopen and restoration. `DeckActivityTests` covers
-the completed-task exception and context selection. Physical installation and
+the completed-task exception and context selection. `AttentionTypesTests` covers
+all switch combinations, schema preservation, cache isolation, notification and
+Deck projections, visible bulk reads, uncertain retry, conflict and server reset. Physical installation and
 real-account multi-device verification remain separate from source/build checks.

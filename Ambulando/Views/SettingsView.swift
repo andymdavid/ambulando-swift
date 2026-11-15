@@ -99,6 +99,7 @@ struct SettingsView: View {
                 }
                 #endif
                 if let fixture = model.fixture { FixtureControls(fixture: fixture, model: model) }
+                AttentionTypesSettingsSection()
                 NotificationSettingsSection()
                 Section {
                     Toggle("Agents", isOn: $showAgents).accessibilityIdentifier("settings.sections.agents")
@@ -258,6 +259,65 @@ private struct DiagnosticsExport: Transferable {
     static var transferRepresentation: some TransferRepresentation {
         DataRepresentation(exportedContentType: .plainText) { item in
             Data(await item.model.diagnosticsText().utf8)
+        }
+    }
+}
+
+/// Both Mac and iPhone use this section and the selected workspace's existing sync owner/store.
+private struct AttentionTypesSettingsSection: View {
+    @Environment(AppModel.self) private var model
+    @State private var snapshot = LiveQuery<AttentionPreferenceState>(initial: AttentionPreferenceState())
+    @State private var busy = false
+    @State private var error: String?
+    private var boundary: WorkspaceBoundary? { model.selectedWorkspaceBoundary }
+    var body: some View {
+        Section {
+            if let workspace = model.selectedWorkspace, boundary != nil {
+                Text(workspace.label).font(.amb(.caption)).foregroundStyle(Amb.mutedForeground)
+                ForEach(AttentionTypes.kinds, id: \.self) { kind in
+                    Toggle(label(kind), isOn: Binding(get: { snapshot.value.types.allows(kind) }, set: { on in save(kind, on: on) }))
+                        .disabled(busy || !snapshot.value.loaded || snapshot.value.pending != nil || !snapshot.value.types.editable || !model.canRead)
+                        .accessibilityIdentifier("settings.attentionTypes.\(kind)")
+                }
+                if busy { ProgressView() }
+                if let message = error ?? snapshot.value.error { Text(message).font(.amb(.caption)).foregroundStyle(Amb.warning) }
+                if !snapshot.value.types.editable { Text(AttentionPreferenceError.incompatible.localizedDescription).font(.amb(.caption)) }
+                if snapshot.value.pending != nil { Text("Save not confirmed. The last confirmed choice remains active; Retry sends the same change safely.").font(.amb(.caption)) }
+                Button("Retry sync") { refresh() }.disabled(busy)
+                    .accessibilityIdentifier("settings.attentionTypes.retry")
+            } else { Text("Select a workspace to choose attention types.") }
+        } header: { Text("Unread and Mentions") } footer: {
+            Text("Choose record types for attention lists, badges and unread Deck activity. Saved privately for your account in this workspace and shared across devices. Hidden records stay unread.")
+        }
+        .task(id: boundary?.id) {
+            busy = false; error = nil
+            guard let boundary, let store = model.store else { snapshot.pause(); return }
+            snapshot.start(store: store, keepingValue: false, matches: { $0.table == .appState }) {
+                try await store.reader.attentionPreference(boundary)
+            }
+            refresh()
+        }
+        .onChange(of: snapshot.value) { _, state in
+            if state.loaded && state.pending == nil && state.error == nil { error = nil }
+        }
+        .onDisappear { snapshot.pause() }
+    }
+    private func label(_ kind: String) -> String {
+        switch kind { case "chat": "Chats"; case "document": "Documents"; case "task": "Tasks"; case "file": "Files"; default: "Other" }
+    }
+    private func refresh() {
+        guard let sync = model.sync, let connection = model.connection, let workspace = model.selectedWorkspace else { return }
+        error = nil
+        Task { await sync.refreshAttentionTypes(connection, workspace, force: true) }
+    }
+    private func save(_ kind: String, on: Bool) {
+        guard !busy, let sync = model.sync, let connection = model.connection, let workspace = model.selectedWorkspace else { return }
+        let selected = boundary
+        busy = true; error = nil
+        Task {
+            do { try await sync.setAttentionType(connection, workspace, kind: kind, on: on) }
+            catch { if boundary == selected { self.error = error.localizedDescription } }
+            if boundary == selected { busy = false }
         }
     }
 }

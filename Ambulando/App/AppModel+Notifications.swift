@@ -9,7 +9,7 @@ extension AppModel {
         guard let store else { return }
         let connectionId = connection.id
         notificationBadge.start(store: store, matches: { key in
-            key.workspaceId == workspaceId && key.table == .notifications
+            (key.workspaceId == workspaceId && key.table == .notifications) || key.table == .appState
         }) {
             // The bell needs the count and the inbox state only, not the rows.
             var snapshot = NotificationSnapshot()
@@ -49,13 +49,10 @@ extension AppModel {
         }
     }
 
-    /// `upToSeq` is the sequence the screen had applied when it was drawn: later arrivals stay unread.
-    func markAllNotificationsRead(upToSeq: Int, category: String?) {
-        guard let notificationActions, let connection, let workspace = selectedWorkspace else { return }
-        Task {
-            do { try await notificationActions.markAllRead(connection: connection, workspace: workspace, upToSeq: upToSeq, category: category) }
-            catch { notice = "Could not mark notifications read: \(error.localizedDescription)" }
-        }
+    /// A bulk UI action acknowledges only the exact displayed rows and their observed versions.
+    /// The server's category-wide bulk endpoint cannot express the record-type preference.
+    func markVisibleNotificationsRead(_ items: [NotificationItem]) {
+        for item in items where item.isUnread { changeNotification(.markRead, item) }
     }
 
     enum NotificationDestination: Equatable {
