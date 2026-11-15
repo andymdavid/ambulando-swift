@@ -320,17 +320,18 @@ extension StoreReader {
     /// Items to show, newest first, with pending local changes applied. `archived` returns the archived partition
     /// (empty until it has been requested).
     public func notifications(connectionId: String, workspaceId: String, filter: NotificationFilter, category: String? = nil, limit: Int = 400) throws -> [NotificationItem] {
+        guard limit > 0 else { return [] }
         let s = try db.prepare(Self.notificationSelect + """
          WHERE connection_id = ? AND workspace_id = ? AND (? IS NULL OR category = ?)
-         ORDER BY occurred_at DESC, id DESC LIMIT ?
+         ORDER BY occurred_at DESC, id DESC
         """)
-        try s.bind([.text(connectionId), .text(workspaceId), category.sql, category.sql, .int(Int64(limit * 2))])
+        try s.bind([.text(connectionId), .text(workspaceId), category.sql, category.sql])
         let types = try attentionTypes(workspaceId: workspaceId, connectionId: connectionId)
         var rows: [NotificationItem] = []
         while try s.step() {
             guard let stored = Self.stored(s) else { continue }
             let item = stored.effective
-            if filter.includes(item) && ((filter != .unread && category != "mention" && category != "comment_tag") || types.allows(item)) { rows.append(item) }
+            if filter.includes(item) && ((filter != .unread && item.category != "mention" && item.category != "comment_tag") || types.allows(item)) { rows.append(item) }
             if rows.count == limit { break }
         }
         return rows
