@@ -29,3 +29,18 @@ Mac's existing in-process interaction harness accepts the Test window:
 ```
 
 The legacy upgrade-retention check intentionally exercises production auth/storage on a disposable simulator and requires explicit `AMBULANDO_UPGRADE_CHECK`; run it with normal Debug configuration, never the Test configuration. Sample checks validate UI and local pipelines only. Pete still verifies real Keychain login in the normal app every version; sample results do not validate Keychain, real Tower or real background execution.
+
+The focused Mac NIP-44 check uses the real browser bridge and an in-memory synthetic identity:
+
+```sh
+'build/test-mac/Build/Products/Test/Ambulando Test.app/Contents/MacOS/Ambulando Test' \
+  -AmbulandoMacThreadRegression -AmbulandoMacNIP44Check
+```
+
+It reads a seeded self-encrypted kind 10318 fixture through JavaScript, edits and encrypts it, signs the saved event,
+and decrypts the saved content again. It verifies the signature, native rejection of direct subframe bridge calls,
+and cancellation of a pending request on an actual WebKit document commit. Add
+`-AmbulandoMacNIP44HostedCheck` with `AMBULANDO_NIP44_TEST_ORIGIN=https://<preview-host>/` to repeat the fixture API roundtrip on the GitWorkshop preview origin and check
+its client-side Settings route (requires network). Approval answers are driven by the
+harness through the production broker. It never publishes to a relay and does not validate Pete's real lists,
+Keychain identity, a hosted GitWorkshop deployment, or installation on his MacBook.

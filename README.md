@@ -700,7 +700,11 @@ Names and the in-app browser (build 12):
 - **Nostr signing in the browser** (`window.nostr`, NIP-07). A site asks before it can see your public key (you can
   remember or forget that per site). Every signature shows a sheet naming the site and what will be signed; only
   sign-in requests (NIP-42, NIP-98) can be allowed for a site until you lock. Locking cancels and refuses all
-  requests. Your key never enters the page. Encryption (NIP-04/44) is not offered.
+  requests. Your key never enters the page. `window.nostr.nip44.encrypt/decrypt(pubkey, text)` (NIP-44 v2, official
+  vectors in `Fixtures/nip44.vectors.json`) shows a sheet naming the site, the other key (or "your own key") and the size
+  for every call; only encrypting/decrypting with your own key (private lists and settings) can be allowed for a site until
+  you lock. The call runs only for the account the sheet named; a switch, lock, navigation or denied site in between
+  refuses it, and plaintext is never shown or logged. NIP-04 is not offered.
 
 Web apps as browser tabs (build 13):
 

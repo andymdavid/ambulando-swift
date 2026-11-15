@@ -343,6 +343,12 @@ struct NostrApprovalSheet: View {
                         }
                     }
                 }
+                if let detail = cipherDetail {
+                    Section(detail.title) {
+                        LabeledContent("With", value: detail.isSelf ? "Your own key (private data)" : shortNpub(NostrKeys.npub(publicKeyHex: detail.peer) ?? detail.peer))
+                        LabeledContent("Size", value: "\(detail.bytes) bytes")
+                    }
+                }
                 if let npub = prompt.npub {
                     Section("Your key") { Text(shortNpub(npub)).font(.amb(.footnote).monospaced()) }
                 }
@@ -351,13 +357,13 @@ struct NostrApprovalSheet: View {
                         Text("You can forget this in the browser menu. Signing still asks every time.")
                     }
                 } else if prompt.offersSessionGrant {
-                    Section { Toggle("Don't ask again for this kind on \(host) until Ambulando locks", isOn: $remember)
+                    Section { Toggle(cipherDetail != nil ? "Don't ask again for your own data on \(host) until Ambulando locks" : "Don't ask again for this kind on \(host) until Ambulando locks", isOn: $remember)
                             .accessibilityIdentifier("nostr.remember") } footer: {
-                        Text("Only for sign-in requests. Other kinds always ask.")
+                        Text(cipherDetail != nil ? "Only for your own private data. Messages with other keys always ask." : "Only for sign-in requests. Other kinds always ask.")
                     }
                 }
             }
-            .navigationTitle(prompt.kind == .connect ? "Connect to Nostr" : "Sign with Nostr")
+            .navigationTitle(navigationTitle)
             .inlineTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -365,7 +371,7 @@ struct NostrApprovalSheet: View {
                         .accessibilityIdentifier("nostr.deny")
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(prompt.kind == .connect ? "Allow" : "Sign") { decide(.allow(remember: remember)) }
+                    Button(confirmTitle) { decide(.allow(remember: remember)) }
                         .fontWeight(.semibold)
                         .accessibilityIdentifier("nostr.allow")
                 }
@@ -378,6 +384,34 @@ struct NostrApprovalSheet: View {
         switch prompt.kind {
         case .connect: "wants to know your public Nostr key, so it can recognise you."
         case .sign: "asks you to sign this event with your Nostr key."
+        case .encrypt(_, let isSelf, _): isSelf ? "asks to encrypt private data for you with your Nostr key." : "asks to encrypt a message to another key with your Nostr key."
+        case .decrypt(_, let isSelf, _): isSelf ? "asks to read private data encrypted to you with your Nostr key." : "asks to decrypt a message from another key with your Nostr key."
+        }
+    }
+
+    private var cipherDetail: (title: String, peer: String, isSelf: Bool, bytes: Int)? {
+        switch prompt.kind {
+        case .encrypt(let peer, let isSelf, let bytes): ("What will be encrypted", peer, isSelf, bytes)
+        case .decrypt(let peer, let isSelf, let bytes): ("What will be decrypted", peer, isSelf, bytes)
+        default: nil
+        }
+    }
+
+    private var navigationTitle: String {
+        switch prompt.kind {
+        case .connect: "Connect to Nostr"
+        case .sign: "Sign with Nostr"
+        case .encrypt: "Encrypt with Nostr"
+        case .decrypt: "Decrypt with Nostr"
+        }
+    }
+
+    private var confirmTitle: String {
+        switch prompt.kind {
+        case .connect: "Allow"
+        case .sign: "Sign"
+        case .encrypt: "Encrypt"
+        case .decrypt: "Decrypt"
         }
     }
 

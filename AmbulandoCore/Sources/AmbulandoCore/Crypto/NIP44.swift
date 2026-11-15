@@ -80,8 +80,10 @@ public enum NIP44 {
   static func chacha(_ data: Data, key: Data, nonce: Data) -> Data {
     func words(_ d: Data) -> [UInt32] {
       let b = Array(d)
-      return stride(from: 0, to: b.count, by: 4).map {
-        UInt32(b[$0]) | UInt32(b[$0 + 1]) << 8 | UInt32(b[$0 + 2]) << 16 | UInt32(b[$0 + 3]) << 24
+      return stride(from: 0, to: b.count, by: 4).map { index in
+        let low = UInt32(b[index]) | (UInt32(b[index + 1]) << 8)
+        let high = (UInt32(b[index + 2]) << 16) | (UInt32(b[index + 3]) << 24)
+        return low | high
       }
     }
     func rotate(_ x: UInt32, _ n: UInt32) -> UInt32 { (x << n) | (x >> (32 - n)) }

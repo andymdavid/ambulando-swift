@@ -2,7 +2,7 @@ import Foundation
 
 /// Why a `window.nostr` request was not answered. `message` is what the page's promise is rejected with.
 public enum NIP07Error: Error, Equatable, Sendable {
-    case locked, denied, pageChanged, closed, busy
+    case locked, denied, pageChanged, closed, busy, accountChanged
     case invalid(String)
     case unsupported(String)
 
@@ -13,6 +13,7 @@ public enum NIP07Error: Error, Equatable, Sendable {
         case .pageChanged: "The page changed before the request was answered."
         case .closed: "The request was cancelled."
         case .busy: "Too many requests are waiting for the user."
+        case .accountChanged: "The active account changed before the request was answered."
         case .invalid(let why): "Invalid request: \(why)"
         case .unsupported(let method): "\(method) is not supported by Ambulando."
         }
@@ -25,6 +26,7 @@ public enum NIP07Method: Equatable, Sendable {
     /// `requestedPubkey` is the `pubkey` the page put in the event, if any; it must be the user's own.
     case signEvent(NostrEventTemplate, requestedPubkey: String?)
     case getRelays
+    case nip44(NIP44Operation)
     case unsupported(String)
 
     public static let maxContentBytes = 256 * 1024
@@ -39,6 +41,7 @@ public enum NIP07Method: Equatable, Sendable {
         case "getPublicKey": return .success(.getPublicKey)
         case "getRelays": return .success(.getRelays)
         case "signEvent": return parseEvent(params, now: now)
+        case "nip44.encrypt", "nip44.decrypt": return parseNIP44(method, params)
         default:
             let name = String(method.prefix(40)).filter { $0.isLetter || $0.isNumber || $0 == "." }
             return .success(.unsupported(name.isEmpty ? "This method" : name))
@@ -82,6 +85,25 @@ public enum NIP07Method: Equatable, Sendable {
         return .success(.signEvent(NostrEventTemplate(kind: kind, tags: tags, content: content, createdAt: createdAt), requestedPubkey: requested))
     }
 
+    /// `{ pubkey, plaintext }` or `{ pubkey, ciphertext }` and nothing else, within the NIP-44 v2 limits.
+    static func parseNIP44(_ method: String, _ params: Any?) -> Result<NIP07Method, NIP07Error> {
+        let encrypting = method == "nip44.encrypt"
+        let field = encrypting ? "plaintext" : "ciphertext"
+        guard let body = params as? [String: Any], Set(body.keys) == ["pubkey", field] else {
+            return .failure(.invalid("\(method) needs a pubkey and \(field)"))
+        }
+        guard let pubkey = body["pubkey"] as? String, NIP44.isHexPublicKey(pubkey) else {
+            return .failure(.invalid("pubkey must be 64 lowercase hex characters"))
+        }
+        guard let text = body[field] as? String else { return .failure(.invalid("\(field) must be a string")) }
+        if encrypting {
+            guard (1...NIP44.maxPlaintextBytes).contains(text.utf8.count) else { return .failure(.invalid("plaintext must be 1–\(NIP44.maxPlaintextBytes) bytes")) }
+            return .success(.nip44(.encrypt(peer: pubkey, plaintext: text)))
+        }
+        guard NIP44.payloadLengthRange.contains(text.utf8.count), !text.hasPrefix("#") else { return .failure(.invalid("ciphertext is not a NIP-44 v2 payload")) }
+        return .success(.nip44(.decrypt(peer: pubkey, payload: text)))
+    }
+
     /// A whole JSON number (never a boolean) within the exactly representable range.
     static func integer(_ value: Any?) -> Int? {
         guard let number = value as? NSNumber, CFGetTypeID(number) != CFBooleanGetTypeID() else { return nil }
@@ -108,6 +130,10 @@ public struct NIP07Prompt: Identifiable, Equatable, Sendable {
     public enum Kind: Equatable, Sendable {
         case connect
         case sign(NostrEventTemplate)
+        /// `bytes` is the size of the text going in; the text itself is never shown or kept. `isSelf`: the peer is the
+        /// user's own key (a private list or setting), the only case that may be allowed until Ambulando locks.
+        case encrypt(peer: String, isSelf: Bool, bytes: Int)
+        case decrypt(peer: String, isSelf: Bool, bytes: Int)
     }
     public let id: UUID
     public let context: NIP07Context
@@ -116,8 +142,11 @@ public struct NIP07Prompt: Identifiable, Equatable, Sendable {
     public let npub: String?
     /// Whether "allow for this site until Ambulando locks" may be offered (authentication kinds only).
     public var offersSessionGrant: Bool {
-        if case .sign(let event) = kind { return NIP07Broker.sessionGrantKinds.contains(event.kind) }
-        return false
+        switch kind {
+        case .sign(let event): return NIP07Broker.sessionGrantKinds.contains(event.kind)
+        case .encrypt(_, let isSelf, _), .decrypt(_, let isSelf, _): return isSelf
+        case .connect: return false
+        }
     }
 }
 
@@ -133,6 +162,7 @@ public enum NIP07Reply: Equatable, Sendable {
     case publicKey(String)
     case event(NostrEvent)
     case relays
+    case text(String)
 }
 
 /// Native side of `window.nostr`. Pages never see the key; they get the public key (after the user allows the site)
@@ -155,18 +185,23 @@ public final class NIP07Broker {
     public var onChange: (() -> Void)?
 
     private var sessionGrants: Set<String> = []
+    private var authorizationEpoch: UInt64 = 0
+    private var originEpochs: [String: UInt64] = [:]
     private var waiters: [UUID: CheckedContinuation<NIP07Decision?, Never>] = [:]
     private let publicKey: @Sendable () async throws -> String
     private let signer: @Sendable (NostrEventTemplate) async throws -> NostrEvent
+    /// Runs one NIP-44 operation for exactly the given public key (the account the user approved it for).
+    private let cipher: @Sendable (NIP44Operation, String) async throws -> String
     private let persist: ([String: NIP07SitePermission]) -> Void
     private let now: () -> Date
 
     public init(locked: Bool, sites: [String: NIP07SitePermission] = [:],
                 publicKey: @escaping @Sendable () async throws -> String,
                 signer: @escaping @Sendable (NostrEventTemplate) async throws -> NostrEvent,
+                cipher: @escaping @Sendable (NIP44Operation, String) async throws -> String = { _, _ in throw NIP07Error.unsupported("nip44") },
                 persist: @escaping ([String: NIP07SitePermission]) -> Void = { _ in },
                 now: @escaping () -> Date = { Date() }) {
-        self.locked = locked; self.sites = sites; self.publicKey = publicKey; self.signer = signer; self.persist = persist; self.now = now
+        self.locked = locked; self.sites = sites; self.publicKey = publicKey; self.signer = signer; self.cipher = cipher; self.persist = persist; self.now = now
     }
 
     /// Answers one request. `isCurrent` reports whether the requesting document is still the one shown in its tab.
@@ -183,6 +218,7 @@ public final class NIP07Broker {
         case .unsupported(let name): return .failure(.unsupported(name))
         case .getPublicKey: return await connect(context, isCurrent: isCurrent)
         case .signEvent(let template, let requested): return await sign(template, requested: requested, context: context, isCurrent: isCurrent)
+        case .nip44(let operation): return await encryptOrDecrypt(operation, context: context, isCurrent: isCurrent)
         }
     }
 
@@ -233,9 +269,69 @@ public final class NIP07Broker {
         }
     }
 
-    private func ask(_ kind: NIP07Prompt.Kind, context: NIP07Context, isCurrent: @escaping @MainActor () -> Bool) async -> Result<NIP07Decision, NIP07Error> {
+    /// One NIP-44 call. The account is fixed when the request arrives; the sheet names it, and the operation runs only
+    /// if that same account is still active after the user answers (an account switch, lock, navigation or revoked
+    /// site in between refuses the call and nothing is decrypted or encrypted).
+    private func encryptOrDecrypt(_ operation: NIP44Operation, context: NIP07Context,
+                                  isCurrent: @escaping @MainActor () -> Bool) async -> Result<NIP07Reply, NIP07Error> {
+        if sites[context.origin] == .denied { return .failure(.denied) }
+        let epoch = authorizationEpoch
+        let originEpoch = originEpochs[context.origin, default: 0]
+        let own: String
+        do { own = try await publicKey() } catch { return .failure(locked ? .locked : .invalid("no identity")) }
+        let isSelf = operation.peer == own
+        let kind: NIP07Prompt.Kind
+        let method: String
+        switch operation {
+        case .encrypt(let peer, let plaintext): kind = .encrypt(peer: peer, isSelf: isSelf, bytes: plaintext.utf8.count); method = "nip44.encrypt"
+        case .decrypt(let peer, let payload): kind = .decrypt(peer: peer, isSelf: isSelf, bytes: payload.utf8.count); method = "nip44.decrypt"
+        }
+        let grant = "\(context.origin)|\(own)|\(method).self"
+        var rememberSelf = false
+        if !(isSelf && sessionGrants.contains(grant)) {
+            switch await ask(kind, context: context, isCurrent: isCurrent, account: own) {
+            case .failure(let error): return .failure(error)
+            case .success(.deny): return .failure(.denied)
+            case .success(.allow(let remember)):
+                rememberSelf = remember && isSelf
+            }
+        }
+        guard !locked else { return .failure(.locked) }
+        guard isCurrent() else { return .failure(.pageChanged) }
+        guard sites[context.origin] != .denied else { return .failure(.denied) }
+        do {
+            guard try await publicKey() == own else { return .failure(.accountChanged) }
+            guard !locked else { return .failure(.locked) }
+            guard isCurrent() else { return .failure(.pageChanged) }
+            guard sites[context.origin] != .denied,
+                  authorizationEpoch == epoch, originEpochs[context.origin, default: 0] == originEpoch else { return .failure(.denied) }
+            if rememberSelf { sessionGrants.insert(grant) }
+            let result = try await cipher(operation, own)
+            // Both identity lookup and the cipher suspend. Never deliver output after revocation or account change.
+            guard try await publicKey() == own else { return .failure(.accountChanged) }
+            guard !locked else { return .failure(.locked) }
+            guard isCurrent() else { return .failure(.pageChanged) }
+            guard sites[context.origin] != .denied,
+                  authorizationEpoch == epoch, originEpochs[context.origin, default: 0] == originEpoch else { return .failure(.denied) }
+            return .success(.text(result))
+        } catch let error as IdentityError where error == .signerMismatch {
+            return .failure(.accountChanged)
+        } catch {
+            return .failure(locked ? .locked : .invalid(encrypting(operation) ? "the text could not be encrypted" : "the payload could not be decrypted"))
+        }
+    }
+
+    private func encrypting(_ operation: NIP44Operation) -> Bool {
+        if case .encrypt = operation { return true }
+        return false
+    }
+
+    /// `account`: the public key the request was made for; if the active key differs when the sheet is built, the call fails.
+    private func ask(_ kind: NIP07Prompt.Kind, context: NIP07Context, isCurrent: @escaping @MainActor () -> Bool, account: String? = nil) async -> Result<NIP07Decision, NIP07Error> {
         guard prompts.filter({ $0.context.tabId == context.tabId }).count < Self.maxPromptsPerTab else { return .failure(.busy) }
-        let npub = (try? await publicKey()).flatMap(NostrKeys.npub(publicKeyHex:))
+        let shown = try? await publicKey()
+        if let account, shown != account { return .failure(locked ? .locked : .accountChanged) }
+        let npub = shown.flatMap(NostrKeys.npub(publicKeyHex:))
         // The key read above suspends; the page or lock may have changed meanwhile.
         guard !locked else { return .failure(.locked) }
         guard isCurrent() else { return .failure(.pageChanged) }
@@ -266,6 +362,7 @@ public final class NIP07Broker {
         guard value != locked else { return }
         locked = value
         if value {
+            authorizationEpoch &+= 1
             sessionGrants = []
             cancel { _ in true }
         }
@@ -274,12 +371,14 @@ public final class NIP07Broker {
 
     /// Settings › browser: forget what was decided for `origin`.
     public func forget(_ origin: String) {
+        originEpochs[origin, default: 0] &+= 1
         sessionGrants = sessionGrants.filter { !$0.hasPrefix(origin + "|") }
         setSite(origin, nil)
     }
 
     /// Identity removed or disconnected: nothing a site was allowed survives.
     public func reset() {
+        authorizationEpoch &+= 1
         sessionGrants = []
         cancel { _ in true }
         sites = [:]
@@ -288,6 +387,7 @@ public final class NIP07Broker {
     }
 
     private func setSite(_ origin: String, _ value: NIP07SitePermission?) {
+        if value == .denied { originEpochs[origin, default: 0] &+= 1 }
         sites[origin] = value
         persist(sites)
         onChange?()
@@ -312,6 +412,7 @@ extension NIP07Reply {
         switch self {
         case .publicKey(let key): key
         case .relays: [String: Any]()
+        case .text(let text): text
         case .event(let e): ["id": e.id, "pubkey": e.pubkey, "created_at": e.created_at, "kind": e.kind, "tags": e.tags,
                              "content": e.content, "sig": e.sig] as [String: Any]
         }

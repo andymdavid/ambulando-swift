@@ -62,7 +62,7 @@ final class NIP07RequestTests: XCTestCase {
             if case .success = NIP07Method.parse(method: "signEvent", params: params, now: now) { XCTFail("accepted \(params.keys.sorted())") }
         }
         if case .success = NIP07Method.parse(method: "signEvent", params: "x", now: now) { XCTFail() }
-        XCTAssertEqual(try? NIP07Method.parse(method: "nip44.encrypt", params: nil, now: now).get(), .unsupported("nip44.encrypt"))
+        XCTAssertEqual(try? NIP07Method.parse(method: "nip04.encrypt", params: nil, now: now).get(), .unsupported("nip04.encrypt"))
         XCTAssertEqual(try? NIP07Method.parse(method: "getRelays", params: nil, now: now).get(), .getRelays)
     }
 }

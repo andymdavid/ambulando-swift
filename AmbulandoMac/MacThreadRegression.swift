@@ -74,6 +74,10 @@ enum MacThreadRegression {
         }
         defer { heartbeat.cancel() }
         do {
+            if ProcessInfo.processInfo.arguments.contains("-AmbulandoMacNIP44Check") {
+                try await nip44Check(model: model)
+                print("PASS: native NIP44 bridge, synthetic private list and frame/document boundaries"); fflush(stdout); exit(0)
+            }
             if ProcessInfo.processInfo.arguments.contains("-AmbulandoMacDocumentExportCheck") {
                 try await documentActionsCheck(model: model); try await documentExportCheck(); fflush(stdout); exit(0)
             }

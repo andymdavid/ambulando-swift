@@ -131,6 +131,10 @@ final class BrowserModel {
                                      guard let service = await signer() else { throw IdentityError.locked }
                                      return try await service.sign(template)
                                  },
+                                 cipher: { operation, account in
+                                     guard let service = await signer() else { throw IdentityError.locked }
+                                     return try await service.nip44(operation, expectedPublicKey: account)
+                                 },
                                  persist: { sites in
                                      let text = sites.isEmpty ? nil : (try? JSONEncoder().encode(sites)).map { String(decoding: $0, as: UTF8.self) }
                                      Task { try? await store.writer.setState(Self.sitesStateKey, text) }
@@ -417,7 +421,7 @@ final class BrowserModel {
         broker?.documentChanged(tabId: tab.id, documentId: tab.documentId)
     }
 
-    /// NIP-07 for the top frame of HTTPS pages. The page only ever gets the public key and events the user approved;
+    /// NIP-07 for the top frame of HTTPS pages. The page only ever gets the public key, events the user approved and NIP-44 results the user approved;
     /// every call goes to the native handler, which checks the calling frame itself.
     static let nostrScript = """
     (() => {
@@ -434,7 +438,12 @@ final class BrowserModel {
         },
         getRelays: () => call('getRelays'),
         nip04: { encrypt: unsupported('nip04.encrypt'), decrypt: unsupported('nip04.decrypt') },
-        nip44: { encrypt: unsupported('nip44.encrypt'), decrypt: unsupported('nip44.decrypt') },
+        nip44: Object.freeze({
+          encrypt: (pubkey, plaintext) => typeof pubkey === 'string' && typeof plaintext === 'string'
+            ? call('nip44.encrypt', { pubkey, plaintext }) : Promise.reject(new Error('nip44.encrypt needs a pubkey and a plaintext string.')),
+          decrypt: (pubkey, ciphertext) => typeof pubkey === 'string' && typeof ciphertext === 'string'
+            ? call('nip44.decrypt', { pubkey, ciphertext }) : Promise.reject(new Error('nip44.decrypt needs a pubkey and a ciphertext string.')),
+        }),
       };
       Object.defineProperty(nostr, '__ambulando', { value: true });
       Object.defineProperty(window, 'nostr', { value: Object.freeze(nostr), configurable: true, writable: false });

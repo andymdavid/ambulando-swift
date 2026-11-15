@@ -531,7 +531,16 @@ directory refresh). No Tower route or schema was added.
     ≤ 256 KB, ≤ 2,000 tags) and a foreign `pubkey` is refused. Navigation, reload, tab close and lock cancel waiting
     requests; after the user answers, lock and document are checked again before and after signing. Locking clears
     the until-lock grants and refuses everything; removing the identity or disconnecting closes tabs and forgets
-    sites. `getRelays` returns `{}`; NIP-04/44 reject. JavaScript only ever receives the public key and signed events.
+    sites. `getRelays` returns `{}`; NIP-04 rejects.
+    `nip44.encrypt/decrypt` take exactly `{pubkey, plaintext|ciphertext}` (lowercase 64-hex x-only key, plaintext
+    1–65535 bytes, payload 132–87472 characters, no `#` marker; NIP-44 v2 per `Crypto/NIP44Browser.swift`, checked
+    against paulmillr's official vectors). Every call needs a sheet (origin, own key vs other key, size; never the
+    text); only own-key calls offer "until Ambulando locks" per origin, account and operation. Forgetting a site, resetting the identity, or locking invalidates in-flight
+    results even if permissions are granted again before the operation finishes. The broker fixes the active
+    public key when the request arrives, the sheet is refused if it changes, and `IdentityService.nip44` runs only
+    if the unlocked key is still that key, deriving and wiping the conversation key inside the actor. Lock, document
+    and site denial are re-checked before and after the operation. JavaScript only ever receives the public key,
+    signed events and NIP-44 results.
 
 ### 5.1 Chat catch-up (WP3, delivered)
 

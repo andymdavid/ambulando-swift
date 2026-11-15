@@ -506,6 +506,21 @@ public actor IdentityService: EventSigner {
         return try NIP44.encrypt(plaintext, key: key)
     }
 
+    /// NIP-44 for `window.nostr.nip44`. Only the unlocked identity, and only if it is still `expectedPublicKey` (the key
+    /// the user approved the request for). The conversation key is derived and wiped here; the secret never leaves.
+    public func nip44(_ operation: NIP44Operation, expectedPublicKey: String) throws -> String {
+        guard vault.isUnlocked, let current = vault.publicKeyHex else { throw IdentityError.locked }
+        guard current == expectedPublicKey else { throw IdentityError.signerMismatch }
+        var secret = try vault.secretCopy()
+        defer { secret.resetBytes(in: 0..<secret.count) }
+        var key = try NIP44.conversationKey(secret: secret, peer: operation.peer)
+        defer { key.resetBytes(in: 0..<key.count) }
+        switch operation {
+        case .encrypt(_, let plaintext): return try NIP44.encryptStrict(plaintext, key: key)
+        case .decrypt(_, let payload): return try NIP44.decryptStrict(payload, key: key)
+        }
+    }
+
     public func publicKeyHex() throws -> String {
         if vault.isUnlocked, let hex = vault.publicKeyHex { return hex }
         if let reader, !revoked { return reader.credential.publicKeyHex }
