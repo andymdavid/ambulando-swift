@@ -16,7 +16,7 @@ the screens is shared:
 | | |
 | --- | --- |
 | Bundle identifier | `studio.otherstuff.ambulando.mac` (Debug builds: `studio.otherstuff.ambulando.mac.debug`) |
-| Version | 0.1.0 (46) |
+| Version | 0.1.0 (95) |
 | Minimum macOS | 15.0 |
 | CPU | Universal: Apple Silicon (arm64) and Intel (x86_64). Only Apple Silicon has been run. |
 | Sandbox | App Sandbox, outgoing network, user-selected files (read/write); hardened runtime |
@@ -495,3 +495,43 @@ mentions, links, large list numbers, task items, code and a table. It captures t
 narrow and expanded window sizes, plus larger text, and checks horizontal bounds, unchanged stored content,
 message menu actions and unsent draft retention. It uses the existing harness heartbeat and watchdog. Captures
 and logs belong in ignored `tmp/docs/handoffs/`; these sample checks do not validate a real Tower session.
+
+
+## Document windows (build 95)
+
+Open a document in View mode, then choose **Open in New Window** above the page. Save or finish any active edit
+first; the action is disabled during editing and explains this requirement. The existing reader/editor opens in a
+resizable Mac window with the document and workspace in its title. You can navigate sections, scopes, channels and other
+documents in the main window while continuing to read, comment and save in the document window. Each distinct
+document can have its own window. Opening the same document again shows **Show Document Window** and focuses its
+existing window rather than creating another editor.
+
+The document retains its original signer, connection, workspace, app and document identity. If the main window
+switches workspace, the loaded document stays visible with editing/actions disabled and a notice to return to its
+workspace. Locking or changing account hides the document. Returning to the original unlocked workspace enables
+the same page again. Editing across workspace/account switches is deliberately suspended; windows never retarget.
+Document windows are not restored automatically after quitting.
+
+Closing a document window (or quitting) captures current editor input and review state locally before retiring its
+single editor session. A failed local checkpoint keeps the window open. Unsynced edits remain a local draft and can
+be recovered by reopening the document; use the existing **Save** action to publish them to Tower.
+
+The implementation opens the existing shared document view in an AppKit window from reader mode. An active inline
+edit must be saved or finished before pop-out; transferring an active editor is not supported. The main route offers
+a focus-window action instead of a second editor. It reuses document permissions, comments, wiki links and the guarded
+saver. The document action row stays with the page. Saver/upload references belong to the captured editor's workspace. iPhone keeps its existing toolbar and has no pop-out action.
+
+Run the isolated native regression after building `AmbulandoMacTest`:
+
+```sh
+xcodebuild -project Ambulando.xcodeproj -scheme AmbulandoMacTest -configuration Test \
+  -destination 'platform=macOS,arch=arm64' -derivedDataPath build/test-mac \
+  -skipPackagePluginValidation build
+'build/test-mac/Build/Products/Test/Ambulando Test.app/Contents/MacOS/Ambulando Test' \
+  -AmbulandoFixtureReset -AmbulandoMacThreadRegression -AmbulandoMacDocumentWindowCheck
+```
+
+The regression uses a local stand-in Tower and a throwaway Test identity. It checks native window identity,
+repeat-open focus, main-navigation independence, multiple documents, resize, guarded Save, workspace suspension,
+offline close/reopen draft recovery and lock privacy. This does not establish a live Tower round trip or installation
+on another Mac. Deliver source through GitHub `main`; Pete pulls and builds on his MacBook separately.

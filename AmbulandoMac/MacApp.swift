@@ -80,6 +80,21 @@ final class MacAppDelegate: NSObject, NSApplicationDelegate {
     }
     #endif
 
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        let sessions = Array(MacDocumentWindows.shared.sessions.values)
+        guard !sessions.isEmpty else { return .terminateNow }
+        Task { @MainActor in
+            for session in sessions {
+                if let beforeClose = session.beforeClose, !(await beforeClose()) {
+                    sender.reply(toApplicationShouldTerminate: false)
+                    return
+                }
+            }
+            sender.reply(toApplicationShouldTerminate: true)
+        }
+        return .terminateLater
+    }
+
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
 }
 

@@ -160,6 +160,16 @@ struct DocumentSnapshot: Sendable, Equatable {
 /// A document opens in the user’s preferred mode, with comments in a sheet on iPhone/iPad
 /// and beside the page on Mac. Unset preferences open in View.
 struct DocumentView: View {
+    #if os(macOS)
+    @Environment(\.macDocumentSession) private var macSession
+    @State private var macSurfaceId = UUID()
+    private var windowScopeActive: Bool {
+        guard let macSession else { return true }
+        return model.isUnlocked && model.identity.npub == macSession.key.signer && model.connection?.id == macSession.key.connection &&
+            model.connection?.signerNpub == macSession.key.signer && model.selectedWorkspaceId == workspace.id &&
+            model.selectedWorkspace?.appNpub == workspace.appNpub
+    }
+    #endif
     @Environment(AppModel.self) private var model
     @Environment(\.scenePhase) private var scenePhase
     let docId: String
@@ -199,7 +209,12 @@ struct DocumentView: View {
         _wiki = State(initialValue: WikiLinkController(workspace: workspace, sourceDocId: docId, store: store))
     }
 
-    private var canEdit: Bool { model.isUnlocked && snapshot.value.doc?.archived == false && (snapshot.value.editable || snapshot.value.draft != nil) }
+    private var canEdit: Bool {
+        #if os(macOS)
+        guard windowScopeActive else { return false }
+        #endif
+        return model.isUnlocked && snapshot.value.doc?.archived == false && (snapshot.value.editable || snapshot.value.draft != nil)
+    }
 
     var body: some View {
         #if os(iOS)
@@ -207,6 +222,9 @@ struct DocumentView: View {
         let commentComposer = composer
         #endif
         actionReader
+        #if os(macOS)
+        .disabled(macSession?.closing == true)
+        #endif
         .fixtureLabel()
         .navigationTitle("Document")
         .inlineTitle()
@@ -225,6 +243,34 @@ struct DocumentView: View {
             }
             .padding(.horizontal, 12).padding(.top, 6)
         }
+        #if os(macOS)
+        .onAppear {
+            macSession?.beforeClose = {
+                guard !actionsBusy else { return false }
+                if let openingEditor { await openingEditor.value }
+                if let editor {
+                    guard await editor.pauseForLifecycle(), await editor.checkpoint(), await editor.persistReview() else {
+                        editor.resumeAfterLifecycle()
+                        actionMessage = "The document window could not close because your latest edit could not be saved locally. Keep this window open and try again."
+                        return false
+                    }
+                    await editor.closeAndReleaseLease(); self.editor = nil; wiki.editor = nil
+                }
+                return true
+            }
+        }
+        .onChange(of: snapshot.value.doc?.title, initial: true) { _, _ in updateWindowTitle() }
+        .onChange(of: model.identity) { _, _ in updateWindowTitle() }
+        .onChange(of: editor != nil || openingEditor != nil, initial: true) { _, editing in
+            if editing { macSession?.editingSurfaces.insert(macSurfaceId) }
+            else { macSession?.editingSurfaces.remove(macSurfaceId) }
+        }
+        .onChange(of: windowScopeActive) { _, active in
+            editor?.setWindowScopeActive(active)
+            if !active { exporting = false; exportData = nil; historyOpen = false; history = [] }
+            updateWindowTitle()
+        }
+        #endif
         .onChange(of: snapshot.value.titles) { _, titles in wiki.titles = titles }
         #if os(iOS)
         .sheet(isPresented: $showingComments) {
@@ -257,6 +303,9 @@ struct DocumentView: View {
         }
         .onChange(of: model.docEditRequest) { _, _ in takeEditRequest() }
         .onDisappear {
+            #if os(macOS)
+            macSession?.editingSurfaces.remove(macSurfaceId)
+            #endif
             // Leaving for a linked page keeps the text as a draft; coming back opens the editor on that draft.
             wiki.isVisible = false
             openingGeneration = UUID()
@@ -271,35 +320,13 @@ struct DocumentView: View {
 
     private var actionReader: some View {
         readerLayout
-        .toolbar {
-            ToolbarItemGroup(placement: .trailingBar) {
-                    Menu {
-                        Button("Export as .md") { Task { await exportDocument(pdf: false) } }
-                            .disabled(!model.isUnlocked || !snapshot.value.hasBody || actionsBusy).accessibilityIdentifier("doc.export.md")
-                        Button("Export as .pdf") { Task { await exportDocument(pdf: true) } }
-                            .disabled(!model.isUnlocked || !snapshot.value.hasBody || actionsBusy).accessibilityIdentifier("doc.export.pdf")
-                        Button("FD Ref") {
-                            if let doc = snapshot.value.doc { Pasteboard.copy(DocumentActionText.reference(title: doc.title, docId: doc.id)); actionMessage = "FD Ref copied." }
-                        }.disabled(snapshot.value.doc == nil || !model.isUnlocked).accessibilityIdentifier("doc.reference")
-                        Button("Versioning") { Task { await openHistory() } }
-                            .disabled(!model.isUnlocked || actionsBusy).accessibilityIdentifier("doc.versioning")
-                        Divider()
-                        Button("Move…") { Task { await wiki.refresh(); wiki.sheet = .move } }
-                            .disabled(snapshot.value.doc == nil || !model.isUnlocked || actionsBusy)
-                            .accessibilityIdentifier("doc.move")
-                        Button("Archive document") { lifecycleTarget = snapshot.value.doc; confirmArchive = true }
-                            .disabled(!canManage).accessibilityIdentifier("doc.archive")
-                        Button("Delete document", role: .destructive) { lifecycleTarget = snapshot.value.doc; confirmDelete = true }
-                            .disabled(!canManage).accessibilityIdentifier("doc.delete")
-                    } label: { Label("Document actions", systemImage: "ellipsis.circle") }
-                        .accessibilityLabel("Document actions").accessibilityIdentifier("doc.actions")
-                    if editor == nil {
-                        Button(snapshot.value.draft == nil ? "Edit" : "Continue editing") { beginEditing() }
-                            .disabled(!canEdit || actionsBusy)
-                            .accessibilityIdentifier("doc.edit")
-                    }
-            }
+        #if os(macOS)
+        .safeAreaInset(edge: .top, spacing: 0) {
+            HStack { Spacer(); documentActions }.padding(10).background(Amb.card)
         }
+        #else
+        .toolbar { ToolbarItemGroup(placement: .trailingBar) { documentActions } }
+        #endif
         .fileExporter(isPresented: $exporting, document: exportData, contentType: exportType, defaultFilename: exportName) { result in
             if case .failure(let error) = result { actionMessage = "Export could not be saved: \(error.localizedDescription)" }
         }
@@ -320,6 +347,59 @@ struct DocumentView: View {
             Button("OK") { actionMessage = nil }
         } message: { Text(actionMessage ?? "") }
     }
+
+    @ViewBuilder private var documentActions: some View {
+        #if os(macOS)
+        if let macSession {
+            Button("Open in New Window", systemImage: "arrow.up.right.square") {
+                Task {
+                    await macSession.show()
+                    updateWindowTitle()
+                }
+            }
+            .disabled(!windowScopeActive || actionsBusy || editor != nil || openingEditor != nil || macSession.editingSurfaces.isEmpty == false)
+            .help(editor != nil || openingEditor != nil ? "Save or finish editing before opening a new window." : "Open this document in its own window.")
+            .accessibilityIdentifier("doc.window.open")
+            if editor != nil || openingEditor != nil || macSession.editingSurfaces.isEmpty == false {
+                Text("Save or finish editing to open a new window.").font(.caption).foregroundStyle(Amb.mutedForeground)
+                    .accessibilityIdentifier("doc.window.finishEditing")
+            }
+        }
+        #endif
+        Menu {
+            Button("Export as .md") { Task { await exportDocument(pdf: false) } }
+                .disabled(!model.isUnlocked || !snapshot.value.hasBody || actionsBusy).accessibilityIdentifier("doc.export.md")
+            Button("Export as .pdf") { Task { await exportDocument(pdf: true) } }
+                .disabled(!model.isUnlocked || !snapshot.value.hasBody || actionsBusy).accessibilityIdentifier("doc.export.pdf")
+            Button("FD Ref") {
+                if let doc = snapshot.value.doc { Pasteboard.copy(DocumentActionText.reference(title: doc.title, docId: doc.id)); actionMessage = "FD Ref copied." }
+            }.disabled(snapshot.value.doc == nil || !model.isUnlocked).accessibilityIdentifier("doc.reference")
+            Button("Versioning") { Task { await openHistory() } }
+                .disabled(!model.isUnlocked || actionsBusy).accessibilityIdentifier("doc.versioning")
+            Divider()
+            Button("Move…") { Task { await wiki.refresh(); wiki.sheet = .move } }
+                .disabled(snapshot.value.doc == nil || !model.isUnlocked || actionsBusy)
+                .accessibilityIdentifier("doc.move")
+            Button("Archive document") { lifecycleTarget = snapshot.value.doc; confirmArchive = true }
+                .disabled(!canManage).accessibilityIdentifier("doc.archive")
+            Button("Delete document", role: .destructive) { lifecycleTarget = snapshot.value.doc; confirmDelete = true }
+                .disabled(!canManage).accessibilityIdentifier("doc.delete")
+        } label: { Label("Document actions", systemImage: "ellipsis.circle") }
+            .accessibilityLabel("Document actions").accessibilityIdentifier("doc.actions")
+        if editor == nil {
+            Button(snapshot.value.draft == nil ? "Edit" : "Continue editing") { beginEditing() }
+                .disabled(!canEdit || actionsBusy)
+                .accessibilityIdentifier("doc.edit")
+        }
+    }
+
+    #if os(macOS)
+    private func updateWindowTitle() {
+        guard let macSession else { return }
+        let sameIdentity = model.isUnlocked && model.identity.npub == macSession.key.signer
+        macSession.window?.title = sameIdentity ? "\(snapshot.value.doc?.title ?? "Document") — \(workspace.label)" : "Document — Locked"
+    }
+    #endif
 
     private var canManage: Bool {
         model.isUnlocked && snapshot.value.doc?.archived == false && editor?.permissionDenied != true && !actionsBusy
@@ -394,7 +474,8 @@ struct DocumentView: View {
 
     private func openFormattedPage() {
         takeEditRequest()
-        if automaticEditing && model.documentOpeningMode == .edit && canEdit { beginEditing() }
+        let wantsEdit = model.documentOpeningMode == .edit
+        if automaticEditing && wantsEdit && canEdit { beginEditing() }
     }
 
     /// A canvas document's Edit opens this screen with Edit already on.
@@ -405,6 +486,9 @@ struct DocumentView: View {
     }
 
     private func beginEditing() {
+        #if os(macOS)
+        guard windowScopeActive else { return }
+        #endif
         guard canEdit, editor == nil, openingEditor == nil, let doc = snapshot.value.doc, let connection = model.connection else { return }
         let created = DocEditorModel(doc: doc, workspace: workspace, store: store, connection: connection, app: model)
         created.wiki = wiki
@@ -417,6 +501,9 @@ struct DocumentView: View {
             // Transport failures still permit the existing durable offline draft flow.
             let allowed = await created.prepareOpening()
             guard !Task.isCancelled, openingGeneration == generation, allowed, model.isUnlocked else { created.close(); return }
+            #if os(macOS)
+            guard windowScopeActive else { created.close(); return }
+            #endif
             wiki.editor = created
             wiki.beforeLeaving = { [weak created] in await created?.checkpoint() ?? true }
             editor = created

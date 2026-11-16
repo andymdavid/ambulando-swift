@@ -146,7 +146,13 @@ struct WorkDestination: View {
         if let workspace = model.selectedWorkspace, route.workspaceId == workspace.id, let store = model.store, let connection = model.connection {
             switch route {
             case .task(_, let id): TaskDetailView(taskId: id, workspace: workspace, store: store)
-            case .doc(_, let id): DocumentView(docId: id, workspace: workspace, store: store)
+            case .doc(_, let id):
+                #if os(macOS)
+                MacDocumentSurface(docId: id, workspace: workspace, store: store)
+                    .id("\(connection.signerNpub):\(connection.id):\(workspace.id):\(workspace.appNpub):\(id)")
+                #else
+                DocumentView(docId: id, workspace: workspace, store: store)
+                #endif
             case .file(_, let id): FileDetailView(fileId: id, workspace: workspace, store: store)
             case .thread(_, let channel, let thread):
                 ThreadView(target: ChatTarget(connectionId: connection.id, workspaceId: workspace.id, channelId: channel, threadId: thread), workspace: workspace, store: store)

@@ -76,6 +76,13 @@ final class DocEditorModel: UploadTokenHost {
     @ObservationIgnored let store: LocalStore
     @ObservationIgnored let connection: ConnectionRecord
     @ObservationIgnored private weak var app: AppModel?
+    // These services belong to the editor's captured workspace, not the main window's selection.
+    @ObservationIgnored private let saver: DocumentSaver?
+    @ObservationIgnored private let uploads: ComposerUploads?
+    private var scopeActive: Bool {
+        app?.isUnlocked == true && app?.identity.npub == connection.signerNpub && app?.connection?.id == connection.id &&
+        app?.connection?.signerNpub == connection.signerNpub && app?.selectedWorkspaceId == workspace.id
+    }
     @ObservationIgnored weak var page: DocumentEditorPage?
     /// Opens, creates and picks wiki links for this document; set by the screen that shows the editor.
     @ObservationIgnored weak var wiki: WikiLinkController?
@@ -93,7 +100,7 @@ final class DocEditorModel: UploadTokenHost {
     @ObservationIgnored private var imagePoll: Task<Void, Never>?
 
     init(doc: DocRecord, workspace: WorkspaceRecord, store: LocalStore, connection: ConnectionRecord, app: AppModel) {
-        self.doc = doc; self.workspace = workspace; self.store = store; self.connection = connection; self.app = app
+        self.doc = doc; self.workspace = workspace; self.store = store; self.connection = connection; self.app = app; self.saver = app.saver; self.uploads = app.uploads
     }
 
     var draftKey: String { DocDraft.key(connectionId: connection.id, workspaceId: workspace.id, docId: doc.id) }
@@ -183,9 +190,9 @@ final class DocEditorModel: UploadTokenHost {
             #if os(macOS)
             page?.focus()
             #endif
-            page?.setEditable(!followingRemote && !permissionDenied && app?.isUnlocked == true)
+            page?.setEditable(!followingRemote && !permissionDenied && scopeActive)
             // Uploads for this document (also ones that finished while it was closed) apply once the page has it.
-            app?.uploads?.attach(self)
+            self.uploads?.attach(self)
             wiki?.pushTitles()
             #if DEBUG
             if app?.fixture != nil, ProcessInfo.processInfo.arguments.contains("-AmbulandoFixtureDocBridgeProbe") { page?.probeBridge() }
@@ -308,7 +315,7 @@ final class DocEditorModel: UploadTokenHost {
         closed = false
         active = true
         holdLease()
-        app?.uploads?.attach(self)
+        self.uploads?.attach(self)
         WikiEditors.register(self)
     }
 
@@ -343,7 +350,7 @@ final class DocEditorModel: UploadTokenHost {
     // MARK: Lease
 
     func prepareOpening() async -> Bool {
-        guard let saver = app?.saver, app?.isUnlocked == true else { return false }
+        guard let saver = self.saver, scopeActive else { return false }
         do {
             let lease = try await saver.acquire(connection, workspace, docId: doc.id, editorSessionId: editorSessionId)
             concurrentEditing = lease.documentEditProtocol == TowerAPI.concurrentDocumentEditProtocol
@@ -359,7 +366,7 @@ final class DocEditorModel: UploadTokenHost {
     }
 
     func holdLease() {
-        guard let saver = app?.saver, app?.isUnlocked == true else { leaseState = "Editing on this \(Device.name). Unlock to save."; return }
+        guard let saver = self.saver, scopeActive else { leaseState = "Editing on this \(Device.name). Unlock to save."; return }
         let connection = connection, workspace = workspace, id = doc.id
         renew?.cancel()
         startAutosave()
@@ -384,7 +391,7 @@ final class DocEditorModel: UploadTokenHost {
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(60))
                 guard !Task.isCancelled else { return }
-                guard let self else { return }
+                guard let self, scopeActive else { return }
                 do { try await saver.renew(connection, workspace, docId: id, editorSessionId: editorSessionId) }
                 catch is LeaseError {
                     if await saver.resumeUnchangedSession(connection, workspace, docId: id, editorSessionId: editorSessionId) {
@@ -402,7 +409,12 @@ final class DocEditorModel: UploadTokenHost {
     }
 
     /// Ends the session: stops renewing, releases the lease and stops receiving upload results.
-    func close() {
+    func closeAndReleaseLease() async {
+        close(releasingLease: false)
+        await saver?.release(connection, workspace, docId: doc.id, editorSessionId: editorSessionId)
+    }
+
+    func close(releasingLease: Bool = true) {
         closed = true
         editRevision &+= 1
         previewGeneration &+= 1
@@ -416,14 +428,14 @@ final class DocEditorModel: UploadTokenHost {
         autosave?.cancel(); autosave = nil
         renew?.cancel()
         imagePoll?.cancel()
-        app?.uploads?.detach(self)
-        guard let saver = app?.saver else { return }
+        self.uploads?.detach(self)
+        guard releasingLease, let saver = self.saver else { return }
         let connection = connection, workspace = workspace, id = doc.id, session = editorSessionId
         Task.detached { await saver.release(connection, workspace, docId: id, editorSessionId: session) }
     }
 
     private func startAutosave() {
-        guard active, autosave == nil else { return }
+        guard scopeActive, active, autosave == nil else { return }
         autosave = Task { [weak self] in
             let clock = ContinuousClock()
             var deadline = clock.now.advanced(by: .seconds(60))
@@ -451,8 +463,15 @@ final class DocEditorModel: UploadTokenHost {
     }
     func resumeAfterLifecycle() {
         lifecyclePending = false
-        page?.setEditable(!followingRemote && !permissionDenied && app?.isUnlocked == true)
+        page?.setEditable(!followingRemote && !permissionDenied && scopeActive)
         startAutosave()
+    }
+
+    func setWindowScopeActive(_ value: Bool) {
+        page?.setEditable(value && scopeActive && !followingRemote && !permissionDenied)
+        setActive(value)
+        if value { holdLease() }
+        else { renew?.cancel() }
     }
 
     func setActive(_ value: Bool) {
@@ -472,7 +491,7 @@ final class DocEditorModel: UploadTokenHost {
     }
 
     private func inspectAuthority() async {
-        guard let saver = app?.saver else { return }
+        guard let saver = self.saver else { return }
         do {
             let inspected = try await saver.inspect(connection, workspace, docId: doc.id)
             observedLeaseId = inspected.leaseId
@@ -486,7 +505,7 @@ final class DocEditorModel: UploadTokenHost {
 
     /// Explicit confirmation keeps divergent local work as an existing Tower recovery before loading the remote head.
     func takeover() async {
-        guard !saving, !takingOver, !reconciling, let saver = app?.saver, canTakeover else { return }
+        guard !saving, !takingOver, !reconciling, let saver = self.saver, canTakeover else { return }
         let expected = observedLeaseId
         takingOver = true
         defer { takingOver = false }
@@ -531,7 +550,7 @@ final class DocEditorModel: UploadTokenHost {
 
     /// Refresh only the comparison target. A newer shared save never replaces a working draft.
     func reconcileRemote() async {
-        guard !loading, !saving, !takingOver, !reconciling, active, app?.isUnlocked == true, let saver = app?.saver else { return }
+        guard !loading, !saving, !takingOver, !reconciling, active, scopeActive, let saver = self.saver else { return }
         reconciling = true
         defer { reconciling = false }
         guard await checkpoint() else { return }
@@ -592,7 +611,7 @@ final class DocEditorModel: UploadTokenHost {
     }
 
     func openVersions() async {
-        guard let saver = app?.saver, !saving, !takingOver else { return }
+        guard let saver = self.saver, !saving, !takingOver else { return }
         do {
             let fresh = try await saver.latest(connection, workspace, docId: doc.id)
             reviewedHead = fresh.body; reviewedTitle = fresh.doc.title
@@ -604,7 +623,7 @@ final class DocEditorModel: UploadTokenHost {
     }
 
     func previewVersion(_ recovery: DocumentRecovery?) async {
-        guard let saver = app?.saver, let head = reviewedHead else { return }
+        guard let saver = self.saver, let head = reviewedHead else { return }
         selectedRecovery = recovery; versionPreview = nil
         do {
             let bytes = head.bytes
@@ -619,7 +638,7 @@ final class DocEditorModel: UploadTokenHost {
     }
 
     func resolveVersion(promote: Bool) async {
-        guard let saver = app?.saver, let recovery = selectedRecovery, let head = reviewedHead, !saving, !takingOver, !dirty else {
+        guard let saver = self.saver, let recovery = selectedRecovery, let head = reviewedHead, !saving, !takingOver, !dirty else {
             setStatus("Preserve current edits before choosing a saved version.", .warning); return
         }
         saving = true
@@ -737,7 +756,7 @@ final class DocEditorModel: UploadTokenHost {
 
     /// No network mutation or lease acquisition: accepting an existing version never publishes a version.
     func acceptLatest() async {
-        guard !saving, !takingOver, !reconciling, let saver = app?.saver, let reviewed = remoteVersion else { return }
+        guard !saving, !takingOver, !reconciling, let saver = self.saver, let reviewed = remoteVersion else { return }
         reconciling = true
         defer { reconciling = false }
         guard let original = await workingSnapshot() else { return }
@@ -849,7 +868,7 @@ final class DocEditorModel: UploadTokenHost {
     }
     /// Explicit authority action for current exclusive-lease Tower. It preserves the working page and preview.
     func takeOverForMerge() async {
-        guard mergeReady || concurrentEditing, !takingOver, !saving, let saver = app?.saver else { return }
+        guard mergeReady || concurrentEditing, !takingOver, !saving, let saver = self.saver else { return }
         guard await checkpoint() else { return }
         await persistReview()
         takingOver = true
@@ -892,7 +911,7 @@ final class DocEditorModel: UploadTokenHost {
     /// This creates a durable local draft; normal Save still performs a fresh preflight and server CAS.
     func useMergePreview() async {
         guard mergeReady, mergeConflicts.isEmpty, !saving, !takingOver, !reconciling,
-              let target = journal.mergeLatest, let saver = app?.saver else { return }
+              let target = journal.mergeLatest, let saver = self.saver else { return }
         reconciling = true
         defer { reconciling = false }
         do {
@@ -956,13 +975,13 @@ final class DocEditorModel: UploadTokenHost {
     /// Current work is retained before any replacement; normal Save keeps lease/hash/race checks.
     func restoreCanonical(_ version: DocumentVersion) async -> Bool {
         guard let bytes = version.bytes, !saving, !takingOver, !reconciling, !permissionDenied,
-              let current = await workingSnapshot(), app?.isUnlocked == true, let saver = app?.saver else { return false }
+              let current = await workingSnapshot(), scopeActive, let saver = self.saver else { return false }
         reconciling = true
         defer { reconciling = false }
         let revision = editRevision
         do {
             let latest = try await saver.latest(connection, workspace, docId: doc.id)
-            guard revision == editRevision, app?.isUnlocked == true else { return false }
+            guard revision == editRevision, scopeActive else { return false }
             journal.preserve(current)
             preserveRawPreview()
             if let preview = try? encodedPreview() { journal.preserve(preview) }
@@ -1008,7 +1027,7 @@ final class DocEditorModel: UploadTokenHost {
 
     // MARK: Formatting
 
-    func command(_ name: String, _ args: [String: String] = [:]) { guard !followingRemote, !permissionDenied, app?.isUnlocked == true else { return }; page?.command(name, args) }
+    func command(_ name: String, _ args: [String: String] = [:]) { guard !followingRemote, !permissionDenied, scopeActive else { return }; page?.command(name, args) }
 
     /// Capture before comments take focus; save first so the anchor refers to canonical content.
     func commentAnchor(_ selected: DocumentAnchor) async -> DocumentAnchor? {
@@ -1096,7 +1115,7 @@ final class DocEditorModel: UploadTokenHost {
     /// Saves through Tower (lease, expected version). True when Tower made it the canonical version.
     func save() async -> Bool {
         guard !lifecyclePending else { return false }
-        guard !closed, !saving, !takingOver, !reconciling, !permissionDenied, let saver = app?.saver else { return false }
+        guard scopeActive, !closed, !saving, !takingOver, !reconciling, !permissionDenied, let saver = self.saver else { return false }
         saving = true
         defer { saving = false }
         guard await checkpoint() else { return false }
@@ -1199,7 +1218,7 @@ final class DocEditorModel: UploadTokenHost {
     /// Sends the page every image it asked for that is now in the file cache, asks once for downloads of the rest, and
     /// checks again every second for a minute (a download lands in the cache without any other signal).
     func deliverImages() {
-        guard let app, let cache = app.fileCache else { return }
+        guard scopeActive, let app, let cache = app.fileCache else { return }
         for id in waitingImages {
             if let file = cache.attachment(workspaceId: workspace.id, objectId: id) {
                 waitingImages.remove(id)
@@ -1235,7 +1254,7 @@ final class DocEditorModel: UploadTokenHost {
     /// goes through the same paste pipeline as chat (metadata stripped, staged, uploaded with retry), and its
     /// placeholder goes in at the caret.
     func pageSentFile(_ body: String) {
-        guard let uploads = app?.uploads else { setStatus(ComposerUploadError.locked.localizedDescription, .warning); return }
+        guard let uploads = self.uploads else { setStatus(ComposerUploadError.locked.localizedDescription, .warning); return }
         let target = uploadTarget, appNpub = workspace.appNpub
         Task { [weak self] in
             let decoded = await Task.detached(priority: .userInitiated) { () -> (data: Data, name: String, type: UTType)? in
