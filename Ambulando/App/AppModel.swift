@@ -699,6 +699,34 @@ final class AppModel {
 
     // MARK: Connection
 
+    func connectWorkspaceQr(_ envelope: String, mode: String) async throws {
+        guard let sync = catalogSync ?? sync, let catalog = catalogStore ?? store, isUnlocked, let signer = currentSigner else { throw IdentityError.locked }
+        let qr = try WorkspaceConnection.parse(envelope)
+        let origin = try qr.origin(mode: mode)
+        let pinned = try await catalog.reader.connections().filter { $0.origin == origin.description }
+        guard !pinned.contains(where: { $0.towerNpub != nil && $0.towerNpub != qr.service_npub }) else { throw TowerError.descriptor("existing Tower identity differs from this QR") }
+        for connection in pinned where connection.signerNpub == signer {
+            for workspace in try await catalog.reader.workspaces(connectionId: connection.id) where workspace.id == qr.workspace_id {
+                let raw = try JSONSerialization.jsonObject(with: workspace.raw) as? [String: Any]
+                let identity = raw?["identity"] as? [String: Any]
+                if let authority = identity?["workspace_service_npub"] as? String, authority != qr.workspace_service_npub { throw TowerError.descriptor("existing workspace authority differs from this QR") }
+            }
+        }
+        let api = TowerAPI(client: TowerClient(origin: origin, transport: sync.transport, signer: sync.identity))
+        let workspace = try await api.connectionWorkspace(qr)
+        let descriptor = try await sync.checkDescriptor(origin: origin)
+        guard descriptor.stack?.tower_npub == qr.service_npub else { throw TowerError.descriptor("Tower identity mismatch") }
+        guard currentSigner == signer, isUnlocked else { throw IdentityError.locked }
+        if preferences == nil { preferences = WorkspacePreferences() }
+        let connection = try await catalog.writer.saveConnection(ConnectionRecord(origin: origin, signerNpub: signer, towerNpub: qr.service_npub))
+        let existing = try await catalog.reader.workspaces(connectionId: connection.id)
+        try await catalog.writer.replaceWorkspaces(connectionId: connection.id,
+            existing.filter { $0.id != workspace.id || $0.appNpub != workspace.appNpub } + [workspace])
+        try await applyWorkspaceListings(try await readWorkspaceListings(catalog))
+        guard let entry = workspaceEntries.first(where: { $0.connection.id == connection.id && $0.workspace.id == workspace.id && $0.workspace.appNpub == workspace.appNpub }) else { throw TowerError.malformed("selected workspace") }
+        selectWorkspaceEntry(entry)
+    }
+
     func checkDescriptor(_ origin: String) async throws -> NStackDescriptor {
         guard let sync else { throw TowerError.unsafeOrigin }
         return try await sync.checkDescriptor(origin: try TowerOrigin(origin))

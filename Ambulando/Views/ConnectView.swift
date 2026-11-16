@@ -1,11 +1,17 @@
 import AmbulandoCore
 import SwiftUI
+import UniformTypeIdentifiers
+import Vision
 
 /// Connect to the user's nStack/Tower over HTTPS: read the public descriptor, then bind the origin
 /// to the unlocked identity and start discovery. FIPS endpoints are refused, never silently swapped for HTTPS.
 struct ConnectView: View {
     @Environment(AppModel.self) private var model
     @State private var origin = ""
+    @State private var chooseQrImage = false
+    @State private var workspaceQr: WorkspaceConnection?
+    @State private var workspaceEnvelope = ""
+    @State private var workspaceMode = "https"
     @State private var descriptor: NStackDescriptor?
     @State private var checkError: String?
     @State private var working = false
@@ -18,7 +24,7 @@ struct ConnectView: View {
                     Text(Product.isGrandparentChat ? "Connect to your NStack" : "Connect your nStack").font(Amb.editorial).foregroundStyle(Amb.itemHeading)
                     Text(Product.isGrandparentChat
                          ? "Enter the web address (https://…) of your family's NStack. \(Product.name) checks it, then shows the spaces your account can open."
-                         : "Enter the HTTPS address of your Tower. \(Product.name) reads its public service descriptor first, then lists the workspaces your identity can access.")
+                         : "Paste workspace QR text or enter the HTTPS address of your Tower. \(Product.name) reads its public service descriptor first, then lists the workspaces your identity can access.")
                         .font(.amb(.footnote)).foregroundStyle(Amb.mutedForeground)
                     if let tower = model.pendingTowerWorkspaceChoice {
                         Button("Cancel Tower selection") { model.cancelPendingTowerSelection() }
@@ -47,11 +53,31 @@ struct ConnectView: View {
                     TextField(Product.isGrandparentChat ? "https://your-nstack.example" : "https://your-tower.example", text: $origin)
                         .urlEntry().autocorrectionDisabled()
                         .padding(10).background(Amb.muted, in: RoundedRectangle(cornerRadius: Amb.radiusControl))
-                        .onChange(of: origin) { descriptor = nil; checkError = nil }
+                        .onChange(of: origin) { descriptor = nil; workspaceQr = nil; checkError = nil }
+                    Button("Scan workspace QR image") { chooseQrImage = true }.disabled(working)
                     if let checkError { Notice(tone: .error, text: checkError) }
                     if let descriptor { DescriptorSummary(descriptor: descriptor) }
                     if let notice = model.notice { Notice(tone: .error, text: notice) }
-                    if descriptor == nil {
+                    if let qr = workspaceQr {
+                        Text(qr.name ?? "NStack workspace").font(.headline)
+                        Text(qr.workspace_id).textSelection(.enabled)
+                        Text(qr.service_npub).textSelection(.enabled)
+                        Text(qr.workspace_service_npub).textSelection(.enabled)
+                        Text("Confirm only if you trust the QR source. Your signed-in identity must already have access.")
+                        Picker("Transport", selection: $workspaceMode) {
+                            ForEach(qr.modes, id: \.self) { mode in Text(mode.uppercased()).tag(mode) }
+                        }
+                        if workspaceMode == "https" { Text(qr.transports.https?.url ?? "") }
+                        else { Text(qr.transports.fips.map { "http://\($0.host):\($0.port)" } ?? "") }
+                        Button("Confirm and verify workspace") {
+                            working = true
+                            Task {
+                                do { try await model.connectWorkspaceQr(workspaceEnvelope, mode: workspaceMode) }
+                                catch { checkError = error.localizedDescription }
+                                working = false
+                            }
+                        }.buttonStyle(PrimaryButtonStyle()).disabled(working)
+                    } else if descriptor == nil {
                         Button { check() } label: { label(Product.isGrandparentChat ? "Check address" : "Check service") }
                             .buttonStyle(PrimaryButtonStyle()).disabled(origin.isEmpty || working)
                     } else {
@@ -70,6 +96,20 @@ struct ConnectView: View {
             }
             .padding(20)
         }
+        .fileImporter(isPresented: $chooseQrImage, allowedContentTypes: [.image]) { result in
+            do {
+                let url = try result.get()
+                let scoped = url.startAccessingSecurityScopedResource()
+                defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+                let request = VNDetectBarcodesRequest()
+                request.symbologies = [.qr]
+                try VNImageRequestHandler(url: url).perform([request])
+                let codes = request.results ?? []
+                guard codes.count == 1, let value = codes.first?.payloadStringValue else { throw TowerError.descriptor("choose an image containing exactly one workspace QR") }
+                origin = value
+                descriptor = nil; workspaceQr = nil; checkError = nil
+            } catch { checkError = error.localizedDescription }
+        }
     }
 
     private func label(_ text: String) -> some View {
@@ -79,7 +119,12 @@ struct ConnectView: View {
     private func check() {
         working = true
         Task {
-            do { descriptor = try await model.checkDescriptor(origin) } catch { checkError = error.localizedDescription }
+            do {
+                if origin.hasPrefix("nstack:workspace:") {
+                    let qr = try WorkspaceConnection.parse(origin)
+                    workspaceEnvelope = origin; workspaceMode = qr.policy.preferred; workspaceQr = qr
+                } else { descriptor = try await model.checkDescriptor(origin) }
+            } catch { checkError = error.localizedDescription }
             working = false
         }
     }
