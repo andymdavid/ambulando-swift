@@ -73,8 +73,15 @@ final class BrowserModel {
 
     private(set) var tabs: [BrowserTab] = []
     var selectedId: UUID?
+    #if os(macOS)
+    /// A URL request must raise the browser even when its window is already open behind chat.
+    private(set) var presentationRequest = 0
+    #endif
     var presented = false {
         didSet {
+            #if os(macOS)
+            if presented { presentationRequest &+= 1 }
+            #endif
             if oldValue && !presented {
                 downloadTransfer?.cancel()
                 for tab in tabs { broker?.tabClosed(tab.id) }

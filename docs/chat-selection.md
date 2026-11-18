@@ -30,3 +30,25 @@ rich content, scrolling at normal/narrow/expanded widths, larger text, menus, re
 It rejects embedded WKWebViews in the chat window. See [rich-message-layout.md](rich-message-layout.md)
 for restored iOS geometry, intrinsic-size, horizontal-table and native selection UI checks.
 Those tests are fixture evidence; device acceptance and timing comparisons remain separate.
+
+## Mac link presentation (build 97)
+
+Each browser presentation request now raises the Mac browser window, including when it is already
+open behind a focused conversation. Previously another URL could create a tab without bringing
+that window forward. The native text renderer, internal link routing, accessibility grouping
+and block-level selection remain unchanged.
+
+After building `AmbulandoMacTest`, run the isolated regression:
+
+```sh
+'build/test-mac/Build/Products/Test/Ambulando Test.app/Contents/MacOS/Ambulando Test' \
+  -AmbulandoFixtureReset -AmbulandoMacThreadRegression -AmbulandoMacChatLinkCheck
+```
+
+It checks the exact destination of a bold-wrapped Markdown release link, bare URL and internal
+reference encoding, and raising an existing browser window for another URL request with a focused
+thread retained. The page is served locally by the fixture. The regression puts chat in front and
+invokes the production URL handler, then asserts that the browser is the front visible window.
+Synthetic pointer delivery and key-window activation are unreliable in this fixture session, so
+this check does not establish pointer clicks, keyboard focus, drag selection, installation on a
+user's Mac, or remote-page behavior.

@@ -6,6 +6,49 @@ import AmbulandoCore
 
 /// Real thread presentation with synthetic long prose; never runs against an everyday account.
 extension MacThreadRegression {
+    /// Checks the URL-handler/window boundary: pointer delivery is not reliable in a command-line fixture.
+    static func chatLinkCheck(model: AppModel) async throws {
+        let release = "https://github.com/humansinstitute/nostr-stack/releases/tag/nstack-setup-v0.1.0-rc.5"
+        let prose = "The minimal **NStack + MinIO setup is already implemented and published in [rc.5](\(release))**, including automatic storage builds, admin claiming and persistent data."
+        let attributed = InlineText.attributed(MarkdownBlocks.inline(prose))
+        try require(attributed.runs.compactMap { $0.link?.absoluteString } == [release], "bold Markdown link retains exact target")
+        let bare = InlineText.attributed(MarkdownBlocks.inline("Read https://example.com/plain"))
+        try require(bare.runs.compactMap { $0.link?.absoluteString } == ["https://example.com/plain"], "bare URL retains its exact destination")
+        let reference = InlineText.attributed(MarkdownBlocks.inline("@[Thread](mention:thread:fixture-thread)"))
+        let routed = reference.runs.compactMap { $0.link }.compactMap(RichLinks.mentionTarget)
+        try require(routed.count == 1 && routed[0].kind == "thread" && routed[0].id == "fixture-thread", "internal link retains its encoded record route")
+        guard let fixture = model.fixture, let workspace = model.selectedWorkspace,
+              let main = NSApp.windows.first(where: { find($0, "fixture.banner") != nil }) else {
+            throw Failure(description: "Missing fixture thread")
+        }
+        fixture.tower.postAsMember(channel: FixtureTower.generalChannel, body: prose, threadId: FixtureTower.threadReview)
+        let previousSample = model.browser.samplePage
+        defer { model.browser.samplePage = previousSample }
+        // Serve the destination locally; the regression does not depend on GitHub or fetch the release.
+        model.browser.samplePage = (URL(string: release)!, "<html><body>Link destination</body></html>")
+        let focus = ThreadFocus(workspaceId: workspace.id, channelId: FixtureTower.generalChannel, threadId: FixtureTower.threadReview)
+        model.focusThread(focus)
+        await settle()
+        _ = model.browser.handleLink(URL(string: release)!)
+        for _ in 0..<20 {
+            if NSApp.windows.contains(where: { $0.isVisible && find($0, "browser.return") != nil }) { break }
+            await settle()
+        }
+        try require(model.browser.presented, "URL request presents browser")
+        try require(model.browser.selected?.webView.url?.absoluteString == release, "browser opens exact requested URL")
+        try require(NSApp.windows.contains { $0.isVisible && find($0, "browser.return") != nil }, "browser window is visible")
+        main.orderFrontRegardless()
+        await settle()
+        try require(NSApp.orderedWindows.first(where: \.isVisible) === main, "chat is in front of existing browser before another link")
+        let count = model.browser.tabs.count
+        _ = model.browser.handleLink(URL(string: release)!)
+        await settle()
+        try require(model.browser.tabs.count == count + 1, "another URL request opens a tab while browser is already presented")
+        try require(NSApp.orderedWindows.first(where: \.isVisible).map { find($0, "browser.return") != nil } == true, "another URL request brings existing browser window forward")
+        try require(model.focusedThread == focus, "browsing keeps the focused thread")
+        print("CHAT_LINK_WINDOW_PASS exactBoldTarget=true bareEncoding=true internalRouteEncoding=true repeatedRequestRaises=true threadRetained=true")
+    }
+
     static func richFormattingCheck(_ window: NSWindow, model: AppModel) async throws {
         TextScale.shared.reset()
         guard let readMenu = find(window, "deck.inbox.readMenu") else { throw Failure(description: "Missing Inbox read-actions menu") }
