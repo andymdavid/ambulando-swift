@@ -117,3 +117,9 @@ Review: https://claude.ai/artifact/S4HCkDSDtn2gJtky9eWTNH
 - User decision: own the term. Restored "Tower" in 17 strings where it names the server (Settings row, diagnostics,
   uploads, unlock, archive/delete/avatar notes, notifications, scope setup, membership). Sentences about Tower's
   internal checks stay removed. Rock/Pebble/Sand logged as an open decision.
+
+### 2.3 Tooltips (`copy: tooltips for task sizes and icon buttons`)
+- New `TaskPriorityHelp.swift`: one-line help per task size ("big rocks first"), shown on priority badges, the task
+  priority menu and the edit picker. Wording pending Pete.
+- Tooltips on icon-only buttons: composer photo/file/mention, Deck inbox new thread and type filters, Tasks/Docs/
+  Files add buttons, task list/board toggle. Rule: only unexplained terms and icon-only controls.

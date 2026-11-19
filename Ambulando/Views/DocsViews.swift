@@ -67,7 +67,7 @@ struct DocumentsView: View {
                 Spacer()
                 Button { creating = true } label: { Image(systemName: "plus") }
                     .buttonStyle(.ambIcon)
-                    .accessibilityLabel("New document").accessibilityIdentifier("docs.new")
+                    .help("New document").accessibilityLabel("New document").accessibilityIdentifier("docs.new")
             }
         }
         .sheet(isPresented: $creating) { DocumentCreateSheet(workspace: workspace, choice: snapshot.value.choice, context: context) }

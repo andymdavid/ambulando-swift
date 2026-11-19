@@ -334,6 +334,7 @@ struct DeckInboxCard: View {
                 .accessibilityLabel(DeckInbox.toggleLabel(kind))
                 .accessibilityValue(on ? "Shown" : "Hidden")
                 .accessibilityAddTraits(on ? .isSelected : [])
+                .help(DeckInbox.toggleLabel(kind))
                 .accessibilityIdentifier("deck.inbox.type.\(kind.rawValue)")
             }
         }
@@ -375,6 +376,7 @@ struct DeckInboxCard: View {
         }
         .buttonStyle(.ambIcon)
         .accessibilityLabel(model.directMessageCreationScope == nil ? "New thread" : "New direct message")
+        .help(model.directMessageCreationScope == nil ? "New thread" : "New direct message")
         .accessibilityIdentifier("deck.inbox.new")
     }
 

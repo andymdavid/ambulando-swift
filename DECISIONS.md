@@ -48,6 +48,8 @@ Goal: Linear-level polish for the Mac app without changing what the product does
 - **Hover on rows, tabs and icon buttons; row actions (•••) appear on hover** (Mac only). Mac had no hover at all.
 - **Four buttons: primary (filled violet), secondary, ghost, icon.** Replaced system bordered buttons, tinted chips
   and four kinds of add button. Filled violet chosen over Halaska-style inverted buttons to keep the brand visible.
+- **Tooltips for unexplained terms and icon-only buttons only**; never on buttons with a text label. Helpful
+  without being noisy.
 - **Spacing scale 4/8/12/16/24/32.** Used as screens are reworked, not converted all at once.
 
 ## Copy
@@ -63,7 +65,8 @@ Goal: Linear-level polish for the Mac app without changing what the product does
 - **Deck greeting by time of day** ("Good evening, Maya"), as in the reference app, instead of "Welcome …, where
   will we focus today?".
 - **Rock / Pebble / Sand: open.** Gives the app character but may read as jargon next to a plain priority.
-  Leaning: keep the words, make them self-explanatory (size glyph, order, tooltip). Ask Pete about the method.
+  Leaning: keep the words, make them self-explanatory. Tooltips added ("big rocks first": rock = most important,
+  pebble = after the rocks, sand = small tasks); size glyph and order to follow. Wording to confirm with Pete.
 - **Kept for now: Autopilot, scopes, Deck/Canvas/Toolbox.** These are product vocabulary;
   they belong to the "who is this for / domains" conversation, not a polish pass.
 

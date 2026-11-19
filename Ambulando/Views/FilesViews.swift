@@ -76,7 +76,7 @@ struct FilesView: View {
                 Spacer()
                 Button { uploading = true } label: { Image(systemName: "plus") }
                     .buttonStyle(.ambIcon)
-                    .accessibilityLabel("Upload").accessibilityIdentifier("files.upload")
+                    .help("Upload a file").accessibilityLabel("Upload").accessibilityIdentifier("files.upload")
             }
         }
         .sheet(isPresented: $uploading) { UploadSheet(workspace: workspace, choice: snapshot.value.choice, context: context) }
