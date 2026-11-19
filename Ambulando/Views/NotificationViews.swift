@@ -371,7 +371,7 @@ private struct NotificationRow: View {
                 }
                 Text(item.title).font(.amb(.subheadline).weight(item.isUnread ? .semibold : .regular)).foregroundStyle(Amb.foreground).lineLimit(2)
                 if !item.body.isEmpty {
-                    Text(item.body).font(.amb(.footnote)).foregroundStyle(Amb.mutedForeground).lineLimit(2)
+                    Text(item.body).font(.amb(.footnote)).foregroundStyle(Amb.secondaryForeground).lineLimit(2)
                 }
                 if item.eventCount > 1 {
                     Text("\(item.eventCount) updates").font(.amb(.caption)).foregroundStyle(Amb.mutedForeground)

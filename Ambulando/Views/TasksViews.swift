@@ -240,7 +240,7 @@ struct TasksView: View {
                 ScrollView {
                     LazyVStack(spacing: 8) {
                         ForEach(rows) { row in boardCard(row) }
-                        if rows.isEmpty { Text("Nothing here").font(.amb(.caption)).foregroundStyle(Amb.mutedForeground).padding(.vertical, 20) }
+                        if rows.isEmpty { Text("Nothing here").font(.amb(.caption)).foregroundStyle(Amb.faint).padding(.vertical, 20) }
                     }.frame(maxWidth: .infinity, minHeight: 120, alignment: .top)
                 }
             }

@@ -403,7 +403,7 @@ private struct ChannelRow: View {
                 }
                 // sol `.sidebar-scope-channel-row.active`: muted fill, primary bold label.
                 Text(label).font(.amb(.subheadline).weight(active ? .bold : unread ? .semibold : .regular))
-                    .foregroundStyle(active ? Amb.selectedForeground : unread ? Amb.foreground : Amb.mutedForeground).lineLimit(1)
+                    .foregroundStyle(active ? Amb.selectedForeground : unread ? Amb.foreground : Amb.secondaryForeground).lineLimit(1)
                 Spacer(minLength: 0)
                 if unread { Circle().fill(Amb.unread).frame(width: 7, height: 7).accessibilityHidden(true) }
             }

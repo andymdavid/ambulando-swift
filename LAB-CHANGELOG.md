@@ -42,3 +42,10 @@ Review: https://claude.ai/artifact/S4HCkDSDtn2gJtky9eWTNH
 ### 1.2e Dark chrome from Ari, content from Linear (`style(theme): Ari chrome and Linear content in dark mode`)
 - Dark mode only, two values: chrome/sidebar #090A0B (Ari), content page #0F1011 (Linear level 1). Cards and fills
   unchanged. Deck layering (page → section panel → row card → tiles) noted; flattening deferred to Phase 5.
+
+### 1.3a Four text levels, preview (`style(theme): four text levels`)
+- New `secondaryForeground` between ink and grey. Levels: foreground (content you read), secondaryForeground
+  (supporting content), mutedForeground (metadata), faint (hints/empty states).
+  Dark #EDEDED / #B8B8B8 / #8A8A8A / #636363; light #1B1C1F / #45474D / #6B6E75 / #9A9CA3.
+- Preview promotions only: unselected sidebar channels, Deck inbox subtitles and thread previews, app/agent and
+  canvas subtitles, notification bodies → secondary; "Nothing here" → faint. Full pass of ~240 uses comes in 1.3.

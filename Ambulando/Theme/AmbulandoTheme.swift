@@ -15,9 +15,12 @@ enum Amb {
     static let foreground = dynamic(ChatTextPalette.foreground(false), ChatTextPalette.foreground(true))
     static let card = dynamic(0xFFFFFF, 0x1A1A1A)
     static let muted = dynamic(0xF0F0F2, 0x232323)
+    // Four text levels: foreground (content you read), secondaryForeground (supporting content you still read),
+    // mutedForeground (metadata you scan) and faint (hints, placeholders, empty states).
+    static let secondaryForeground = dynamic(0x45474D, 0xB8B8B8)
     static let mutedForeground = dynamic(ChatTextPalette.muted(false), ChatTextPalette.muted(true))
-    /// Third text level: hints, placeholders and quiet timestamps.
-    static let faint = dynamic(0x9A9CA3, 0x6E6E6E)
+    /// Fourth text level: hints, placeholders and empty states.
+    static let faint = dynamic(0x9A9CA3, 0x636363)
     /// Hairlines. Kept faint: surfaces are separated by shade first, lines second.
     static let border = dynamic(0xEBEBEE, 0x262626)
     /// A firmer line for the few places that need one (focused fields, popover edges).

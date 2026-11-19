@@ -433,7 +433,7 @@ struct DeckInboxCard: View {
                         }
                         Text(item.title).font(.amb(.subheadline).weight(item.isUnread ? .semibold : .regular)).foregroundStyle(Amb.foreground)
                             .lineLimit(2).multilineTextAlignment(.leading)
-                        Text(item.kind == .chat ? item.subtitle : item.reason).font(.amb(.caption)).foregroundStyle(Amb.mutedForeground).lineLimit(1)
+                        Text(item.kind == .chat ? item.subtitle : item.reason).font(.amb(.caption)).foregroundStyle(Amb.secondaryForeground).lineLimit(1)
                         if item.workingUntil != nil { DeckWorkingLabel(until: item.workingUntil) }
                     }
                 }
@@ -844,7 +844,7 @@ struct DeckCanvasCard: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(canvas.title).font(.amb(.subheadline).weight(.semibold)).foregroundStyle(Amb.foreground).lineLimit(2)
                             Text(canvas.visibilityMode == "workspace" ? "Everyone in the workspace" : "Shared with selected people")
-                                .font(.amb(.caption)).foregroundStyle(Amb.mutedForeground)
+                                .font(.amb(.caption)).foregroundStyle(Amb.secondaryForeground)
                         }
                         Spacer(minLength: 0)
                         if !canvas.updatedAt.isEmpty { Text(ChatTime.label(canvas.updatedAt)).font(.amb(.caption2)).foregroundStyle(Amb.mutedForeground) }
@@ -914,7 +914,7 @@ struct DeckRecentCard: View {
                             Text(ChatTime.label(thread.latestAt)).font(.amb(.caption2)).foregroundStyle(Amb.mutedForeground)
                         }
                         Text(DeckActivity.threadTitle(thread)).font(.amb(.footnote)).foregroundStyle(Amb.foreground).lineLimit(1)
-                        Text(MentionCodec.plain(thread.latestBody)).font(.amb(.caption)).foregroundStyle(Amb.mutedForeground).lineLimit(1)
+                        Text(MentionCodec.plain(thread.latestBody)).font(.amb(.caption)).foregroundStyle(Amb.secondaryForeground).lineLimit(1)
                     }
                     .contentShape(Rectangle())
                 }
@@ -1020,7 +1020,7 @@ struct AppLauncherCard: View {
                 .overlay(Circle().stroke(Amb.border, lineWidth: 2))
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(.amb(.subheadline).weight(.bold)).foregroundStyle(Amb.itemHeading).lineLimit(1)
-                Text(subtitle).font(.amb(.caption)).foregroundStyle(Amb.mutedForeground).lineLimit(2).multilineTextAlignment(.leading)
+                Text(subtitle).font(.amb(.caption)).foregroundStyle(Amb.secondaryForeground).lineLimit(2).multilineTextAlignment(.leading)
             }
             Spacer(minLength: 0)
             Image(systemName: "chevron.right").font(.amb(.caption).weight(.semibold)).foregroundStyle(Amb.mutedForeground)
@@ -1277,7 +1277,7 @@ private struct MacLauncherPill: View {
             .overlay(Circle().stroke(Amb.border, lineWidth: 2))
             VStack(alignment: .leading, spacing: 2) {
                 Text(item.title).font(.amb(.subheadline).weight(.bold)).foregroundStyle(Amb.itemHeading).lineLimit(1)
-                Text(item.subtitle).font(.amb(.caption)).foregroundStyle(Amb.mutedForeground).lineLimit(1)
+                Text(item.subtitle).font(.amb(.caption)).foregroundStyle(Amb.secondaryForeground).lineLimit(1)
             }
             Spacer(minLength: 0)
         }
