@@ -26,3 +26,9 @@ Review: https://claude.ai/artifact/S4HCkDSDtn2gJtky9eWTNH
 - Title bar is neutral window chrome (`Amb.sidebar`) instead of a 12% tint of the workspace colour (upstream
   `WorkspaceHeaderTint`). Workspace colour could return later as a small mark on the workspace avatar (shell phase).
 - Mac section tab bar sits on the page surface, so the content column is one surface.
+
+### 1.2c Halaska dark neutrals (`style(theme): Halaska neutral greys for dark mode`)
+- Ari's dark scale still read slightly cool and its levels were too close to see selection. Dark mode only now uses
+  Halaska UI's pure neutral greys with clearer steps: page #0A0A0A, chrome #111111, panels #171717, muted #202020,
+  selected #262626, lines #262626; dark text #F2F2F2 / #8F8F8F / #6E6E6E.
+- Light theme and the accent are unchanged from 1.2b.

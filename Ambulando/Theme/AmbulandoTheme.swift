@@ -9,19 +9,19 @@ enum Amb {
 
     /// Page surface. The web paints its pages, header, sidebar, chat feed and section bar with `--card` (white in
     /// light mode; `styles.css` `body { background: var(--card) }`), not with `--background`.
-    static let background = dynamic(0xFFFFFF, 0x0C0D0E)
+    static let background = dynamic(0xFFFFFF, 0x0A0A0A)
     /// sol `--background`: the recessed grey the web keeps for a few inputs and nested cards.
-    static let canvas = dynamic(0xF7F7F8, 0x090A0B)
+    static let canvas = dynamic(0xF7F7F8, 0x0A0A0A)
     static let foreground = dynamic(ChatTextPalette.foreground(false), ChatTextPalette.foreground(true))
-    static let card = dynamic(0xFFFFFF, 0x121314)
-    static let muted = dynamic(0xF0F0F2, 0x1C1D20)
+    static let card = dynamic(0xFFFFFF, 0x171717)
+    static let muted = dynamic(0xF0F0F2, 0x202020)
     static let mutedForeground = dynamic(ChatTextPalette.muted(false), ChatTextPalette.muted(true))
     /// Third text level: hints, placeholders and quiet timestamps.
-    static let faint = dynamic(0x9A9CA3, 0x65676D)
+    static let faint = dynamic(0x9A9CA3, 0x6E6E6E)
     /// Hairlines. Kept faint: surfaces are separated by shade first, lines second.
-    static let border = dynamic(0xEBEBEE, 0x222327)
+    static let border = dynamic(0xEBEBEE, 0x262626)
     /// A firmer line for the few places that need one (focused fields, popover edges).
-    static let borderStrong = dynamic(0xDCDCE1, 0x2D2F33)
+    static let borderStrong = dynamic(0xDCDCE1, 0x333333)
     /// The one accent: buttons, selection controls, focus, mentions of you and unread. Never used for headings.
     static let primary = dynamic(0x6E56CF, 0x7C6AE6)
     static let primaryForeground = dynamic(0xFFFFFF, 0xFFFFFF)
@@ -40,13 +40,13 @@ enum Amb {
     /// Web addresses in messages and documents: a clear blue, always underlined, so a link never reads as plain text.
     static let link = dynamic(ChatTextPalette.link(false), ChatTextPalette.link(true))
     static let infoBackground = dynamic(0xE8F1F9, 0x20384C)
-    // Surface layers (Linear/Ari): window chrome (title bar + sidebar) is the `sidebar` surface, content sits on
-    // `background`; raised floats above it; hover and selected are fills. Values match Ari's tokens.
-    static let sidebar = dynamic(0xF7F7F8, 0x090A0B)
-    static let raised = dynamic(0xFFFFFF, 0x17181A)
-    static let hoverFill = dynamic(0xF0F0F2, 0x1C1D20)
+    // Surface layers: window chrome (title bar + sidebar) is the `sidebar` surface, content sits on `background`;
+    // raised floats above it; hover and selected are fills. Dark values are Halaska UI's pure neutral greys.
+    static let sidebar = dynamic(0xF7F7F8, 0x111111)
+    static let raised = dynamic(0xFFFFFF, 0x171717)
+    static let hoverFill = dynamic(0xF0F0F2, 0x1C1C1C)
     /// Selected row: a grey fill with ink text (selection is shown by shade, not colour).
-    static let selectedFill = dynamic(0xE9E9ED, 0x222327)
+    static let selectedFill = dynamic(0xE9E9ED, 0x262626)
     static let selectedForeground = foreground
     /// The single unread signal, everywhere (sidebar, inbox, notifications).
     static let unread = primary
@@ -78,8 +78,8 @@ extension Amb {
         let control = UISegmentedControl.appearance()
         control.selectedSegmentTintColor = dynamicUI(0x6E56CF, 0x7C6AE6)          // primary
         control.setTitleTextAttributes([.foregroundColor: dynamicUI(0xFFFFFF, 0xFFFFFF)], for: .selected)   // primary-foreground
-        control.setTitleTextAttributes([.foregroundColor: dynamicUI(0x1B1C1F, 0xECEDEE)], for: .normal)     // foreground
-        control.backgroundColor = dynamicUI(0xF0F0F2, 0x1C1D20)                    // muted
+        control.setTitleTextAttributes([.foregroundColor: dynamicUI(0x1B1C1F, 0xF2F2F2)], for: .normal)     // foreground
+        control.backgroundColor = dynamicUI(0xF0F0F2, 0x202020)                    // muted
         #endif
     }
 }
