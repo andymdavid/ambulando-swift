@@ -73,3 +73,10 @@ Review: https://claude.ai/artifact/S4HCkDSDtn2gJtky9eWTNH
   (Phase 3), icon buttons (1.5).
 - Known pre-existing failure: `-AmbulandoMacThreadRegression` fails "synced reply must render in actual thread" on
   upstream main + the Xcode 27 fix alone (no lab UX changes), so it's environmental (Xcode/macOS 27), not ours.
+
+### 1.4b Linear dark theme and translucent hover (`style(theme): Linear dark theme and overlay hover`)
+- User still disliked the dark colours; dark mode now uses Linear's dark theme values (linear.app `[data-theme=dark]`):
+  chrome #08090A, page #0F1011, cards #141516, raised #1C1C1F, muted #191A1B, selected #232326, lines
+  #23252A/#34343A, text #F7F8F8 / #D0D6E0 / #8A8F98 / #62666D. Light theme and accent unchanged.
+- Hover is now a translucent overlay like Linear's (black 4% light, white 5% dark) instead of a solid grey; the old
+  light hover (#F0F0F2, about 6% black) was too dark. New `PlatformColor.overlay(lightBlack:darkWhite:)`.
