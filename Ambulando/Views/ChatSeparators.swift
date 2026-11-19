@@ -76,15 +76,12 @@ struct RepliesRule: View {
     }
 }
 
-/// One conversation in a channel's message list, drawn as the web's `.channel-thread-card`: a bordered panel on the
-/// page surface with a gap to the next. The border, not a line under every message, separates conversations.
+/// One conversation in a channel's message list. UX lab: a flat row on the page (no card or border), as in Linear
+/// and Slack; each message highlights on hover (see `MessageCell`). Was the web's bordered `.channel-thread-card`.
 struct ConversationCard: ViewModifier {
     func body(content: Content) -> some View {
         content
-            .padding(.vertical, 4)
-            .background(Amb.card, in: RoundedRectangle(cornerRadius: Amb.radiusPanel, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: Amb.radiusPanel, style: .continuous).stroke(Amb.border, lineWidth: 1))
-            .padding(.horizontal, 10).padding(.vertical, 5)
+            .padding(.horizontal, 8).padding(.vertical, 1)
     }
 }
 

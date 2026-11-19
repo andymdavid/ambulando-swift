@@ -249,11 +249,13 @@ struct ChannelView: View {
                 }
                 // Each conversation is a card (sol `.channel-thread-card`); a date label starts each day.
                 // One view per element (a lazy stack mis-lays rows whose element yields a varying number of views).
+                let continued = ChatGrouping.continued(snapshot.value.posts, dayStarts: snapshot.value.dayStarts)
                 ForEach(snapshot.value.posts) { post in
                     VStack(spacing: 0) {
                         if let day = snapshot.value.dayStarts[post.id] { DaySeparator(day: day) }
                         PostRow(post: post, people: snapshot.value.people, workspace: workspace, extras: snapshot.value.extras,
-                                threadTitle: post.message.threadId.flatMap { snapshot.value.threadTitles[$0] })
+                                threadTitle: post.message.threadId.flatMap { snapshot.value.threadTitles[$0] },
+                                continued: continued.contains(post.id))
                             .conversationCard()
                     }
                 }
@@ -517,15 +519,17 @@ struct PostRow: View {
     let workspace: WorkspaceRecord
     let extras: MessageExtras
     var threadTitle: String? = nil
+    /// UX lab: continues the previous message's block (same sender, within five minutes).
+    var continued = false
 
     var body: some View {
         if let thread = post.message.threadId {
             // Only the message opens the thread; reactions and status lines below it stay separately tappable.
             MessageCell(message: post.message, people: people, workspace: workspace, extras: extras,
                         route: ChatRoute.thread(workspaceId: workspace.id, channelId: post.message.channelId, threadId: thread),
-                        replyCount: post.replyCount, lastReplyAt: post.lastReplyAt, threadTitle: threadTitle)
+                        replyCount: post.replyCount, lastReplyAt: post.lastReplyAt, threadTitle: threadTitle, continued: continued)
         } else {
-            MessageCell(message: post.message, people: people, workspace: workspace, extras: extras)
+            MessageCell(message: post.message, people: people, workspace: workspace, extras: extras, continued: continued)
         }
     }
 }
@@ -535,6 +539,8 @@ struct MessageRow: View {
     let people: PeopleDirectory
     var bodyOverride: String?
     var workspace: WorkspaceRecord?
+    /// UX lab: no avatar or name line; the message continues the block above.
+    var continued = false
 
     /// Resolved from the store with the snapshot: workspace name, Tower's label, public profile, else the short npub.
     private var sender: PersonDisplay { people.person(message.senderNpub, senderLabel: message.senderLabel) }
@@ -554,14 +560,20 @@ struct MessageRow: View {
         let interactive = !display.attachments.isEmpty || (bodyOverride == nil && (display.blocks.map(RichBlocksInfo.hasControls) ?? false))
         let sender = sender
         HStack(alignment: .top, spacing: 10) {
-            PersonAvatar(person: sender)
+            if continued {
+                Color.clear.frame(width: 34, height: 1).accessibilityHidden(true)
+            } else {
+                PersonAvatar(person: sender)
+            }
             VStack(alignment: .leading, spacing: messageHeaderSpacing) {
-                HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    Text(sender.name).font(.amb(.subheadline).weight(.semibold)).foregroundStyle(Amb.foreground).lineLimit(1)
-                        .accessibilityIdentifier("message.author")
-                    Text(display.time).font(.amb(.caption)).foregroundStyle(Amb.mutedForeground)
+                if !continued {
+                    HStack(alignment: .firstTextBaseline, spacing: 6) {
+                        Text(sender.name).font(.amb(.subheadline).weight(.semibold)).foregroundStyle(Amb.foreground).lineLimit(1)
+                            .accessibilityIdentifier("message.author")
+                        Text(display.time).font(.amb(.caption)).foregroundStyle(Amb.mutedForeground)
+                    }
+                    .richLayoutFrame("metadata")
                 }
-                .richLayoutFrame("metadata")
                 if let bodyOverride {
                     if !bodyOverride.isEmpty { MessageBody(text: bodyOverride, muted: true) }
                 } else if !message.body.isEmpty {
@@ -580,12 +592,13 @@ struct MessageRow: View {
             Spacer(minLength: 0)
         }
         #if os(macOS)
-        // Desktop messages get room to breathe; the iPhone keeps its compact rows.
-        .padding(.horizontal, 24).padding(.vertical, 14)
+        // UX lab: flat rows with Linear-like density on the Mac (was 24/14 inside a card); continued lines sit tight.
+        .padding(.horizontal, 12).padding(.top, continued ? 0 : 8).padding(.bottom, 4)
         #else
         .padding(.horizontal, 16).padding(.vertical, 8)
         #endif
         .accessibilityElement(children: interactive ? .contain : .combine)
+        .continuedMessageLabel(continued ? "\(sender.name), \(display.time)" : nil)
         .accessibilityIdentifier("message")
     }
 }

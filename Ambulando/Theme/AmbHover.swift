@@ -1,4 +1,7 @@
 import SwiftUI
+#if os(macOS)
+import AppKit
+#endif
 
 /// UX lab hover system. Rows, tabs and buttons answer the pointer with a quiet `Amb.hoverFill`, and secondary row
 /// actions (•••) appear only while the row is hovered, as in Linear. Selected rows keep their own fill: apply
@@ -13,8 +16,9 @@ extension View {
     /// Tracks hover over a whole row (fill included) and tells `ambRevealOnHover` descendants.
     func ambHoverRow(radius: CGFloat = Amb.radiusControl) -> some View { modifier(AmbHoverRow(radius: radius)) }
 
-    /// Shows this view only while its `ambHoverRow` is hovered (Mac only). It stays in the accessibility tree and keeps
-    /// its hit area, so VoiceOver and clicks on the spot still work.
+    /// Shows this view only while its `ambHoverRow` is hovered (Mac only). SwiftUI drops a fully transparent view from
+    /// accessibility, so it stays visible whenever VoiceOver or Full Keyboard Access is on, and while the app's Mac
+    /// interaction checks run (they find and click controls through accessibility).
     func ambRevealOnHover() -> some View { modifier(AmbRevealOnHover()) }
 }
 
@@ -51,7 +55,7 @@ private struct AmbRevealOnHover: ViewModifier {
     func body(content: Content) -> some View {
         #if os(macOS)
         content
-            .opacity(rowHovered ? 1 : 0)
+            .opacity(rowHovered || AmbRevealPolicy.alwaysShow ? 1 : 0)
             .animation(.easeOut(duration: 0.12), value: rowHovered)
         #else
         content
@@ -72,3 +76,14 @@ extension EnvironmentValues {
         set { self[AmbInHoverRowKey.self] = newValue }
     }
 }
+
+#if os(macOS)
+/// When hover-revealed controls must stay visible (assistive technology, keyboard navigation, interaction checks).
+@MainActor
+enum AmbRevealPolicy {
+    /// Read once (these settings rarely change mid-session, and the system calls are not free on every redraw).
+    static let alwaysShow: Bool =
+        NSWorkspace.shared.isVoiceOverEnabled || NSApplication.shared.isFullKeyboardAccessEnabled || runningMacChecks
+    private static let runningMacChecks = ProcessInfo.processInfo.arguments.contains { $0.hasPrefix("-AmbulandoMac") }
+}
+#endif

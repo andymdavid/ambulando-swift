@@ -54,6 +54,18 @@ Goal: Linear-level polish for the Mac app without changing what the product does
   (raised surface, soft border and shadow, Geist) and the same pause.
 - **Spacing scale 4/8/12/16/24/32.** Used as screens are reworked, not converted all at once.
 
+## Chat
+
+- **Flat messages, no cards.** A one-line message took ~140pt inside a bordered card; now about half, so twice as
+  many messages fit. Hover highlights the message.
+- **Group consecutive messages** from the same person within five minutes (one avatar and name), as Slack and
+  Linear do.
+- **Reactions only when they exist.** The always-on 👍 and + under every message moved into a small hover toolbar
+  with the ••• menu. Pills have no outline; yours use the soft accent.
+- **Status dot only when something's wrong** (waiting or refused); "synced" is the normal state.
+- **Hover-revealed controls stay visible for VoiceOver and Full Keyboard Access** (and the app's Mac checks).
+  Hidden controls would otherwise be unreachable.
+
 ## Copy
 
 - **Remove developer language** (FIPS, NIP-98, "authority-barrier", "cursor reset", "fdCalloutWidget"). Say what

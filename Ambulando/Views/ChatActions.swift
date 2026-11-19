@@ -11,7 +11,7 @@ import AppKit
 struct MessageCell: View, Equatable {
     nonisolated static func == (lhs: Self, rhs: Self) -> Bool {
         lhs.message == rhs.message && lhs.people == rhs.people && lhs.workspace == rhs.workspace && lhs.extras == rhs.extras
-            && lhs.effectiveThreadId == rhs.effectiveThreadId && lhs.route == rhs.route && lhs.replyCount == rhs.replyCount && lhs.lastReplyAt == rhs.lastReplyAt && lhs.threadTitle == rhs.threadTitle
+            && lhs.effectiveThreadId == rhs.effectiveThreadId && lhs.route == rhs.route && lhs.replyCount == rhs.replyCount && lhs.lastReplyAt == rhs.lastReplyAt && lhs.threadTitle == rhs.threadTitle && lhs.continued == rhs.continued
     }
 
     @Environment(AppModel.self) private var model
@@ -26,6 +26,8 @@ struct MessageCell: View, Equatable {
     var lastReplyAt: String? = nil
     /// Tower's thread title, shown above the root when it says something the root's first words do not.
     var threadTitle: String? = nil
+    /// UX lab: continues the previous message's block (no avatar or name line).
+    var continued = false
     @Environment(\.editChatMessage) private var editChatMessage
     @State private var confirmDelete = false
     @State private var gettingItDone = false
@@ -88,13 +90,22 @@ struct MessageCell: View, Equatable {
             }
             .overlay(alignment: .topTrailing) { messageControls }
             if model.identity.npub != nil && !message.deleted && !inherited {
+                #if os(macOS)
+                // UX lab: reaction pills only when someone has reacted; quick reactions live in the hover toolbar.
+                if !reactions.isEmpty {
+                    ReactionBar(reactions: reactions, me: model.identity.npub, quickActions: false) { toggle($0) }
+                        .padding(.leading, 56).padding(.trailing, 16).padding(.bottom, 6)
+                }
+                #else
                 ReactionBar(reactions: reactions, me: model.identity.npub) { toggle($0) }
                     .padding(.leading, 60).padding(.trailing, 16)
+                #endif
             }
             ForEach(writes.filter { [.messageEdit, .messageDelete].contains($0.kind) }) { item in
                 WriteStatusLine(item: item, label: item.kind == .messageEdit ? "Edit" : "Delete").padding(.leading, 60).padding(.trailing, 16).padding(.bottom, 6)
             }
         }
+        .ambHoverRow(radius: Amb.radiusPanel)
         .contextMenu { actions }
         .sheet(isPresented: $gettingItDone) { GetItDoneSheet(message: message, workspace: workspace) }
         .confirmationDialog("Delete this message for everyone?", isPresented: $confirmDelete, titleVisibility: .visible) {
@@ -166,11 +177,26 @@ struct MessageCell: View, Equatable {
 
     private var messageControls: some View {
         HStack(spacing: 4) {
-            SyncDot(state: sync)
+            // UX lab: the dot only shows when something needs attention (waiting or refused); it stays in the
+            // accessibility tree either way.
+            SyncDot(state: sync).opacity(sync == .synced ? 0 : 1)
             #if os(macOS)
-            NativeMessageActions(items: nativeActions).frame(width: 28, height: 28)
-                .accessibilityLabel("Message actions")
-                .accessibilityIdentifier("message.actions")
+            // UX lab: quick reactions and the menu appear together in a small toolbar while the message is hovered.
+            HStack(spacing: 2) {
+                if model.identity.npub != nil && !message.deleted && !inherited {
+                    ReactionBar(reactions: [], me: model.identity.npub, compact: true) { toggle($0) }.fixedSize()
+                }
+                NativeMessageActions(items: nativeActions).frame(width: 26, height: 26)
+                    .accessibilityLabel("Message actions")
+                    .accessibilityIdentifier("message.actions")
+            }
+            .padding(2)
+            .background(Amb.raised, in: RoundedRectangle(cornerRadius: Amb.radiusControl + 2, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: Amb.radiusControl + 2, style: .continuous).stroke(Amb.borderStrong, lineWidth: 0.5))
+            .shadow(color: .black.opacity(0.08), radius: 4, y: 1)
+            .fixedSize()
+            .offset(y: -10)   // floats over the message's top edge instead of covering its text
+            .ambRevealOnHover()
             #else
             Menu { actions } label: {
                 Image(systemName: "ellipsis").font(.amb(.footnote).weight(.bold)).foregroundStyle(Amb.mutedForeground)
@@ -213,7 +239,7 @@ struct MessageCell: View, Equatable {
     #endif
 
     private var row: some View {
-        MessageRow(message: message, people: people, bodyOverride: pendingEdit?.isPending == true ? pendingEdit?.string("body") : nil, workspace: workspace)
+        MessageRow(message: message, people: people, bodyOverride: pendingEdit?.isPending == true ? pendingEdit?.string("body") : nil, workspace: workspace, continued: continued)
             .opacity(pendingDelete?.isPending == true ? 0.45 : 1)
     }
 
@@ -252,16 +278,18 @@ private struct ReactionFlowLayout: Layout {
     let spacing: CGFloat
 
     private func arrangement(width: CGFloat, subviews: Subviews) -> (CGSize, [CGPoint]) {
-        var x: CGFloat = 0, y: CGFloat = 0, rowHeight: CGFloat = 0
+        var x: CGFloat = 0, y: CGFloat = 0, rowHeight: CGFloat = 0, used: CGFloat = 0
         var points: [CGPoint] = []
         for view in subviews {
             let size = view.sizeThatFits(.unspecified)
             if x > 0 && x + size.width > width { x = 0; y += rowHeight + spacing; rowHeight = 0 }
             points.append(CGPoint(x: x, y: y))
+            used = max(used, x + size.width)
             x += size.width + spacing
             rowHeight = max(rowHeight, size.height)
         }
-        return (CGSize(width: width, height: y + rowHeight), points)
+        // UX lab: report the width the items use (was the full proposed width), so a short bar sizes to its content.
+        return (CGSize(width: min(width, used), height: y + rowHeight), points)
     }
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
@@ -279,13 +307,17 @@ private struct ReactionFlowLayout: Layout {
 struct ReactionBar: View {
     let reactions: [ReactionRecord]
     let me: String?
+    /// UX lab: false draws only the reaction pills (the quick 👍 and + live in the Mac hover toolbar).
+    var quickActions = true
+    /// UX lab: borderless 26pt quick buttons for the Mac hover toolbar.
+    var compact = false
     let toggle: (String) -> Void
     @State private var picking = false
 
     @ScaledMetric(relativeTo: .footnote) private var scaledSide: CGFloat = 32
     private var side: CGFloat {
         #if os(macOS)
-        32 * TextScale.shared.factor
+        (compact ? 26 : 28) * TextScale.shared.factor
         #else
         scaledSide
         #endif
@@ -302,29 +334,39 @@ struct ReactionBar: View {
                     HStack(spacing: 4) { Image(systemName: emoji.symbol).foregroundStyle(emoji == .heart ? Amb.destructive : (mine ? Amb.primary : Amb.foreground)); Text("\(list.count)") }
                         .font(.amb(.footnote).weight(.semibold)).foregroundStyle(mine ? Amb.primary : Amb.foreground)
                         .padding(.horizontal, 8).frame(minWidth: side, minHeight: side)
-                        .background(mine ? Amb.selectedFill : Amb.card, in: RoundedRectangle(cornerRadius: Amb.radiusControl))
-                        .overlay(RoundedRectangle(cornerRadius: Amb.radiusControl).stroke(Amb.border, lineWidth: 1))
-                        .contentShape(Rectangle())
+                        .background(mine ? Amb.accent : Amb.muted, in: Capsule())
+                        .contentShape(Capsule())
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("\(emoji.name), \(list.count)\(mine ? ", including you" : "")")
                 .accessibilityAddTraits(mine ? .isSelected : [])
                 .accessibilityIdentifier("reaction.\(emoji.rawValue)")
             }
+            if quickActions {
             Button { toggle(ReactionEmoji.thumbsUp.rawValue) } label: {
-                Image(systemName: ReactionEmoji.thumbsUp.symbol).font(.amb(.footnote)).foregroundStyle(Amb.mutedForeground).opacity(0.8)
-                    .frame(width: side, height: side).background(Amb.card, in: RoundedRectangle(cornerRadius: Amb.radiusControl))
-                    .overlay(RoundedRectangle(cornerRadius: Amb.radiusControl).stroke(Amb.border, lineWidth: 1)).contentShape(Rectangle())
+                if compact {
+                    Image(systemName: "hand.thumbsup").frame(width: side, height: side)
+                } else {
+                    Image(systemName: ReactionEmoji.thumbsUp.symbol).font(.amb(.footnote)).foregroundStyle(Amb.mutedForeground).opacity(0.8)
+                        .frame(width: side, height: side).background(Amb.card, in: RoundedRectangle(cornerRadius: Amb.radiusControl))
+                        .overlay(RoundedRectangle(cornerRadius: Amb.radiusControl).stroke(Amb.border, lineWidth: 1)).contentShape(Rectangle())
+                }
             }
-            .buttonStyle(.plain)
+            .ambIconStyle(compact)
+            .ambTooltip(compact ? "React with thumbs up" : "")
             .accessibilityLabel("React with thumbs up")
             .accessibilityIdentifier("reaction.quick")
             Button { picking = true } label: {
-                Image(systemName: "plus").font(.amb(.footnote).weight(.semibold)).foregroundStyle(Amb.mutedForeground)
-                    .frame(width: side, height: side).background(Amb.card, in: RoundedRectangle(cornerRadius: Amb.radiusControl))
-                    .overlay(RoundedRectangle(cornerRadius: Amb.radiusControl).stroke(Amb.border, lineWidth: 1)).contentShape(Rectangle())
+                if compact {
+                    Image(systemName: "face.smiling").frame(width: side, height: side)
+                } else {
+                    Image(systemName: "plus").font(.amb(.footnote).weight(.semibold)).foregroundStyle(Amb.mutedForeground)
+                        .frame(width: side, height: side).background(Amb.card, in: RoundedRectangle(cornerRadius: Amb.radiusControl))
+                        .overlay(RoundedRectangle(cornerRadius: Amb.radiusControl).stroke(Amb.border, lineWidth: 1)).contentShape(Rectangle())
+                }
             }
-            .buttonStyle(.plain)
+            .ambIconStyle(compact)
+            .ambTooltip(compact ? "Add reaction" : "")
             .accessibilityLabel("Add reaction")
             .accessibilityIdentifier("reaction.add")
             .popover(isPresented: $picking, arrowEdge: .bottom) {
@@ -344,8 +386,9 @@ struct ReactionBar: View {
                 .accessibilityElement(children: .contain)
                 .accessibilityIdentifier("reaction.picker")
             }
+            }
         }
-        .padding(.top, 6).padding(.bottom, 8)
+        .padding(.top, compact ? 0 : quickActions ? 6 : 2).padding(.bottom, compact ? 0 : quickActions ? 8 : 0)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("reaction.bar")
     }

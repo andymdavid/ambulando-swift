@@ -134,3 +134,18 @@ Review: https://claude.ai/artifact/S4HCkDSDtn2gJtky9eWTNH
 - Fix (2.4b): tooltips could appear far from the hovered item (placed at the pointer when shown, and a hover-ended
   event can be missed when a parent row redraws). Now anchored to the item's frame (centred below, above near the
   screen edge), shown only if the pointer is still on the item, and hidden by a 0.1s watch as soon as it leaves.
+
+## Phase 3: Chat (`ux/chat`, off `lab` after Phase 2 merged)
+
+### 3.1 Flat, grouped messages (`style(chat): flat grouped messages with a hover toolbar`)
+- `ConversationCard` is a flat row (no card fill or border). Mac message padding 12/8→4 (was 24/14).
+- New `ChatGrouping.swift`: posts continuing the same sender within 5 min (no day break, previous without replies)
+  drop the avatar and name line; VoiceOver hint keeps sender and time.
+- `MessageCell`: whole message is an `ambHoverRow`; Mac hover toolbar (quick 👍, reaction picker, •••) in a raised
+  pill floating over the top edge; reactions below only when present (`ReactionBar quickActions: false`), pills
+  borderless (muted fill, yours on the soft accent). iOS keeps the existing reaction bar.
+- `SyncDot` hidden while synced (kept in the accessibility tree; `ComposerParityUITests` still finds it).
+- `ReactionFlowLayout` reports the width it uses, not the proposed width.
+- `AmbRevealPolicy`: hover-revealed controls stay visible with VoiceOver, Full Keyboard Access or `-AmbulandoMac*`
+  checks (read once at launch). Found via `-AmbulandoMacThreadRegression`; it now fails only at the known
+  environmental step.

@@ -76,3 +76,10 @@ private struct AmbButtonBody: View {
             .onHover { hovered = $0 }
     }
 }
+
+extension View {
+    /// `.ambIcon` when `on`, otherwise the plain style (for controls that are icon buttons only in some contexts).
+    @ViewBuilder func ambIconStyle(_ on: Bool) -> some View {
+        if on { buttonStyle(.ambIcon) } else { buttonStyle(.plain) }
+    }
+}
