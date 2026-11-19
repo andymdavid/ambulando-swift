@@ -12,7 +12,7 @@ struct WorkspaceDangerZone: View {
         Form {
             Section {
                 WorkspaceIdentityHeader(workspace: workspace)
-                Text("Deleting this workspace affects every member and removes their access. Owner and protected-workspace safeguards still apply.")
+                Text("Deleting this workspace on Tower affects every member and removes their access. Owner and protected-workspace safeguards still apply.")
                 TextField("Type \(workspace.label) to confirm", text: $confirmation)
                 Button("Delete workspace", role: .destructive) { showConfirmation = true }
                     .disabled(phase.isWorking || confirmation != workspace.label || model.membership?.isAdmin != true || model.selectedWorkspace?.id != workspace.id)

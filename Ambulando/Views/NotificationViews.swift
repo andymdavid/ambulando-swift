@@ -331,7 +331,7 @@ struct NotificationsView: View {
             VStack(spacing: 6) {
                 Image(systemName: "bell").font(.amb(.title2)).foregroundStyle(Amb.mutedForeground)
                 Text(emptyTitle).font(.amb(.headline)).foregroundStyle(Amb.foreground)
-                Text("Notifications start from when they were turned on for this workspace. Earlier activity isn't imported; Deck's Inbox still shows it.")
+                Text("Notifications start from when your Tower turned them on. Earlier activity isn't imported; Deck's Inbox still shows it.")
                     .font(.amb(.footnote)).foregroundStyle(Amb.mutedForeground).multilineTextAlignment(.center)
             }
             .frame(maxWidth: .infinity).padding(.vertical, 28).padding(.horizontal, 24)
@@ -456,7 +456,7 @@ struct NotificationSettingsSection: View {
                 }
             }
             if status.state == .unsupported {
-                Text("This workspace doesn't have notifications yet. Deck's Inbox and Needs You are unaffected.")
+                Text("This Tower doesn't have notifications yet. Deck's Inbox and Needs You are unaffected.")
                     .font(.amb(.footnote)).foregroundStyle(Amb.mutedForeground)
             }
             if status.state == .ready, let preferences {

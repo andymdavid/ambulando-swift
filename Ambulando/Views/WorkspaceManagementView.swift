@@ -127,7 +127,7 @@ private struct WorkspaceAdministrationPage: View {
         .modifier(ManagementStatusInset(phase: phase))
         .confirmationDialog("Remove access?", isPresented: Binding(get: { pending != nil }, set: { if !$0 { pending = nil } }), titleVisibility: .visible) {
             Button("Remove access", role: .destructive) { if let command = pending { pending = nil; Task { await run(command) } } }
-        } message: { Text("This removes the selected membership, delegation or installation access immediately. Content is not deleted. Other grants may still provide access.") }
+        } message: { Text("Tower removes the selected membership, delegation or installation access immediately. Content is not deleted. Other grants may still provide access.") }
         .task {
             guard let store = model.store else { return }
             observe(members, .members, store); observe(groups, .groups, store)
@@ -609,7 +609,7 @@ struct AdministrationEditor: View {
                 Button("Save") { endEditing(); confirm = true }
                     .disabled(!loaded || phase.isWorking || savedFingerprint == fingerprint || !canEdit || model.selectedWorkspace?.id != workspace.id || model.selectedWorkspace?.appNpub != workspace.appNpub || model.connection?.id != connection.id)
                     .accessibilityIdentifier("admin.save")
-                Text("Your draft is retained after a failure. If the server accepted a request but the connection was interrupted, refresh the relevant list before trying again.").font(.caption).foregroundStyle(.secondary)
+                Text("Your draft is retained after a failure. If Tower accepted a request but the connection was interrupted, refresh the relevant list before trying again.").font(.caption).foregroundStyle(.secondary)
             }
         }
         .macGroupedForm()

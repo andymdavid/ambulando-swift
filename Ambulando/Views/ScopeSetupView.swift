@@ -37,7 +37,7 @@ struct ScopeSetupView: View {
             }
             if capturedScope == nil && draft["attempted"] == "true" {
                 Section("Recover an interrupted creation") {
-                    Button("Check the server for this scope") { Task { await recover() } }.disabled(phase.isWorking)
+                    Button("Check Tower for this scope") { Task { await recover() } }.disabled(phase.isWorking)
                 }
             }
             if case .done = phase {
@@ -55,7 +55,7 @@ struct ScopeSetupView: View {
         } message: { Text("Each creation is an immediate workspace change. A failure can leave a scope or some channels created; saved progress is retained.") }
         .confirmationDialog("Continue setup in an existing scope?", isPresented: Binding(get: { existing != nil }, set: { if !$0 { existing = nil } }), titleVisibility: .visible) {
             Button("Use this scope for remaining channels") { if let scope = existing { draft["scope"] = scope.id; existing = nil; phase = .idle; Task { try? await persist() } } }
-        } message: { Text("A scope with this name already exists. Choosing it preserves its current settings and lets the next confirmed step add only missing template channels.") }
+        } message: { Text("Tower already has a scope with this name. Choosing it preserves its current settings and lets the next confirmed step add only missing template channels.") }
         .task {
             if let saved = try? await model.store?.reader.state(key), let stored = try? JSONDecoder().decode([String: String].self, from: Data(saved.utf8)) { draft = stored }
             loaded = true

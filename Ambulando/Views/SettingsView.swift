@@ -43,7 +43,7 @@ struct SettingsView: View {
                 }
                 if let connection = model.connection {
                     Section("Connection") {
-                        LabeledContent("Server", value: connection.origin)
+                        LabeledContent("Tower", value: connection.origin)
                         LabeledContent("Security", value: "Signed requests")
                         LabeledContent("Workspaces", value: "\(model.workspaces.value.count)")
                         ConnectionStatusRow()
@@ -74,7 +74,7 @@ struct SettingsView: View {
                     }
                         .accessibilityIdentifier("settings.diagnostics.export")
                 } header: { Text("Diagnostics") } footer: {
-                    Text("Export diagnostics shares a short text log of recent connection attempts: times (UTC), the kind of request, how long it took and the error code. It contains your server's address but no keys, messages, names or record ids, and nothing is sent unless you share it.")
+                    Text("Export diagnostics shares a short text log of recent connection attempts: times (UTC), the kind of request, how long it took and the error code. It contains your Tower's address but no keys, messages, names or record ids, and nothing is sent unless you share it.")
                 }
                 Section {
                     Toggle("Public Nostr profiles", isOn: Binding(get: { model.publicProfilesEnabled },
@@ -181,7 +181,7 @@ private struct FixtureControls: View {
                 .accessibilityIdentifier("fixture.storeWorkspaces")
             LabeledContent("Context restores", value: "\(model.contextRestores)").accessibilityIdentifier("fixture.restores")
         } header: { Text("Sample data") } footer: {
-            Text("This build is running on sample data stored on this \(Device.name). Nothing is sent to a server.")
+            Text("This build is running on sample data stored on this \(Device.name). Nothing is sent to a Tower.")
         }
     }
 }

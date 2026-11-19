@@ -112,3 +112,8 @@ Review: https://claude.ai/artifact/S4HCkDSDtn2gJtky9eWTNH
 - Updated `SurfacesUITests` for the new Toolbox "Can't open" string.
 - Left as is: agent activation consent text (security disclosure), connection/Tower-picking screens, Test-app banner.
 - New `DECISIONS.md`: short rationale log for Pete and his agents.
+
+### 2.2 Keep "Tower" (`copy: keep Tower as the product name for the server`)
+- User decision: own the term. Restored "Tower" in 17 strings where it names the server (Settings row, diagnostics,
+  uploads, unlock, archive/delete/avatar notes, notifications, scope setup, membership). Sentences about Tower's
+  internal checks stay removed. Rock/Pebble/Sand logged as an open decision.

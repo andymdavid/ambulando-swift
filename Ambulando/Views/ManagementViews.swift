@@ -451,7 +451,7 @@ struct ChannelSettingsSheet: View {
                 run("Archiving…", done: "Channel archived.") { m, c, w in try await m.archiveChannel(c, w, channel: channel) }
             }
         } message: {
-            Text("This archives the channel, including nonempty channels. Stored tasks, documents, messages and files are kept; the channel is no longer accessible to anyone.")
+            Text("This archives the channel, including nonempty channels. Stored tasks, documents, messages and files stay in Tower; the channel is no longer accessible to anyone.")
         }
     }
 
@@ -647,7 +647,7 @@ struct ScopeEditView: View {
                 .confirmationDialog("Archive \(scope.name)?", isPresented: $confirmArchive, titleVisibility: .visible) {
                     Button("Archive scope", role: .destructive) { archive(scope) }
                 } message: {
-                    Text("This archives the scope and all its channels, including nonempty channels. Stored tasks, documents, messages and files are kept; archived channels are no longer accessible. There is no restore control in Flight Deck.")
+                    Text("This archives the scope and all its channels, including nonempty channels. Stored tasks, documents, messages and files stay in Tower; archived channels are no longer accessible. There is no restore control in Flight Deck.")
                 }
             }
         }

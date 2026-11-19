@@ -31,7 +31,7 @@ struct WorkspaceAvatarUpload: View {
                     } catch { phase = .failed((error as? ManagementError) ?? .unexpected(error.localizedDescription)) }
                 }
             }
-        } message: { Text("The image will be publicly readable. Location and other image metadata are removed. Save the workspace afterwards to use it as its avatar.") }
+        } message: { Text("The image will be publicly readable on Tower. Location and other image metadata are removed. Save the workspace afterwards to use it as its avatar.") }
     }
     @concurrent nonisolated private static func prepare(_ file: URL) async throws -> Data {
         let access = file.startAccessingSecurityScopedResource()

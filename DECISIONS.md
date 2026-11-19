@@ -54,14 +54,17 @@ Goal: Linear-level polish for the Mac app without changing what the product does
 
 - **Remove developer language** (FIPS, NIP-98, "authority-barrier", "cursor reset", "fdCalloutWidget"). Say what
   the person sees and can do.
-- **"Tower" only when choosing or connecting a server**; elsewhere "the server" or "your workspace".
+- **Keep and own "Tower".** It's the product's name for the server and we'll explain it, so it stays wherever it
+  means the server. Removed only sentences about Tower's internal checks (developer language).
 - **"App" instead of napplet / WApp.**
 - **"Your identity" instead of Nostr key / npub**; keys shown only as details.
 - **Agent activation consent text left as is.** It's a security disclosure (what is signed, for which host); reword
   only with Pete.
 - **Deck greeting by time of day** ("Good evening, Maya"), as in the reference app, instead of "Welcome …, where
   will we focus today?".
-- **Kept for now: Autopilot, scopes, Rock/Pebble/Sand, Deck/Canvas/Toolbox.** These are product vocabulary;
+- **Rock / Pebble / Sand: open.** Gives the app character but may read as jargon next to a plain priority.
+  Leaning: keep the words, make them self-explanatory (size glyph, order, tooltip). Ask Pete about the method.
+- **Kept for now: Autopilot, scopes, Deck/Canvas/Toolbox.** These are product vocabulary;
   they belong to the "who is this for / domains" conversation, not a polish pass.
 
 ## Deferred

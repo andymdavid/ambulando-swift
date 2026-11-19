@@ -59,7 +59,7 @@ struct UnlockView: View {
             if !embedded { BrandHeader(subtitle: model.identity.npub.map(shortNpub)).padding(.top, 48) }
             VStack(alignment: .leading, spacing: 12) {
                 Text("Unlock to sync").font(Amb.editorial).foregroundStyle(Amb.itemHeading)
-                Text("Your cached workspace stays readable while locked. Unlock to keep working with your workspace.")
+                Text("Your cached workspace stays readable while locked. Unlocking lets \(Product.name) connect to your Tower.")
                     .font(.amb(.footnote)).foregroundStyle(Amb.mutedForeground)
                 SecureField("PIN", text: $pin).numberPadEntry().oneTimeCodeEntry()
                     .padding(10).background(Amb.muted, in: RoundedRectangle(cornerRadius: Amb.radiusControl))

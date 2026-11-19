@@ -343,7 +343,7 @@ struct DocumentView: View {
         } message: { Text("Delete ‘\(snapshot.value.doc?.title ?? "Document")’ from the shared workspace? This removes it for everyone with access. Unsaved work on this device is retained. This cannot be undone here.") }
         .confirmationDialog("Archive this document?", isPresented: $confirmArchive, titleVisibility: .visible) {
             Button("Archive document") { Task { await changeLifecycle(delete: false) } }
-        } message: { Text("The document leaves active lists. Its content and history are kept, and so are your drafts.") }
+        } message: { Text("The document leaves active lists. Its content and history stay in Tower, and your drafts are kept.") }
         .alert("Document actions", isPresented: Binding(get: { actionMessage != nil }, set: { if !$0 { actionMessage = nil } })) {
             Button("OK") { actionMessage = nil }
         } message: { Text(actionMessage ?? "") }
