@@ -34,7 +34,7 @@ struct MacWorkspaceShell: View {
                         .accessibilityLabel(ui.sidebarVisible ? "Hide Sidebar" : "Show Sidebar")
                         .accessibilityIdentifier("sidebar.toggle")
                     MacSectionBar(sections: AppMode.visible(agents: showAgents, context: showContext))
-                }.background(Amb.card)
+                }.background(Amb.background)
                 Divider()
                 sectionView(model.mode)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -162,7 +162,7 @@ struct MacSectionBar: View {
             row(labelled: true)
             row(labelled: false)
         }
-        .frame(maxWidth: .infinity, alignment: .leading).background(Amb.card)
+        .frame(maxWidth: .infinity, alignment: .leading).background(Amb.background)
         .accessibilityElement(children: .contain).accessibilityLabel("Sections").accessibilityIdentifier("section.bar")
     }
 

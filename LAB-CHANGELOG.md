@@ -19,3 +19,10 @@ Review: https://claude.ai/artifact/S4HCkDSDtn2gJtky9eWTNH
 - New surface tokens: `sidebar`, `raised`, `hoverFill`, `borderStrong`; `selectedFill` is its own grey.
 - Borders much fainter, so separation comes from shade first.
 - Mac sidebar sits on the recessed `sidebar` surface; Home row and workspace switcher lose their outlines.
+
+### 1.2b Dark surfaces match Ari; neutral title bar (`style(theme): Ari dark surfaces and neutral window chrome`)
+- Dark values now Ari's: chrome/sidebar #090A0B, page #0C0D0E, panel #121314, raised #17181A, hover #1C1D20,
+  selected #222327, lines #222327/#2D2F33. Light lines/selected aligned to Ari too.
+- Title bar is neutral window chrome (`Amb.sidebar`) instead of a 12% tint of the workspace colour (upstream
+  `WorkspaceHeaderTint`). Workspace colour could return later as a small mark on the workspace avatar (shell phase).
+- Mac section tab bar sits on the page surface, so the content column is one surface.

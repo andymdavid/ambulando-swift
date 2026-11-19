@@ -311,16 +311,8 @@ struct WorkspaceHeaderTint: ViewModifier {
     @Environment(AppModel.self) private var model
     @Environment(\.colorScheme) private var scheme
 
-    private var background: Color {
-        guard let entry = model.workspaceEntries.first(where: { $0.boundary == model.selectedWorkspaceBoundary }) else { return Amb.card }
-        let rgb = entry.colour.rgb
-        let base: UInt32 = scheme == .dark ? 0x101113 : 0xFFFFFF
-        let amount = 0.12
-        func channel(_ shift: UInt32) -> Double {
-            (Double((base >> shift) & 255) * (1 - amount) + Double((rgb >> shift) & 255) * amount) / 255
-        }
-        return Color(red: channel(16), green: channel(8), blue: channel(0))
-    }
+    /// UX lab: the title bar is neutral window chrome (the sidebar surface), not a tint of the workspace colour.
+    private var background: Color { Amb.sidebar }
 
     func body(content: Content) -> some View {
         #if os(iOS)
