@@ -9,7 +9,7 @@ enum Amb {
 
     /// Page surface. The web paints its pages, header, sidebar, chat feed and section bar with `--card` (white in
     /// light mode; `styles.css` `body { background: var(--card) }`), not with `--background`.
-    static let background = dynamic(0xFFFFFF, 0x131313)
+    static let background = dynamic(0xFFFFFF, 0x0F1011)
     /// sol `--background`: the recessed grey the web keeps for a few inputs and nested cards.
     static let canvas = dynamic(0xF7F7F8, 0x0E0E0E)
     static let foreground = dynamic(ChatTextPalette.foreground(false), ChatTextPalette.foreground(true))
@@ -41,8 +41,8 @@ enum Amb {
     static let link = dynamic(ChatTextPalette.link(false), ChatTextPalette.link(true))
     static let infoBackground = dynamic(0xE8F1F9, 0x20384C)
     // Surface layers: window chrome (title bar + sidebar) is the `sidebar` surface, content sits on `background`;
-    // raised floats above it; hover and selected are fills. Dark: chrome darkest (#080808), content a step lighter.
-    static let sidebar = dynamic(0xF7F7F8, 0x080808)
+    // raised floats above it; hover and selected are fills. Dark: chrome #090A0B (Ari), content #0F1011 (Linear).
+    static let sidebar = dynamic(0xF7F7F8, 0x090A0B)
     static let raised = dynamic(0xFFFFFF, 0x1F1F1F)
     static let hoverFill = dynamic(0xF0F0F2, 0x1C1C1C)
     /// Selected row: a grey fill with ink text (selection is shown by shade, not colour).

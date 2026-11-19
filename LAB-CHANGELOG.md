@@ -38,3 +38,7 @@ Review: https://claude.ai/artifact/S4HCkDSDtn2gJtky9eWTNH
   (#080808) and content sits a step lighter (#131313), with cards #1A1A1A, raised #1F1F1F, muted #232323 and
   selected #2A2A2A above it. Reverses 1.2c's order (page darker than sidebar). Light theme and accent unchanged.
 - The rounded inset content panel from the reference is shell work (Phase 4).
+
+### 1.2e Dark chrome from Ari, content from Linear (`style(theme): Ari chrome and Linear content in dark mode`)
+- Dark mode only, two values: chrome/sidebar #090A0B (Ari), content page #0F1011 (Linear level 1). Cards and fills
+  unchanged. Deck layering (page → section panel → row card → tiles) noted; flattening deferred to Phase 5.
