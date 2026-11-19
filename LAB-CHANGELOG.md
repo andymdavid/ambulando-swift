@@ -131,3 +131,6 @@ Review: https://claude.ai/artifact/S4HCkDSDtn2gJtky9eWTNH
   falls back to `.help`. Text also set as the accessibility hint.
 - All 31 `.help(...)` uses in app views now use `ambTooltip`. Task-size picker tooltip is a three-line list.
 - DECISIONS.md: removed "confirm with Pete" phrasing; entries state the decision and rationale only.
+- Fix (2.4b): tooltips could appear far from the hovered item (placed at the pointer when shown, and a hover-ended
+  event can be missed when a parent row redraws). Now anchored to the item's frame (centred below, above near the
+  screen edge), shown only if the pointer is still on the item, and hidden by a 0.1s watch as soon as it leaves.
