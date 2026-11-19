@@ -138,8 +138,7 @@ struct DescriptorSummary: View {
                 Label("NStack found (\(descriptor.tower?.availability?.status ?? "status unknown"))", systemImage: "checkmark.seal")
                     .font(.amb(.subheadline).weight(.semibold)).foregroundStyle(descriptor.advertisesFIPS ? Amb.warning : Amb.success)
                 if descriptor.advertisesFIPS {
-                    Text("It also advertises a FIPS service, which this \(Device.name) app does not use; it connects over HTTPS only.")
-                        .font(.amb(.caption)).foregroundStyle(Amb.warning)
+                    EmptyView()   // UX lab: dropped the FIPS developer note
                 }
             }
             .padding(10).frame(maxWidth: .infinity, alignment: .leading)

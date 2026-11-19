@@ -857,7 +857,7 @@ struct DeckCanvasCard: View {
                 .modifier(DeckRowStyle())
                 .accessibilityIdentifier("canvas.\(canvas.title)")
             }
-            DeckNote(text: "Create a canvas with +. Sharing settings are changed in the web app.")
+            DeckNote(text: "Create a canvas with +.")
         }
         .refreshable { model.openCanvases(workspace, force: true) }
         .task {
@@ -878,7 +878,7 @@ struct DeckFeedCard: View {
             VStack(alignment: .leading, spacing: 8) {
                 Label("Feeds are in the web app", systemImage: "dot.radiowaves.up.forward").font(.amb(.subheadline).weight(.semibold))
                     .foregroundStyle(Amb.foreground)
-                Text("Subscribed feeds (RSS) and Nostr notifications are read and managed in the web app's Deck. This \(Device.name) app doesn't show them yet.")
+                Text("Subscribed feeds (RSS) are read in the web app for now. This \(Device.name) app doesn't show them yet.")
                     .font(.amb(.footnote)).foregroundStyle(Amb.mutedForeground)
             }
             .modifier(DeckRowStyle())
@@ -971,7 +971,7 @@ struct DeckHelloCard: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityElement(children: .combine)
-                    .accessibilityLabel("\(wapp.title), \(wapp.description ?? "WApp")")
+                    .accessibilityLabel("\(wapp.title), \(wapp.description ?? "App")")
                     .accessibilityHint("Opens in the browser")
                     .accessibilityIdentifier("deck.app.\(wapp.title)")
                 }
@@ -1108,7 +1108,7 @@ private struct MacDeckWelcome: View {
     }
     private var welcome: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Welcome \(snapshot.value.name ?? "back"),\nwhere will we focus today?")
+            Text(DeckGreeting.line(name: snapshot.value.name))
                 .font(.amb(.title2).weight(.bold)).foregroundStyle(Amb.foreground)
             let nav = model.navigation.value
             Text([workspace.label, nav.scope(model.context.scopeId)?.name, nav.channel(model.context.channelId).map(nav.label)].compactMap { $0 }.joined(separator: " / "))
@@ -1142,7 +1142,7 @@ private struct MacDeckWelcome: View {
         let people = snapshot.value.people
         let items = snapshot.value.agents.map { agent in
             MacLauncherItem(id: agent.npub, title: people.name(agent.npub),
-                            subtitle: agent.safeURL == nil ? "Secure launch URL unavailable" : "Dive deeper in Autopilot",
+                            subtitle: agent.safeURL == nil ? "Can't open right now" : "Open in Autopilot",
                             url: agent.safeURL, logo: .person(people.person(agent.npub)), identifier: "deck.agent.\(agent.npub)")
         }
         return launcherPanel("My Agents") {

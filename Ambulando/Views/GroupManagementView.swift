@@ -165,7 +165,7 @@ private struct GroupMembershipDetail: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text(group.title).font(.largeTitle.bold()).textSelection(.enabled)
                         HStack { Label((group.fields["kind"] ?? "Group").capitalized + " group", systemImage: "person.3"); Text("\(group.children.count) direct \(group.children.count == 1 ? "person" : "people")") }.font(.subheadline).foregroundStyle(.secondary)
-                        if group.fields["kind"] == "system" { Text("System group · Tower protects its membership rules.").font(.caption).foregroundStyle(.secondary) }
+                        if group.fields["kind"] == "system" { Text("System group · membership is managed automatically.").font(.caption).foregroundStyle(.secondary) }
                     }
                     GroupQuickAdd(workspace: workspace, connection: connection, group: group, groups: currentGroups, members: currentMembers, people: currentPeople, canEdit: canManage)
                     VStack(alignment: .leading, spacing: 12) {

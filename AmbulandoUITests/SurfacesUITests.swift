@@ -121,7 +121,7 @@ final class SurfacesUITests: XCTestCase {
         openSurface(app, "toolbox")
         let wapp = app.buttons["wapp.Timesheets"].firstMatch
         XCTAssertTrue(wapp.waitForExistence(timeout: 15))
-        XCTAssertTrue(app.staticTexts["Not opened: its address is not HTTPS"].exists)
+        XCTAssertTrue(app.staticTexts["Can't open: this address isn't secure"].exists)
         capture(app, "toolbox")
         // A WApp opens as an in-app browser tab; Ambulando returns to the Toolbox.
         wapp.tap()

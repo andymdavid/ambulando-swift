@@ -127,7 +127,7 @@ private struct WorkspaceAdministrationPage: View {
         .modifier(ManagementStatusInset(phase: phase))
         .confirmationDialog("Remove access?", isPresented: Binding(get: { pending != nil }, set: { if !$0 { pending = nil } }), titleVisibility: .visible) {
             Button("Remove access", role: .destructive) { if let command = pending { pending = nil; Task { await run(command) } } }
-        } message: { Text("Tower will remove the selected membership, delegation or installation authority immediately. Content is not deleted. Other grants may still provide access.") }
+        } message: { Text("This removes the selected membership, delegation or installation access immediately. Content is not deleted. Other grants may still provide access.") }
         .task {
             guard let store = model.store else { return }
             observe(members, .members, store); observe(groups, .groups, store)
@@ -578,7 +578,7 @@ struct AdministrationEditor: View {
                     Picker("Access", selection: binding("access", fallback: "view")) {
                         Text("View").tag("view"); Text("Contribute").tag("contribute"); Text("Manage").tag("manage")
                     }
-                    Text("Manage access includes authority over this channel. Tower checks the exact grant.").font(.caption)
+                    Text("Manage access includes control of this channel.").font(.caption)
                 case .scopeGrant(_, let access, let row):
                     if row == nil {
                         Picker("Principal", selection: binding("type", fallback: "actor")) { Text("Person or agent").tag("actor"); Text("Group").tag("group") }
@@ -606,10 +606,10 @@ struct AdministrationEditor: View {
                 }
             }.disabled(!loaded || phase.isWorking)
             Section {
-                Button("Save on Tower") { endEditing(); confirm = true }
+                Button("Save") { endEditing(); confirm = true }
                     .disabled(!loaded || phase.isWorking || savedFingerprint == fingerprint || !canEdit || model.selectedWorkspace?.id != workspace.id || model.selectedWorkspace?.appNpub != workspace.appNpub || model.connection?.id != connection.id)
                     .accessibilityIdentifier("admin.save")
-                Text("Your draft is retained after a failure. If Tower accepted a request but the connection was interrupted, refresh the relevant list before trying again.").font(.caption).foregroundStyle(.secondary)
+                Text("Your draft is retained after a failure. If the server accepted a request but the connection was interrupted, refresh the relevant list before trying again.").font(.caption).foregroundStyle(.secondary)
             }
         }
         .macGroupedForm()
@@ -801,7 +801,7 @@ private struct WorkspaceMemberRemovalPage: View {
                 Text(workspace.label)
                 Text(member.title).font(.headline)
                 Text(member.fields["npub"] ?? "Identity unavailable").textSelection(.enabled)
-                Text("Removes this identity’s workspace access. Messages, authorship, audit history, global identity and other workspaces are preserved. Existing conversations remain in history; Tower continues to control access and sending.").font(.caption)
+                Text("Removes this identity’s workspace access. Messages, authorship, audit history, global identity and other workspaces are preserved. Existing conversations stay in history.").font(.caption)
             }
             if !removed {
                 Section {

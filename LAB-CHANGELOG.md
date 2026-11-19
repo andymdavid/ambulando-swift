@@ -98,3 +98,17 @@ Review: https://claude.ai/artifact/S4HCkDSDtn2gJtky9eWTNH
 ### 1.6 Spacing values (`style(theme): spacing scale`)
 - `Amb.Space` (2/4/8/12/16/24/32) and `Amb.rowHeight` (32). No visual change; later phases use them as each screen
   is reworked instead of converting all ~245 literal paddings at once (keeps merges with upstream small).
+
+## Phase 2: Copy (`ux/copy`, off `lab` after Phase 1 merged)
+
+### 2.1 Developer language and terminology (`copy: plain language`)
+- Removed or rewrote developer text: unsupported-block placeholder, "Saved relationship list.", Toolbox HTTPS and
+  "Web content ·" lines, WApps explainer, canvas sharing note, agent launch lines, FIPS notes (Settings, Connect,
+  Agents), "Transport: HTTPS + NIP-98" → "Security: Signed requests", delete-workspace and edit-takeover dialogs,
+  "Flight Deck" notification source label hidden.
+- Terminology: "Tower" kept only for choosing/connecting a server (Settings shows "Server"); napplet/WApp → app;
+  Nostr key → identity; "Nostr profiles" → "Public profiles". 32 help/confirmation strings rewritten.
+- Deck greeting by time of day (new `DeckGreeting.swift`).
+- Updated `SurfacesUITests` for the new Toolbox "Can't open" string.
+- Left as is: agent activation consent text (security disclosure), connection/Tower-picking screens, Test-app banner.
+- New `DECISIONS.md`: short rationale log for Pete and his agents.

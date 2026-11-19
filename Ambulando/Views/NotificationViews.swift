@@ -331,7 +331,7 @@ struct NotificationsView: View {
             VStack(spacing: 6) {
                 Image(systemName: "bell").font(.amb(.title2)).foregroundStyle(Amb.mutedForeground)
                 Text(emptyTitle).font(.amb(.headline)).foregroundStyle(Amb.foreground)
-                Text("Notifications start from when your Tower turned them on. Earlier activity isn't imported; Deck's Inbox still shows it.")
+                Text("Notifications start from when they were turned on for this workspace. Earlier activity isn't imported; Deck's Inbox still shows it.")
                     .font(.amb(.footnote)).foregroundStyle(Amb.mutedForeground).multilineTextAlignment(.center)
             }
             .frame(maxWidth: .infinity).padding(.vertical, 28).padding(.horizontal, 24)
@@ -363,7 +363,7 @@ private struct NotificationRow: View {
                 .background((item.isUnread ? Amb.accent : Amb.muted), in: RoundedRectangle(cornerRadius: 7))
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
-                    Text(item.sourceLabel).font(.amb(.caption).weight(.semibold)).foregroundStyle(Amb.mutedForeground).lineLimit(1)
+                    if item.sourceLabel != "Flight Deck" { Text(item.sourceLabel).font(.amb(.caption).weight(.semibold)).foregroundStyle(Amb.mutedForeground).lineLimit(1) }
                     Text(NotificationCategories.label(item.category)).font(.amb(.caption)).foregroundStyle(Amb.mutedForeground).lineLimit(1)
                     Spacer(minLength: 4)
                     if pending { Image(systemName: "clock").font(.amb(.caption)).foregroundStyle(Amb.mutedForeground).accessibilityLabel("Waiting to send") }
@@ -456,7 +456,7 @@ struct NotificationSettingsSection: View {
                 }
             }
             if status.state == .unsupported {
-                Text("This Tower has no notification inbox yet. Deck's Inbox and Needs You are unaffected.")
+                Text("This workspace doesn't have notifications yet. Deck's Inbox and Needs You are unaffected.")
                     .font(.amb(.footnote)).foregroundStyle(Amb.mutedForeground)
             }
             if status.state == .ready, let preferences {

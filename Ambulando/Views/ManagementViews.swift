@@ -451,7 +451,7 @@ struct ChannelSettingsSheet: View {
                 run("Archiving…", done: "Channel archived.") { m, c, w in try await m.archiveChannel(c, w, channel: channel) }
             }
         } message: {
-            Text("This archives the channel, including nonempty channels. Stored tasks, documents, messages and files remain intact in Tower; the channel is no longer accessible to anyone.")
+            Text("This archives the channel, including nonempty channels. Stored tasks, documents, messages and files are kept; the channel is no longer accessible to anyone.")
         }
     }
 
@@ -647,7 +647,7 @@ struct ScopeEditView: View {
                 .confirmationDialog("Archive \(scope.name)?", isPresented: $confirmArchive, titleVisibility: .visible) {
                     Button("Archive scope", role: .destructive) { archive(scope) }
                 } message: {
-                    Text("This archives the scope and all its channels, including nonempty channels. Stored tasks, documents, messages and files remain intact in Tower; archived channels are no longer accessible. There is no restore control in Flight Deck.")
+                    Text("This archives the scope and all its channels, including nonempty channels. Stored tasks, documents, messages and files are kept; archived channels are no longer accessible. There is no restore control in Flight Deck.")
                 }
             }
         }
@@ -805,7 +805,7 @@ private struct ChannelMoveScopeSheet: View {
                                     Text(group.scope.name).tag(group.scope.id)
                                 }
                             }.accessibilityIdentifier("channelMove.destination")
-                            Text("Tower checks management access to the channel and both scopes, plus permission to review channel grants, before a move is allowed.")
+                            Text("Moving a channel needs manage access to the channel and both scopes.")
                                 .font(.footnote).foregroundStyle(.secondary)
                             Button("Preview access changes") { loadPreview() }
                                 .disabled(destination.isEmpty || working)

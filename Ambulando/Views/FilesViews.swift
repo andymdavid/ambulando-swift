@@ -296,7 +296,7 @@ struct UploadSheet: View {
                         .accessibilityIdentifier("upload.photo")
                     Button { importing = true } label: { Label("File from Files", systemImage: "folder") }.accessibilityIdentifier("upload.file")
                 } footer: {
-                    Text("Photos are converted to PNG without location or camera metadata. Uploads wait on this \(Device.name) until they reach Tower.")
+                    Text("Photos are converted to PNG without location or camera metadata. Uploads wait on this \(Device.name) until they finish.")
                 }
                 if working { ProgressView() }
                 if let message { Text(message).foregroundStyle(Amb.destructive) }

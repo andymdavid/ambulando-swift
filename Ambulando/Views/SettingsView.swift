@@ -43,8 +43,8 @@ struct SettingsView: View {
                 }
                 if let connection = model.connection {
                     Section("Connection") {
-                        LabeledContent("Tower", value: connection.origin)
-                        LabeledContent("Transport", value: "HTTPS + NIP-98")
+                        LabeledContent("Server", value: connection.origin)
+                        LabeledContent("Security", value: "Signed requests")
                         LabeledContent("Workspaces", value: "\(model.workspaces.value.count)")
                         ConnectionStatusRow()
                         Button("Refresh now") { model.refresh(force: true) }.disabled(model.identity.npub == nil)
@@ -74,20 +74,20 @@ struct SettingsView: View {
                     }
                         .accessibilityIdentifier("settings.diagnostics.export")
                 } header: { Text("Diagnostics") } footer: {
-                    Text("Export diagnostics shares a short text log of recent connection attempts: times (UTC), the kind of request, how long it took and the error code. It contains your Tower's address but no keys, messages, names or record ids, and nothing is sent unless you share it.")
+                    Text("Export diagnostics shares a short text log of recent connection attempts: times (UTC), the kind of request, how long it took and the error code. It contains your server's address but no keys, messages, names or record ids, and nothing is sent unless you share it.")
                 }
                 Section {
                     Toggle("Public Nostr profiles", isOn: Binding(get: { model.publicProfilesEnabled },
                                                                   set: { on in Task { await model.setPublicProfiles(on) } }))
                         .accessibilityIdentifier("settings.profiles.toggle")
-                    Button("Refresh Nostr profiles") { model.refreshProfiles(force: true) }
+                    Button("Refresh public profiles") { model.refreshProfiles(force: true) }
                         .buttonStyle(.ambSecondary)
                         .disabled(!model.publicProfilesEnabled || model.connection == nil)
                         .accessibilityIdentifier("settings.profiles.refresh")
                     LabeledContent("Saved on this \(Device.name)", value: "\(model.me.value?.savedProfiles ?? 0)")
                         .accessibilityIdentifier("settings.profiles.saved")
-                } header: { Text("Nostr profiles") } footer: {
-                    Text("Names and pictures from people's public Nostr profiles are saved on this \(Device.name) and shown offline. A name set in the workspace comes first. Profiles are read from relay.primal.net, nos.lol and purplepag.es, as in the web app, and each picture is fetched from the address in the profile, which sees this \(Device.name)'s network address. Nothing is signed or sent with them. Turning this off stops all of these requests; saved names and pictures stay until you disconnect.")
+                } header: { Text("Public profiles") } footer: {
+                    Text("Names and pictures from people's public profiles are saved on this \(Device.name) and shown offline. A name set in the workspace comes first. Profiles are read from relay.primal.net, nos.lol and purplepag.es, as in the web app, and each picture is fetched from the address in the profile, which sees this \(Device.name)'s network address. Nothing is signed or sent with them. Turning this off stops all of these requests; saved names and pictures stay until you disconnect.")
                 }
                 #if os(iOS)
                 BackgroundSection(live: live)
@@ -129,8 +129,6 @@ struct SettingsView: View {
                     AboutRow(label: "Version", value: bundleValue("CFBundleShortVersionString"), id: "settings.version")
                     AboutRow(label: "Build", value: bundleValue("CFBundleVersion"), id: "settings.build")
                     AboutRow(label: "Platform", value: Device.name, id: "settings.platform")
-                    Text("FIPS transport is not part of this build. This app uses HTTPS only; notifications are read from Tower's inbox.")
-                        .font(.amb(.caption)).foregroundStyle(Amb.mutedForeground)
                 } header: { Text("About") }
                 }
                 .ambListRows()
@@ -183,7 +181,7 @@ private struct FixtureControls: View {
                 .accessibilityIdentifier("fixture.storeWorkspaces")
             LabeledContent("Context restores", value: "\(model.contextRestores)").accessibilityIdentifier("fixture.restores")
         } header: { Text("Sample data") } footer: {
-            Text("This build is running on sample data stored on this \(Device.name). Nothing is sent to a Tower.")
+            Text("This build is running on sample data stored on this \(Device.name). Nothing is sent to a server.")
         }
     }
 }

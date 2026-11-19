@@ -138,7 +138,7 @@ struct BrowserView: View {
                 if let origin = tab.origin, browser.sites[origin] != nil {
                     Section {
                         Button(role: .destructive) { browser.forget(origin: origin) } label: {
-                            Label("Forget Nostr permission for \(URL(string: origin)?.host ?? origin)", systemImage: "key.slash")
+                            Label("Forget permission for \(URL(string: origin)?.host ?? origin)", systemImage: "key.slash")
                         }
                     }
                 }

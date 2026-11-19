@@ -343,7 +343,7 @@ struct DocumentView: View {
         } message: { Text("Delete ‘\(snapshot.value.doc?.title ?? "Document")’ from the shared workspace? This removes it for everyone with access. Unsaved work on this device is retained. This cannot be undone here.") }
         .confirmationDialog("Archive this document?", isPresented: $confirmArchive, titleVisibility: .visible) {
             Button("Archive document") { Task { await changeLifecycle(delete: false) } }
-        } message: { Text("The document leaves active lists. Its shared content and history remain in Tower; local drafts are retained.") }
+        } message: { Text("The document leaves active lists. Its content and history are kept, and so are your drafts.") }
         .alert("Document actions", isPresented: Binding(get: { actionMessage != nil }, set: { if !$0 { actionMessage = nil } })) {
             Button("OK") { actionMessage = nil }
         } message: { Text(actionMessage ?? "") }
@@ -1286,9 +1286,9 @@ struct DocumentRemoteReview: View {
         .confirmationDialog("Replace your working copy with the reviewed latest version?", isPresented: $confirmAccept, titleVisibility: .visible) {
             Button("Preserve local draft and accept latest", role: .destructive) { Task { await editor.acceptLatest() } }
         } message: { Text("Unsaved work will be replaced on the page and retained in Preserved drafts on this device. No shared version is created. Any merge preview is kept separately.") }
-        .confirmationDialog("Acquire editing authority?", isPresented: $confirmAuthority, titleVisibility: .visible) {
-            Button("Preserve drafts and acquire authority") { Task { await editor.takeOverForMerge() } }
-        } message: { Text("Tower currently allows one active editor. This explicit action may end another editor’s authority and create an authority-barrier version. Your draft and preview stay intact and must be reconciled before Save.") }
+        .confirmationDialog("Take over editing?", isPresented: $confirmAuthority, titleVisibility: .visible) {
+            Button("Keep my draft and take over") { Task { await editor.takeOverForMerge() } }
+        } message: { Text("Only one person can edit at a time. Taking over ends their editing session. Your draft is kept, and you'll review the changes before saving.") }
     }
     private var versionLabel: String {
         let local = editor.localBaseVersion?.description ?? "unknown"

@@ -257,7 +257,7 @@ private struct RichBlockView: View {
             Rectangle().fill(Amb.border).frame(height: 1).padding(.vertical, 4).accessibilityHidden(true)
         case .preserved(let type, let text):
             VStack(alignment: .leading, spacing: 4) {
-                Label("\(type) block — shown on the web; kept unchanged here", systemImage: "square.dashed").font(.amb(.caption)).foregroundStyle(Amb.mutedForeground)
+                Label("This content can be viewed in the web app", systemImage: "square.dashed").font(.amb(.caption)).foregroundStyle(Amb.mutedForeground)
                 if !text.isEmpty { Text(text).font(.amb(.footnote)).foregroundStyle(Amb.mutedForeground) }
             }
             .padding(8).frame(maxWidth: .infinity, alignment: .leading)

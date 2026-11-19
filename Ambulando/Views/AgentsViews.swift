@@ -56,7 +56,7 @@ struct AgentsView: View {
             activitySection("Not responding", stale, value, note: "These agents stopped reporting before finishing.")
             activitySection("Recently finished", Array(recent.prefix(30)), value)
             Section("Not available on \(Device.name)") {
-                Label("Pipeline runs and session control are not implemented in this native app. Agent setup uses advertised HTTPS.", systemImage: "point.topleft.down.to.point.bottomright.curvepath")
+                Label("Pipeline runs are managed in the web app.", systemImage: "point.topleft.down.to.point.bottomright.curvepath")
                     .font(.amb(.footnote)).foregroundStyle(Amb.mutedForeground)
                     .accessibilityIdentifier("agents.pipelines.unavailable")
             }
@@ -171,7 +171,7 @@ struct NStackAgentSetupView: View {
                 ForEach(connections) { record in
                     Text(connectionLabel(record)).tag(record.id)
                 }
-                Text("Enter an HTTPS address").tag("__manual__")
+                Text("Enter an address starting with https://").tag("__manual__")
             }.disabled(working)
             TextField("Autopilot HTTPS address", text: $address)
                 .disabled(working)
@@ -185,7 +185,7 @@ struct NStackAgentSetupView: View {
                 Section("Selected workspace") {
                     Text(workspace.label)
                     Text("Registered app identity: " + workspace.appNpub).font(.amb(.caption)).textSelection(.enabled)
-                    Text("Use a stored workspace Autopilot connection or enter its HTTPS address for first-time setup. No Tower configuration change is needed.").font(.amb(.footnote))
+                    Text("Use a saved Autopilot connection, or enter its address (https://…) to set one up.").font(.amb(.footnote))
                 }
                 connectionSection
                 if let error { Section { Notice(tone: .error, text: error) } }
@@ -200,8 +200,7 @@ struct NStackAgentSetupView: View {
                             }
                         }
                     }
-                    Text("Adding over HTTPS selects HTTPS for this installation and keeps existing verified FIPS details.").font(.amb(.footnote))
-                    Button("Add selected agents over HTTPS") {
+                    Button("Add selected agents") {
                         working = true; error = nil
                         Task {
                             do { try await model.installNStackAgents(setup, selected: selected, workspace: workspace); dismiss() }

@@ -20,14 +20,14 @@ struct ToolboxView: View {
         let key = WorkspaceSync.toolboxKey(workspace.id)
         let nappletKey = WorkspaceSync.nappletsKey(model.connection?.id ?? "", workspace.id)
         List {
-            Section("Workspace napplets") {
+            Section("Workspace apps") {
                 if let error = model.syncError(forKey: nappletKey) {
                     Label(error, systemImage: "exclamationmark.icloud").font(.amb(.caption)).foregroundStyle(Amb.mutedForeground)
-                    Button("Retry workspace napplets") { model.openToolbox(workspace, force: true) }
+                    Button("Retry loading workspace apps") { model.openToolbox(workspace, force: true) }
                 }
                 ForEach(napplets.value) { napplet in
                     NavigationLink(value: WorkRoute.webContent(workspaceId: workspace.id, source: .installedNapplet(key: napplet.key, title: napplet.title))) {
-                        Label { VStack(alignment: .leading) { Text(napplet.title); Text("Installed napplet · version \(napplet.version)").font(.amb(.caption)).foregroundStyle(Amb.mutedForeground) } } icon: { Image(systemName: "app.badge") }
+                        Label { VStack(alignment: .leading) { Text(napplet.title); Text("Installed · version \(napplet.version)").font(.amb(.caption)).foregroundStyle(Amb.mutedForeground) } } icon: { Image(systemName: "app.badge") }
                     }.accessibilityIdentifier("napplet.\(napplet.key)")
                 }
             }
@@ -43,9 +43,9 @@ struct ToolboxView: View {
                 }
             } footer: {
                 if !complete.value {
-                    Text("Tower lists at most \(TowerAPI.personalWappLimit) WApps, so this list may be incomplete.").font(.amb(.caption)).foregroundStyle(Amb.warning)
+                    Text("Only the first \(TowerAPI.personalWappLimit) apps are shown, so this list may be incomplete.").font(.amb(.caption)).foregroundStyle(Amb.warning)
                 }
-                Text("WApps are web apps their publishers own. They open as tabs in the Ambulando browser, where a WApp must ask before it can see your Nostr key and you approve each signature. Adding, editing and placing WApps is done in the web app.")
+                Text("Apps open in the built-in browser. They ask before using your identity, and you approve each signature. Add or edit apps in the web app.")
                     .font(.amb(.caption)).fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -76,7 +76,7 @@ struct ToolboxView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(wapp.title).font(.amb(.subheadline).weight(.semibold)).foregroundStyle(Amb.foreground)
                 if let d = wapp.description { Text(d).font(.amb(.caption)).foregroundStyle(Amb.secondaryForeground).lineLimit(2) }
-                Text(origin.map { "Web content · \($0)" } ?? "Not opened: its address is not HTTPS").font(.amb(.caption2)).foregroundStyle(Amb.mutedForeground)
+                Text(origin.map { URL(string: $0)?.host ?? $0 } ?? "Can't open: this address isn't secure").font(.amb(.caption2)).foregroundStyle(Amb.mutedForeground)
             }
         }
     }

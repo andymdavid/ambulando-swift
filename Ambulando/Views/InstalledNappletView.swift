@@ -133,7 +133,7 @@ struct InstalledNappletView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                Label("Workspace napplet · private", systemImage: "app.badge").font(.amb(.caption))
+                Label("Workspace app · private", systemImage: "app.badge").font(.amb(.caption))
                 Spacer()
                 if host?.writing == true || host?.authorizing == true { ProgressView().controlSize(.mini) }
                 Button("Refresh", systemImage: "arrow.clockwise") { confirm("refresh") }.labelStyle(.iconOnly).disabled(host?.writing == true)

@@ -857,9 +857,7 @@ struct TaskSubtasksView: View {
             } else if let cache = snapshot.value.cache, !cache.complete {
                 SyncNote(text: "Subtasks partially loaded. Refresh to retry the remaining relationships.", tone: .warning)
             }
-            if snapshot.value.cache != nil {
-                Text("Saved relationship list.").font(.amb(.caption)).foregroundStyle(Amb.mutedForeground)
-            }
+            // UX lab: dropped the developer note "Saved relationship list." shown when the cache is used.
             ForEach(snapshot.value.pending) { item in
                 VStack(alignment: .leading) {
                     Text(item.string("title") ?? "New subtask")
