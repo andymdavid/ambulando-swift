@@ -568,7 +568,7 @@ struct SyncDot: View {
 
     var body: some View {
         Circle().fill(details.0).frame(width: 8, height: 8)
-            .help(details.1)
+            .ambTooltip(details.1)
             .accessibilityLabel(details.1)
             .accessibilityIdentifier("message.sync.\(state)")
     }

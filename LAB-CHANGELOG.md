@@ -120,6 +120,14 @@ Review: https://claude.ai/artifact/S4HCkDSDtn2gJtky9eWTNH
 
 ### 2.3 Tooltips (`copy: tooltips for task sizes and icon buttons`)
 - New `TaskPriorityHelp.swift`: one-line help per task size ("big rocks first"), shown on priority badges, the task
-  priority menu and the edit picker. Wording pending Pete.
+  priority menu and the edit picker.
 - Tooltips on icon-only buttons: composer photo/file/mention, Deck inbox new thread and type filters, Tasks/Docs/
   Files add buttons, task list/board toggle. Rule: only unexplained terms and icon-only controls.
+
+### 2.4 Themed tooltips (`style(controls): themed tooltips`)
+- New `Ambulando/Theme/AmbTooltip.swift`: `ambTooltip(_:)` draws a themed tooltip on the Mac (raised surface,
+  borderStrong hairline, soft shadow, Geist caption, max 280pt, line breaks allowed) in a borderless non-activating
+  panel after 0.6s; switches instantly between tooltips; continuous hover so parent redraws don't cancel it. iOS
+  falls back to `.help`. Text also set as the accessibility hint.
+- All 31 `.help(...)` uses in app views now use `ambTooltip`. Task-size picker tooltip is a three-line list.
+- DECISIONS.md: removed "confirm with Pete" phrasing; entries state the decision and rationale only.

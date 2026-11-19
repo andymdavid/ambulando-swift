@@ -50,6 +50,8 @@ Goal: Linear-level polish for the Mac app without changing what the product does
   and four kinds of add button. Filled violet chosen over Halaska-style inverted buttons to keep the brand visible.
 - **Tooltips for unexplained terms and icon-only buttons only**; never on buttons with a text label. Helpful
   without being noisy.
+- **Our own tooltip, not the system one.** The macOS tooltip can't be styled and looked cheap; ours uses the theme
+  (raised surface, soft border and shadow, Geist) and the same pause.
 - **Spacing scale 4/8/12/16/24/32.** Used as screens are reworked, not converted all at once.
 
 ## Copy
@@ -60,13 +62,13 @@ Goal: Linear-level polish for the Mac app without changing what the product does
   means the server. Removed only sentences about Tower's internal checks (developer language).
 - **"App" instead of napplet / WApp.**
 - **"Your identity" instead of Nostr key / npub**; keys shown only as details.
-- **Agent activation consent text left as is.** It's a security disclosure (what is signed, for which host); reword
-  only with Pete.
+- **Agent activation consent text left as is.** It's a security disclosure (what is signed, for which host), so
+  its precision matters more than its tone.
 - **Deck greeting by time of day** ("Good evening, Maya"), as in the reference app, instead of "Welcome …, where
   will we focus today?".
-- **Rock / Pebble / Sand: open.** Gives the app character but may read as jargon next to a plain priority.
-  Leaning: keep the words, make them self-explanatory. Tooltips added ("big rocks first": rock = most important,
-  pebble = after the rocks, sand = small tasks); size glyph and order to follow. Wording to confirm with Pete.
+- **Keep Rock / Pebble / Sand, explain them.** The words give the app character; a tooltip makes them clear
+  ("big rocks first": rock = most important, pebble = after the rocks, sand = small tasks). Size glyph and
+  consistent order to follow in the task redesign.
 - **Kept for now: Autopilot, scopes, Deck/Canvas/Toolbox.** These are product vocabulary;
   they belong to the "who is this for / domains" conversation, not a polish pass.
 
@@ -75,5 +77,5 @@ Goal: Linear-level polish for the Mac app without changing what the product does
 - **Sidebar rebuild (Phase 4).** Scope and channel rows differ in height, type, radius and hover/selection width.
   Fix with one row component rather than patches.
 - **Flatten the Deck (Phase 5).** Four stacked layers (page, section panel, row card, tiles). Two is enough.
-- **Product direction.** Agents-first onboarding and scopes as business domains (Finance, Sales, Clients…). A
-  conversation with Pete, not a lab change.
+- **Product direction.** Agents-first onboarding and scopes as business domains (Finance, Sales, Clients…). Out of
+  scope for a polish pass.

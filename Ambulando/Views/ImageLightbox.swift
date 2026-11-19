@@ -141,7 +141,7 @@ private struct LightboxOverlay: View {
             Button { withAnimation(.snappy) { zoom = min(8, zoom * 1.5) } } label: { Image(systemName: "plus.magnifyingglass") }
                 .accessibilityLabel("Zoom in")
             Button { openInPreview() } label: { Image(systemName: "arrow.up.forward.app") }
-                .help("Open in Preview").accessibilityLabel("Open in Preview").accessibilityIdentifier("lightbox.open")
+                .ambTooltip("Open in Preview").accessibilityLabel("Open in Preview").accessibilityIdentifier("lightbox.open")
             #else
             if let copy = LightboxFiles.namedCopy(of: image.file, alt: image.alt, objectId: image.objectId) {
                 ShareLink(item: copy) { Image(systemName: "square.and.arrow.up") }
@@ -150,7 +150,7 @@ private struct LightboxOverlay: View {
             #endif
             Button(action: close) { Image(systemName: "xmark").frame(minWidth: 32, minHeight: 32) }
                 .keyboardShortcut(.cancelAction)
-                .help("Close (Esc)").accessibilityLabel("Close image").accessibilityIdentifier("lightbox.close")
+                .ambTooltip("Close (Esc)").accessibilityLabel("Close image").accessibilityIdentifier("lightbox.close")
         }
         .font(.system(size: 17, weight: .semibold))
         .buttonStyle(.plain)

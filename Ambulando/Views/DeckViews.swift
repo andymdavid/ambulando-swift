@@ -334,7 +334,7 @@ struct DeckInboxCard: View {
                 .accessibilityLabel(DeckInbox.toggleLabel(kind))
                 .accessibilityValue(on ? "Shown" : "Hidden")
                 .accessibilityAddTraits(on ? .isSelected : [])
-                .help(DeckInbox.toggleLabel(kind))
+                .ambTooltip(DeckInbox.toggleLabel(kind))
                 .accessibilityIdentifier("deck.inbox.type.\(kind.rawValue)")
             }
         }
@@ -376,7 +376,7 @@ struct DeckInboxCard: View {
         }
         .buttonStyle(.ambIcon)
         .accessibilityLabel(model.directMessageCreationScope == nil ? "New thread" : "New direct message")
-        .help(model.directMessageCreationScope == nil ? "New thread" : "New direct message")
+        .ambTooltip(model.directMessageCreationScope == nil ? "New thread" : "New direct message")
         .accessibilityIdentifier("deck.inbox.new")
     }
 
@@ -1233,7 +1233,7 @@ private struct MacLauncherStack<Footer: View>: View {
         }
         .buttonStyle(.plain)
         .disabled(items.count == 1 && first.url == nil && first.nappletKey == nil)
-        .help(items.count == 1 ? first.title : "Show all \(items.count) \(noun)")
+        .ambTooltip(items.count == 1 ? first.title : "Show all \(items.count) \(noun)")
         .accessibilityLabel(items.count == 1 ? "\(first.title), \(first.subtitle)" : "\(first.title) and \(items.count - 1) more \(noun)")
         .accessibilityHint(items.count == 1 ? "Opens in the browser" : "Shows every launcher")
         .accessibilityIdentifier(items.count == 1 ? first.identifier : "deck.\(kind).stack")
@@ -1344,7 +1344,7 @@ struct DeckThreadComposer: View {
                             .font(.amb(.body).weight(.semibold)).frame(width: Amb.touchTarget, height: Amb.touchTarget).contentShape(Rectangle())
                     }
                     .buttonStyle(.plain).foregroundStyle(Amb.mutedForeground)
-                    .help(expanded.wrappedValue ? "Restore size" : "Full screen")
+                    .ambTooltip(expanded.wrappedValue ? "Restore size" : "Full screen")
                     .accessibilityLabel(expanded.wrappedValue ? "Restore size" : "Expand to full screen")
                     .accessibilityIdentifier("deck.compose.expand")
                 }
@@ -1353,7 +1353,7 @@ struct DeckThreadComposer: View {
                 }
                 .buttonStyle(.plain).foregroundStyle(Amb.foreground)
                 .keyboardShortcut(.cancelAction)
-                .help("Close (Esc)")
+                .ambTooltip("Close (Esc)")
                 .accessibilityLabel(requestId == nil ? "Cancel" : "Close")
                 .accessibilityIdentifier("deck.compose.cancel")
             }

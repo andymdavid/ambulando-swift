@@ -184,7 +184,7 @@ struct MacSectionBar: View {
                     .contentShape(RoundedRectangle(cornerRadius: 6))
                 }
                 .buttonStyle(.plain)
-                .help(section.title)
+                .ambTooltip(section.title)
                 .accessibilityLabel(section.title)
                 .accessibilityAddTraits(selected ? [.isSelected, .isButton] : .isButton)
                 .accessibilityIdentifier("section.\(section.rawValue)")

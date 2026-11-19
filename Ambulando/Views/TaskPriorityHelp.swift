@@ -1,7 +1,7 @@
 import AmbulandoCore
 
 /// UX lab: one-line explanations of task sizes, shown as tooltips. Based on the "big rocks first" idea the names come
-/// from; wording to confirm with Pete.
+/// from.
 extension TaskPriority {
     var help: String {
         switch self {
@@ -15,6 +15,6 @@ extension TaskPriority {
         }
     }
 
-    /// The tooltip for all task sizes together (pickers and menus).
-    static let sizesHelp = "Rock: most important, do first · Pebble: important, after the rocks · Sand: small tasks that fill the gaps"
+    /// The tooltip for all task sizes together (pickers and menus), one per line.
+    static let sizesHelp = "Rock: the most important work. Do these first.\nPebble: important, but after the rocks.\nSand: small tasks that fill the gaps."
 }

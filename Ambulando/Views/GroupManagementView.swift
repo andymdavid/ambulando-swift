@@ -24,7 +24,7 @@ struct GroupManagementView: View {
                     Text("\(workspace.label) · \(groups.value.count) groups").font(.subheadline).foregroundStyle(.secondary)
                 }
                 Spacer()
-                Button { Task { await refresh() } } label: { Image(systemName: "arrow.clockwise") }.help("Refresh groups and access")
+                Button { Task { await refresh() } } label: { Image(systemName: "arrow.clockwise") }.ambTooltip("Refresh groups and access")
                     .disabled(phase.isWorking).accessibilityLabel("Refresh groups")
                 NavigationLink { AdministrationEditor(kind: .group, workspace: workspace, connection: connection, members: members.value, groups: groups.value) } label: {
                     Label("New group", systemImage: "plus")

@@ -1174,7 +1174,7 @@ struct Composer: View {
             Image(systemName: "photo").font(.body.weight(.semibold)).frame(width: 34, height: 32)
         }
         .accessibilityLabel("Attach photos")
-        .help("Add a photo")
+        .ambTooltip("Add a photo")
         .accessibilityIdentifier("composer.photo")
         .iconButton()
         #if os(macOS)
@@ -1182,7 +1182,7 @@ struct Composer: View {
             Image(systemName: "paperclip").font(.amb(.body).weight(.semibold)).frame(width: 34, height: 32)
         }
         .accessibilityLabel("Attach files")
-        .help("Attach a file")
+        .ambTooltip("Attach a file")
         .accessibilityIdentifier("composer.files")
         .iconButton()
         .fileImporter(isPresented: $attachingFiles, allowedContentTypes: [.item], allowsMultipleSelection: true) { result in
@@ -1208,7 +1208,7 @@ struct Composer: View {
             model.refreshDirectory(workspace)
         } label: { Image(systemName: "at").font(.amb(.body).weight(.semibold)).frame(width: 34, height: 32) }
             .accessibilityLabel("Mention someone")
-            .help("Mention someone")
+            .ambTooltip("Mention someone")
             .accessibilityIdentifier("composer.mention")
             .iconButton()
     }

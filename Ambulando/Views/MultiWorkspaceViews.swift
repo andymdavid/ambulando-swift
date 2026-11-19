@@ -282,7 +282,7 @@ private struct WorkspaceChannelRow: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("\(entry.navigation.label(channel)), \(entry.workspace.label)\(Set(model.workspaceEntries.map { $0.connection.origin }).count > 1 ? ", " + entry.connection.origin : "")\(entry.navigation.unread.contains(channel.id) ? ", unread" : "")")
-        .help("\(entry.navigation.label(channel)) in \(entry.workspace.label)")
+        .ambTooltip("\(entry.navigation.label(channel)) in \(entry.workspace.label)")
         .accessibilityIdentifier("workspace.\(showsWorkspace ? "unread" : "channel").\(entry.workspace.label).\(entry.navigation.label(channel))")
     }
 }

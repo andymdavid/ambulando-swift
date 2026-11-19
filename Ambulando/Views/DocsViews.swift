@@ -67,7 +67,7 @@ struct DocumentsView: View {
                 Spacer()
                 Button { creating = true } label: { Image(systemName: "plus") }
                     .buttonStyle(.ambIcon)
-                    .help("New document").accessibilityLabel("New document").accessibilityIdentifier("docs.new")
+                    .ambTooltip("New document").accessibilityLabel("New document").accessibilityIdentifier("docs.new")
             }
         }
         .sheet(isPresented: $creating) { DocumentCreateSheet(workspace: workspace, choice: snapshot.value.choice, context: context) }
@@ -359,7 +359,7 @@ struct DocumentView: View {
                 }
             }
             .disabled(!windowScopeActive || actionsBusy || editor != nil || openingEditor != nil || macSession.editingSurfaces.isEmpty == false)
-            .help(editor != nil || openingEditor != nil ? "Save or finish editing before opening a new window." : "Open this document in its own window.")
+            .ambTooltip(editor != nil || openingEditor != nil ? "Save or finish editing before opening a new window." : "Open this document in its own window.")
             .accessibilityIdentifier("doc.window.open")
             if editor != nil || openingEditor != nil || macSession.editingSurfaces.isEmpty == false {
                 Text("Save or finish editing to open a new window.").font(.caption).foregroundStyle(Amb.mutedForeground)
@@ -548,7 +548,7 @@ struct DocumentView: View {
                         }
                         .buttonStyle(.plain)
                         .accessibilityLabel(commentsExpanded ? "Collapse comments panel" : "Expand comments panel")
-                        .help(commentsExpanded ? "Collapse comments panel" : "Expand comments panel")
+                        .ambTooltip(commentsExpanded ? "Collapse comments panel" : "Expand comments panel")
                         .accessibilityIdentifier("doc.commentsPanel.toggle")
                     }
                     if commentsExpanded {
@@ -573,7 +573,7 @@ struct DocumentView: View {
                         }
                         .buttonStyle(.plain)
                         .accessibilityLabel("Document status: \(editor.status ?? editor.leaseState). \(editor.dirty ? "Changes pending sync." : "") Expand comments panel")
-                        .help([editor.leaseState, editor.status, editor.dirty ? "Changes pending sync" : nil].compactMap { $0 }.joined(separator: " · "))
+                        .ambTooltip([editor.leaseState, editor.status, editor.dirty ? "Changes pending sync" : nil].compactMap { $0 }.joined(separator: " · "))
                         .accessibilityIdentifier("doc.statusPanel.expand")
                     }
                     if !commentsExpanded { Spacer(minLength: 0) }
@@ -989,9 +989,9 @@ struct DocumentFormatBar: View {
                     tool("chevron.left.forwardslash.chevron.right", "Inline code", f.code, "code")
                 }
                 Button { href = f.link ?? ""; linking = true } label: { icon("link", active: f.link != nil) }
-                    .help("Link").accessibilityLabel("Link").accessibilityIdentifier("editor.format.link")
+                    .ambTooltip("Link").accessibilityLabel("Link").accessibilityIdentifier("editor.format.link")
                 Button { editor.wiki?.openToolbarPicker() } label: { icon("link.badge.plus", active: false) }
-                    .help("Link to doc or note").accessibilityLabel("Link to doc or note").accessibilityIdentifier("editor.format.wikilink")
+                    .ambTooltip("Link to doc or note").accessibilityLabel("Link to doc or note").accessibilityIdentifier("editor.format.wikilink")
                 divider
                 tool("list.bullet", "Bulleted list", f.bulletList, "bulletList")
                 tool("list.number", "Numbered list", f.orderedList, "orderedList")
@@ -1046,7 +1046,7 @@ struct DocumentFormatBar: View {
 
     private func tool(_ symbol: String, _ label: String, _ active: Bool, _ command: String) -> some View {
         Button { editor.command(command) } label: { icon(symbol, active: active) }
-            .help(label)
+            .ambTooltip(label)
             .accessibilityLabel(label)
             .accessibilityAddTraits(active ? .isSelected : [])
             .accessibilityIdentifier("editor.format.\(command)")
@@ -1078,7 +1078,7 @@ struct DocumentEditorStatus: View {
                 #endif
                 if !editor.recoveries.isEmpty {
                     Button { Task { await editor.openVersions() } } label: { Image(systemName: "clock.arrow.circlepath") }
-                        .accessibilityLabel("Saved versions — previous edits available").help("Saved versions")
+                        .accessibilityLabel("Saved versions — previous edits available").ambTooltip("Saved versions")
                         .accessibilityIdentifier("editor.versions")
                 }
             }

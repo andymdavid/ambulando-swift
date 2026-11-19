@@ -94,11 +94,11 @@ struct TasksView: View {
                 }
                 .pickerStyle(.segmented).frame(width: 110)
                 .labelsHidden()
-                .help("Show as list or board")
+                .ambTooltip("Show as list or board")
                 .accessibilityIdentifier("tasks.layout")
                 Button { creating = true } label: { Image(systemName: "plus") }
                     .buttonStyle(.ambIcon)
-                    .help("New task").accessibilityLabel("New task").accessibilityIdentifier("tasks.new")
+                    .ambTooltip("New task").accessibilityLabel("New task").accessibilityIdentifier("tasks.new")
             }
             Group { if board { boardView } else { listView } }
             boardFeedback
@@ -423,7 +423,7 @@ struct PriorityBadge: View {
             .padding(.horizontal, 6).padding(.vertical, 2)
             .foregroundStyle(priority == "rock" || priority == "urgent" || priority == "high" ? Amb.brandOrange : Amb.mutedForeground)
             .background(Amb.muted, in: Capsule())
-            .help(TaskPriority(rawValue: priority)?.help ?? "")
+            .ambTooltip(TaskPriority(rawValue: priority)?.help ?? "")
     }
 }
 
@@ -551,7 +551,7 @@ struct TaskDetailView: View {
                         Button(p.label) { patch(row, ["priority": p.rawValue]) }
                     }
                 } label: { chip(TaskPriority(rawValue: row.priority)?.label ?? row.priority, systemImage: "flag") }
-                    .help(TaskPriority.sizesHelp)
+                    .ambTooltip(TaskPriority.sizesHelp)
                     .accessibilityIdentifier("task.priority")
                 Menu {
                     Button("Unassigned") { assign(row, nil) }
@@ -729,7 +729,7 @@ struct TaskCreateSheet: View {
                 .disabled(parentTaskId != nil)
                 Picker("State", selection: $state) { ForEach(TaskState.board, id: \.self) { Text($0.label).tag($0) } }
                 Picker("Priority", selection: $priority) { ForEach(TaskPriority.editable, id: \.self) { Text($0.label).tag($0) } }
-                    .help(TaskPriority.sizesHelp)
+                    .ambTooltip(TaskPriority.sizesHelp)
                 Picker("Assignee", selection: $assignee) {
                     Text("Unassigned").tag(String?.none)
                     ForEach(members) { Text($0.label).tag(Optional($0.npub)) }

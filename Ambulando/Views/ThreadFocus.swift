@@ -421,7 +421,7 @@ private struct ThreadFocusPanel: View {
             }
             .buttonStyle(.plain)
             .foregroundStyle(Amb.mutedForeground)
-            .help(expanded ? "Restore size" : "Full screen")
+            .ambTooltip(expanded ? "Restore size" : "Full screen")
             .accessibilityLabel(expanded ? "Restore size" : "Expand to full screen")
             .accessibilityIdentifier("thread.focus.expand")
             #endif
@@ -433,7 +433,7 @@ private struct ThreadFocusPanel: View {
             .buttonStyle(.plain)
             .foregroundStyle(Amb.foreground)
             .keyboardShortcut(.cancelAction)
-            .help("Close (Esc)")
+            .ambTooltip("Close (Esc)")
             .accessibilityLabel("Close")
             .accessibilityIdentifier("thread.focus.close")
         }
@@ -505,7 +505,7 @@ private struct ThreadHeaderMenu: View {
         let items = items
         menuButton(items)
             .disabled(items.isEmpty)
-            .help("Thread menu")
+            .ambTooltip("Thread menu")
             .accessibilityLabel("Thread menu")
             .accessibilityIdentifier("thread.focus.actions")
             .sheet(item: $gettingItDone) { GetItDoneSheet(message: $0, workspace: workspace) }
