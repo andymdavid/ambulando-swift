@@ -180,6 +180,8 @@ public final class ComposerUploads {
             items.append(item)
             tokens.append(UploadToken.make(kind, id: id))
             let staging = staging
+            // Each provider is handed to exactly one staging task; Swift 6.4 (Xcode 27) rejects the transfer otherwise.
+            nonisolated(unsafe) let provider = provider
             loads[id] = Task { [weak self] in
                 let staged = await Self.stage(provider, kind: kind, type: type, id: id, in: staging)
                 self?.staged(id, staged)
