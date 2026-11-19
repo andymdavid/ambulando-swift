@@ -80,3 +80,5 @@ Review: https://claude.ai/artifact/S4HCkDSDtn2gJtky9eWTNH
   #23252A/#34343A, text #F7F8F8 / #D0D6E0 / #8A8F98 / #62666D. Light theme and accent unchanged.
 - Hover is now a translucent overlay like Linear's (black 4% light, white 5% dark) instead of a solid grey; the old
   light hover (#F0F0F2, about 6% black) was too dark. New `PlatformColor.overlay(lightBlack:darkWhite:)`.
+- Fix (1.4c): with the translucent hover, sidebar channel rows drew two stacked hover layers (row + row group), so the
+  inner part looked darker. `ambHover` now steps aside inside an `ambHoverRow`, leaving one fill.
