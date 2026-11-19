@@ -53,6 +53,9 @@ enum WorkRoute: Hashable {
 @MainActor
 @Observable
 final class AppModel {
+    #if os(macOS)
+    let dataRefresh = MacDataRefresh()
+    #endif
     enum Phase: Equatable { case starting, failed(String), ready }
 
     private(set) var phase: Phase = .starting

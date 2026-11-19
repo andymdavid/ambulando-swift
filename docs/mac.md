@@ -148,6 +148,11 @@ each time, so after each rebuild macOS asks once for the login password to let A
   content and remain visible on record screens. The window toolbar has sync status, Search, Browser and Settings.
 - The in-app browser (with `window.nostr`) is its own window; **Back to Ambulando** or closing it ends the browsing
   presentation, and websites can then no longer ask for signatures.
+- **Refresh data** (build 99) is available beside the sections, in an open conversation, in the browser bar and from
+  Account or ⌘R. It updates the selected workspace and current view while keeping navigation, unsent replies,
+  pending attachments and document edits. A spinner indicates work; the result icon explains completion or failure.
+  The browser menu's separate **Reload web page** action reloads that website. Refresh data leaves web pages and
+  their unsent forms alone.
 - Each canvas opens in a window of its own (build 22), so it can sit beside the main window or go full screen. The
   window keeps its own navigation (documents, tasks and boards opened from the board, with Back); a conversation opens
   in the main window's thread view, which comes forward, and a linked canvas opens another window. Edit from the
@@ -167,7 +172,7 @@ each time, so after each rebuild macOS asks once for the login password to let A
 | ⇧⌘H | Home (all workspace activity) |
 | ⌘F | Search saved messages, tasks, documents and files |
 | ⇧⌘B | Browser window · ⌘T new browser tab |
-| ⌘R | Refresh now |
+| ⌘R | Refresh data for the selected workspace and current view |
 | ⇧⌘L | Lock now / Unlock… |
 | ⌘, | Settings |
 | ⌃⌘S | Show or hide the sidebar |

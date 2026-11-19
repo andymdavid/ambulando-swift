@@ -63,9 +63,9 @@ struct AmbulandoCommands: Commands {
                 .disabled(!ready)
         }
         CommandMenu("Account") {
-            Button("Refresh Now") { model.refresh(force: true) }
+            Button("Refresh Data") { model.dataRefresh.start(model) }
                 .keyboardShortcut("r", modifiers: .command)
-                .disabled(!ready || !model.canRead)
+                .disabled(!model.dataRefresh.available(model))
             Divider()
             if case .unlocked = model.identity {
                 Button("Lock Now") { Task { await model.lock() } }

@@ -408,6 +408,9 @@ private struct ThreadFocusPanel: View {
                 .accessibilityAddTraits(.isHeader)
                 .accessibilityIdentifier("thread.focus.title")
             Spacer(minLength: 8)
+            #if os(macOS)
+            MacRefreshDataButton()
+            #endif
             if let workspace = model.selectedWorkspace, workspace.id == focus.workspaceId {
                 PinToggleButton(type: .thread, id: focus.threadId, workspace: workspace)
                 // Only this thread's own targets: a context left by another thread is never acted on.
