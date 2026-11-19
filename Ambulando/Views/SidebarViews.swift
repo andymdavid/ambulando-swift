@@ -254,6 +254,7 @@ struct SidebarContent: View {
                             }
                             .padding(.horizontal, 10).padding(.vertical, 7)
                             .background(context.isHome ? Amb.selectedFill : Color.clear, in: RoundedRectangle(cornerRadius: Amb.radiusPanel))
+                            .ambHover(radius: Amb.radiusPanel)
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
@@ -295,6 +296,7 @@ struct SidebarContent: View {
                                         .padding(.horizontal, 4)
                                         .background(context.scopeId == group.id && context.channelId == nil ? Amb.selectedFill : Color.clear,
                                                     in: RoundedRectangle(cornerRadius: Amb.radiusControl))
+                                        .ambHover()
                                         .contentShape(Rectangle())
                                 }
                                 .buttonStyle(.plain)
@@ -327,9 +329,11 @@ struct SidebarContent: View {
                                                 .frame(width: 44, height: 44).contentShape(Rectangle())
                                         }
                                         .buttonStyle(.plain)
+                                        .ambRevealOnHover()
                                         .accessibilityLabel("Channel settings for \(nav.label(channel))")
                                         .accessibilityIdentifier("sidebar.channelSettings.\(nav.label(channel))")
                                     }
+                                    .ambHoverRow()
                                 }
                             }
                         }
@@ -413,6 +417,7 @@ private struct ChannelRow: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .ambHover()
         .accessibilityLabel(label + (unread ? ", unread" : ""))
         .accessibilityAddTraits(active ? .isSelected : [])
         .accessibilityIdentifier("\(identifierPrefix).\(label)")

@@ -179,6 +179,7 @@ struct MacSectionBar: View {
                     .font(.amb(.subheadline).weight(selected ? .semibold : .regular))
                     .padding(.horizontal, 10).padding(.vertical, 8)
                     .background(selected ? Amb.selectedFill : Color.clear, in: RoundedRectangle(cornerRadius: 6))
+                    .ambHover(radius: 6)
                     // The whole pill is clickable, not only the glyphs.
                     .contentShape(RoundedRectangle(cornerRadius: 6))
                 }

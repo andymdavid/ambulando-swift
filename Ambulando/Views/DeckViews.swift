@@ -197,6 +197,7 @@ private struct DeckRowStyle: ViewModifier {
         content
             .padding(.horizontal, 12).padding(.vertical, 10)
             .frame(maxWidth: .infinity, alignment: .leading)
+            .ambHover(radius: Amb.radiusPanel)
             .background((tint ?? .clear).opacity(0.06), in: RoundedRectangle(cornerRadius: Amb.radiusPanel))
             .background(Amb.card, in: RoundedRectangle(cornerRadius: Amb.radiusPanel))
             .overlay(RoundedRectangle(cornerRadius: Amb.radiusPanel).stroke(unread ? Amb.unread.opacity(0.6) : Amb.border, lineWidth: unread ? 1.2 : 0.8))

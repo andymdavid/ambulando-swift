@@ -301,6 +301,7 @@ struct TasksView: View {
             }
         }
         .padding(8).frame(maxWidth: .infinity, alignment: .leading)
+        .ambHover(radius: Amb.radiusPanel)
         .background(selected.contains(row.id) ? Amb.accent : Amb.card, in: RoundedRectangle(cornerRadius: Amb.radiusPanel))
         .overlay(RoundedRectangle(cornerRadius: Amb.radiusPanel).stroke(selected.contains(row.id) ? Amb.accentForeground : .clear))
         .contextMenu {

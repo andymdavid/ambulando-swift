@@ -64,3 +64,12 @@ Review: https://claude.ai/artifact/S4HCkDSDtn2gJtky9eWTNH
   previews, WApp descriptions, suggestion details, agent activity lines, notification detail); empty states → faint.
   Remaining ~215 grey uses reviewed and left as metadata (timestamps, counts, labels, icons, status lines).
 - Correction to the review: Mac text was not "large"; it was small (10–11pt for most labels).
+
+### 1.4 Hover (`style(interaction): hover fills and hover-revealed row actions`)
+- New `Ambulando/Theme/AmbHover.swift`: `ambHover` (hover fill), `ambHoverRow` (row hover group) and
+  `ambRevealOnHover` (Mac-only: shown while the row is hovered; stays accessible and clickable).
+- Applied to: Mac section tabs, sidebar Home row, scope headers and channel rows (channel ••• now appears on hover),
+  Deck rows (shared `DeckRowStyle`), task cards. Not yet: Docs/Files lists (system List rows), chat messages
+  (Phase 3), icon buttons (1.5).
+- Known pre-existing failure: `-AmbulandoMacThreadRegression` fails "synced reply must render in actual thread" on
+  upstream main + the Xcode 27 fix alone (no lab UX changes), so it's environmental (Xcode/macOS 27), not ours.
