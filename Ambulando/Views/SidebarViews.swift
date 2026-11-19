@@ -254,7 +254,6 @@ struct SidebarContent: View {
                             }
                             .padding(.horizontal, 10).padding(.vertical, 7)
                             .background(context.isHome ? Amb.selectedFill : Color.clear, in: RoundedRectangle(cornerRadius: Amb.radiusPanel))
-                            .overlay(RoundedRectangle(cornerRadius: Amb.radiusPanel).stroke(Amb.border, lineWidth: 1))
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
@@ -493,7 +492,7 @@ private struct WorkspaceFooter: View {
             Image(systemName: "chevron.up.chevron.down").font(.amb(.caption).weight(.semibold)).foregroundStyle(Amb.mutedForeground)
         }
         .padding(10)
-        .background(Amb.muted, in: RoundedRectangle(cornerRadius: Amb.radiusControl))
+        .background(Amb.hoverFill, in: RoundedRectangle(cornerRadius: Amb.radiusControl))
     }
 }
 

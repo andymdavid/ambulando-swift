@@ -148,7 +148,7 @@ struct MacWorkspaceShell: View {
 
 /// Workspace navigation stays in the sidebar; product sections sit above every detail surface.
 struct MacSidebar: View {
-    var body: some View { SidebarContent().background(Amb.card) }
+    var body: some View { SidebarContent().background(Amb.sidebar) }
 }
 
 /// The section bar is a plain row, not a horizontal `ScrollView`: on macOS that scroll view swallowed real mouse clicks
