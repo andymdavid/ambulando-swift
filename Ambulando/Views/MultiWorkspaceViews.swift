@@ -126,7 +126,7 @@ struct WorkspaceSelectionEmptyState: View {
         VStack(spacing: 20) {
             ContentUnavailableView("Choose a workspace", systemImage: "square.stack.3d.up", description: Text("All workspaces are paused. Enable one to return to its saved content and catch up."))
             Button("Choose workspaces", systemImage: "checklist") { choosing = true }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.ambPrimary)
                 .accessibilityIdentifier("workspace.empty.choose")
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

@@ -64,6 +64,7 @@ struct NewCanvasButton: View {
 
     var body: some View {
         Button { title = ""; creating = true } label: { if working { ProgressView() } else { Image(systemName: "plus") } }
+            .buttonStyle(.ambIcon)
             .disabled(working || !model.isUnlocked)
             .accessibilityLabel("New canvas").accessibilityIdentifier("canvas.new")
             .alert("New canvas", isPresented: $creating) {
@@ -549,7 +550,7 @@ struct CanvasBoardView: View {
             elementBar(element, value)
         } else if let id = selected, let naplet = value.scene.naplets.first(where: { $0.id == id }) {
             HStack(spacing: 10) {
-                Image(systemName: NapletCard.icon(naplet.content)).foregroundStyle(Amb.primary)
+                Image(systemName: NapletCard.icon(naplet.content)).foregroundStyle(Amb.mutedForeground)
                 VStack(alignment: .leading, spacing: 1) {
                     Text(naplet.title).font(.amb(.subheadline).weight(.semibold)).lineLimit(1)
                     Text(NapletCard.kindLabel(naplet.content)).font(.amb(.caption)).foregroundStyle(Amb.mutedForeground)
@@ -562,12 +563,12 @@ struct CanvasBoardView: View {
                         Button { run { e, c, w in try await e.duplicate(c, w, canvasId: canvasId, naplet: naplet, topZ: topZ(value)) } } label: {
                             Image(systemName: "plus.square.on.square")
                         }
-                        .buttonStyle(.bordered).disabled(busy).accessibilityLabel("Duplicate").accessibilityIdentifier("naplet.duplicate")
+                        .buttonStyle(.ambSecondary).disabled(busy).accessibilityLabel("Duplicate").accessibilityIdentifier("naplet.duplicate")
                     }
                     Button("Remove", role: .destructive) { removing = naplet }
-                        .buttonStyle(.bordered).disabled(busy).accessibilityIdentifier("naplet.remove")
+                        .buttonStyle(.ambSecondary).disabled(busy).accessibilityIdentifier("naplet.remove")
                 } else if openable(naplet) {
-                    Button("Open") { open(naplet) }.buttonStyle(.borderedProminent).accessibilityIdentifier("naplet.open")
+                    Button("Open") { open(naplet) }.buttonStyle(.ambPrimary).accessibilityIdentifier("naplet.open")
                 }
             }
             .padding(.horizontal, 16).padding(.vertical, 10)
@@ -778,7 +779,7 @@ struct CanvasBoardView: View {
             if busy { ProgressView() }
             if element.kind == .text {
                 Button { textSheet = TextSheet(element: element) } label: { Image(systemName: "pencil") }
-                    .buttonStyle(.bordered).disabled(busy).accessibilityLabel("Edit text").accessibilityIdentifier("element.editText")
+                    .buttonStyle(.ambSecondary).disabled(busy).accessibilityLabel("Edit text").accessibilityIdentifier("element.editText")
                 Menu {
                     ForEach([12, 16, 20, 24, 32, 48, 72], id: \.self) { size in
                         Button("\(size) pt") { run { e, c, w in try await e.updateElement(c, w, canvasId: canvasId, element: element, data: ["fontSize": size]) } }
@@ -797,12 +798,12 @@ struct CanvasBoardView: View {
             Button { run { e, c, w in try await e.duplicate(c, w, canvasId: canvasId, element: element, topZ: topZ(value)) } } label: {
                 Image(systemName: "plus.square.on.square")
             }
-            .buttonStyle(.bordered).disabled(busy).accessibilityLabel("Duplicate").accessibilityIdentifier("element.duplicate")
+            .buttonStyle(.ambSecondary).disabled(busy).accessibilityLabel("Duplicate").accessibilityIdentifier("element.duplicate")
             Button(role: .destructive) {
                 selectedElement = nil
                 run { e, c, w in try await e.deleteElement(c, w, canvasId: canvasId, element: element) }
             } label: { Image(systemName: element.isGroup ? "square.on.square.dashed" : "trash") }
-                .buttonStyle(.bordered).disabled(busy).accessibilityLabel(element.isGroup ? "Ungroup" : "Delete").accessibilityIdentifier("element.delete")
+                .buttonStyle(.ambSecondary).disabled(busy).accessibilityLabel(element.isGroup ? "Ungroup" : "Delete").accessibilityIdentifier("element.delete")
         }
         .padding(.horizontal, 16).padding(.vertical, 10)
         .background(.bar)
@@ -894,7 +895,7 @@ struct CanvasBoardView: View {
             Text(groupKeys.count < 2 ? "Tap two or more items to group them." : "\(groupKeys.count) items")
                 .font(.amb(.subheadline)).lineLimit(2)
             Spacer()
-            Button("Cancel") { grouping = false; groupKeys = [] }.buttonStyle(.bordered).accessibilityIdentifier("canvas.group.cancel")
+            Button("Cancel") { grouping = false; groupKeys = [] }.buttonStyle(.ambSecondary).accessibilityIdentifier("canvas.group.cancel")
             Button("Group") {
                 let keys = Array(groupKeys).sorted()
                 let layouts = value.scene.naplets.filter { keys.contains(CanvasEditor.itemKey("naplet", $0.id)) }.map(\.layout)
@@ -905,7 +906,7 @@ struct CanvasBoardView: View {
                     await MainActor.run { selectedElement = id }
                 }
             }
-            .buttonStyle(.borderedProminent).disabled(groupKeys.count < 2 || busy).accessibilityIdentifier("canvas.group.confirm")
+            .buttonStyle(.ambPrimary).disabled(groupKeys.count < 2 || busy).accessibilityIdentifier("canvas.group.confirm")
         }
         .padding(.horizontal, 16).padding(.vertical, 10)
         .background(.bar)

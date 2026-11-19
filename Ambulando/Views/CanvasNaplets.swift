@@ -180,7 +180,7 @@ struct DocNapletBody: View {
                     .disabled(!value.editable && !value.hasDraft)
                     .accessibilityIdentifier("naplet.doc.edit")
             }
-            .buttonStyle(.bordered).controlSize(.small).font(.amb(.caption))
+            .buttonStyle(.ambSecondary).controlSize(.small).font(.amb(.caption))
             .padding(.horizontal, 10).padding(.vertical, 6)
             .disabled(!interactive)
             Divider()
@@ -367,7 +367,7 @@ struct TaskTreeNapletBody: View {
                     Button { reload(current) } label: { Image(systemName: "arrow.clockwise") }.accessibilityLabel("Refresh tree")
                 }
             }
-            .buttonStyle(.bordered).controlSize(.small).font(.amb(.caption))
+            .buttonStyle(.ambSecondary).controlSize(.small).font(.amb(.caption))
             .padding(.horizontal, 10).padding(.vertical, 6)
             .disabled(!interactive || busy)
             Text("Solid: subtasks · Dashed: dependencies").font(.amb(.caption2)).foregroundStyle(Amb.mutedForeground)
@@ -394,7 +394,7 @@ struct TaskTreeNapletBody: View {
                                 setScale(TaskTreeView.fitScale(width: size.width, height: size.height, availableWidth: proxy.size.width, availableHeight: max(1, proxy.size.height - 48)), current)
                             }
                         }
-                        .buttonStyle(.bordered).controlSize(.small).frame(minHeight: 44).disabled(!interactive)
+                        .buttonStyle(.ambSecondary).controlSize(.small).frame(minHeight: 44).disabled(!interactive)
                         ScrollView([.horizontal, .vertical]) { graphView(current) }.id(scrollReset)
                             .simultaneousGesture(MagnifyGesture().onChanged { value in
                                 guard interactive else { return }
@@ -552,7 +552,7 @@ struct TaskTreeNapletBody: View {
             HStack(spacing: 6) {
                 TextField("Task title", text: $title).textFieldStyle(.roundedBorder).onSubmit { submit(entry) }
                     .accessibilityIdentifier("tree.entry")
-                Button("Add") { submit(entry) }.buttonStyle(.borderedProminent).disabled(busy || title.trimmingCharacters(in: .whitespaces).isEmpty)
+                Button("Add") { submit(entry) }.buttonStyle(.ambPrimary).disabled(busy || title.trimmingCharacters(in: .whitespaces).isEmpty)
                     .accessibilityIdentifier("tree.add")
                 Button { self.entry = nil; title = "" } label: { Image(systemName: "xmark") }.buttonStyle(.borderless).accessibilityLabel("Cancel")
             }

@@ -326,7 +326,7 @@ struct DeckInboxCard: View {
                         .foregroundStyle(on ? Amb.selectedForeground : Amb.mutedForeground)
                         .frame(width: 38, height: 36)
                         .background(on ? Amb.selectedFill : Color.clear, in: RoundedRectangle(cornerRadius: Amb.radiusControl))
-                        .overlay(RoundedRectangle(cornerRadius: Amb.radiusControl).stroke(Amb.border, lineWidth: 0.8))
+                        .ambHover()
                         .frame(minWidth: Amb.touchTarget, minHeight: Amb.touchTarget)
                         .contentShape(Rectangle())
                 }
@@ -371,8 +371,9 @@ struct DeckInboxCard: View {
             composingThread = true
             #endif
         } label: {
-            Image(systemName: "plus").font(.amb(.body).weight(.semibold)).frame(width: 30, height: 30)
+            Image(systemName: "plus")
         }
+        .buttonStyle(.ambIcon)
         .accessibilityLabel(model.directMessageCreationScope == nil ? "New thread" : "New direct message")
         .accessibilityIdentifier("deck.inbox.new")
     }
@@ -841,7 +842,7 @@ struct DeckCanvasCard: View {
             ForEach(canvases.value) { canvas in
                 CanvasRouteLink(workspaceId: workspace.id, canvasId: canvas.id) {
                     HStack(spacing: 10) {
-                        Image(systemName: "rectangle.3.group").foregroundStyle(Amb.primary).frame(width: 20)
+                        Image(systemName: "rectangle.3.group").foregroundStyle(Amb.mutedForeground).frame(width: 20)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(canvas.title).font(.amb(.subheadline).weight(.semibold)).foregroundStyle(Amb.foreground).lineLimit(2)
                             Text(canvas.visibilityMode == "workspace" ? "Everyone in the workspace" : "Shared with selected people")

@@ -63,7 +63,7 @@ struct NotificationsView: View {
                     HStack {
                         Text("\(snapshot.value.unread) unread").font(.amb(.footnote)).foregroundStyle(Amb.mutedForeground)
                         Spacer()
-                        Button("Mark all read") { model.markVisibleNotificationsRead(snapshot.value.items) }
+                        Button("Mark all read") { model.markVisibleNotificationsRead(snapshot.value.items) }.buttonStyle(.ambGhost)
                             .font(.amb(.footnote).weight(.semibold))
                             .accessibilityIdentifier("notifications.markAll")
                     }

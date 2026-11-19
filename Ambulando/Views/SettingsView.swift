@@ -27,18 +27,18 @@ struct SettingsView: View {
                 }
                 if let workspace = model.selectedWorkspace, model.connection != nil {
                     Section("Workspace") {
-                        Button("Manage Workspace") { showWorkspaceManagement = true }.accessibilityIdentifier("settings.manageWorkspace")
+                        Button("Manage Workspace") { showWorkspaceManagement = true }.buttonStyle(.ambSecondary).accessibilityIdentifier("settings.manageWorkspace")
                         Text(workspace.label).font(.caption).foregroundStyle(.secondary)
                     }
                 }
                 Section("Identity") {
                     LabeledContent("Public key", value: model.identity.npub.map(shortNpub) ?? "None")
                     switch model.identity {
-                    case .unlocked: Button("Lock now") { Task { await model.lock() } }
+                    case .unlocked: Button("Lock now") { Task { await model.lock() } }.buttonStyle(.ambSecondary)
                     case .locked, .none, .unavailable: EmptyView()
                     }
                     if model.identity.npub != nil {
-                        Button("Remove identity from this \(Device.name)", role: .destructive) { confirmRemove = true }
+                        Button("Remove identity from this \(Device.name)", role: .destructive) { confirmRemove = true }.buttonStyle(.ambSecondary)
                     }
                 }
                 if let connection = model.connection {
@@ -81,6 +81,7 @@ struct SettingsView: View {
                                                                   set: { on in Task { await model.setPublicProfiles(on) } }))
                         .accessibilityIdentifier("settings.profiles.toggle")
                     Button("Refresh Nostr profiles") { model.refreshProfiles(force: true) }
+                        .buttonStyle(.ambSecondary)
                         .disabled(!model.publicProfilesEnabled || model.connection == nil)
                         .accessibilityIdentifier("settings.profiles.refresh")
                     LabeledContent("Saved on this \(Device.name)", value: "\(model.me.value?.savedProfiles ?? 0)")

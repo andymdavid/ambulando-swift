@@ -271,7 +271,7 @@ struct BoardNotices: View {
                     if state.canWrite { Button("Restore") { session.restoreViewed() }.accessibilityIdentifier("board.restore") }
                     Button("Back to latest") { session.returnToLatest() }.accessibilityIdentifier("board.latest")
                 }
-                .buttonStyle(.bordered).controlSize(.small)
+                .buttonStyle(.ambSecondary).controlSize(.small)
             }
             if state.save == .stale || state.newerAvailable {
                 HStack(spacing: 8) {
@@ -280,7 +280,7 @@ struct BoardNotices: View {
                     Button("Merge my changes") { session.mergeLatest() }.accessibilityIdentifier("board.merge")
                     Button("Discard mine", role: .destructive) { confirmDiscard = true }
                 }
-                .buttonStyle(.bordered).controlSize(.small)
+                .buttonStyle(.ambSecondary).controlSize(.small)
             }
             if !state.error.isEmpty || !state.notice.isEmpty {
                 HStack(alignment: .top, spacing: 8) {

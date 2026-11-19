@@ -82,7 +82,7 @@ struct TasksView: View {
                 if board {
                     Button(selecting ? "Cancel" : "Select") {
                         selecting.toggle(); selected.removeAll(); feedback = nil
-                    }.disabled(busy)
+                    }.buttonStyle(.ambGhost).disabled(busy)
                         .keyboardShortcut(selecting ? .escape : "s", modifiers: selecting ? [] : [.command, .shift])
                         .accessibilityIdentifier("tasks.select")
                     if selecting { selectionMenu }
@@ -95,7 +95,8 @@ struct TasksView: View {
                 .pickerStyle(.segmented).frame(width: 110)
                 .labelsHidden()
                 .accessibilityIdentifier("tasks.layout")
-                Button { creating = true } label: { Image(systemName: "plus.circle.fill").font(.amb(.title2)) }
+                Button { creating = true } label: { Image(systemName: "plus") }
+                    .buttonStyle(.ambIcon)
                     .accessibilityLabel("New task").accessibilityIdentifier("tasks.new")
             }
             Group { if board { boardView } else { listView } }

@@ -609,7 +609,7 @@ struct NavigationStatus: View {
                 .accessibilityIdentifier(identifier)
             if retry {
                 Button { model.retryNavigation() } label: { Label("Retry", systemImage: "arrow.clockwise").font(.amb(.footnote).weight(.semibold)) }
-                    .buttonStyle(.bordered).controlSize(.small)
+                    .buttonStyle(.ambSecondary).controlSize(.small)
                     .accessibilityIdentifier("sidebar.retry")
             }
         }

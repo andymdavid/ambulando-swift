@@ -74,7 +74,8 @@ struct FilesView: View {
         .safeAreaInset(edge: .top, spacing: 0) {
             ListHeaderBar {
                 Spacer()
-                Button { uploading = true } label: { Image(systemName: "plus.circle.fill").font(.amb(.title2)) }
+                Button { uploading = true } label: { Image(systemName: "plus") }
+                    .buttonStyle(.ambIcon)
                     .accessibilityLabel("Upload").accessibilityIdentifier("files.upload")
             }
         }

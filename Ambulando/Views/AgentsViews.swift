@@ -37,7 +37,7 @@ struct AgentsView: View {
                 }
                 ForEach(value.agents) { agent in
                     HStack(spacing: 10) {
-                        Image(systemName: "sparkles").foregroundStyle(Amb.primary).frame(width: 24)
+                        Image(systemName: "sparkles").foregroundStyle(Amb.mutedForeground).frame(width: 24)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(agent.displayName).font(.amb(.subheadline).weight(.semibold))
                             Text(([String(agent.agentNpub.prefix(12)) + "…"] + agent.capabilities.prefix(3)).joined(separator: " · "))

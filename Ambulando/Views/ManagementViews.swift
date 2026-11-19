@@ -76,7 +76,7 @@ struct ManagementStatusView: View {
                     .accessibilityIdentifier("manage.error")
                 if error.retryable, let retry {
                     Button { retry() } label: { Label("Retry", systemImage: "arrow.clockwise") }
-                        .buttonStyle(.bordered).controlSize(.small)
+                        .buttonStyle(.ambSecondary).controlSize(.small)
                         .accessibilityIdentifier("manage.retry")
                 }
             }

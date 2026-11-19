@@ -82,3 +82,15 @@ Review: https://claude.ai/artifact/S4HCkDSDtn2gJtky9eWTNH
   light hover (#F0F0F2, about 6% black) was too dark. New `PlatformColor.overlay(lightBlack:darkWhite:)`.
 - Fix (1.4c): with the translucent hover, sidebar channel rows drew two stacked hover layers (row + row group), so the
   inner part looked darker. `ambHover` now steps aside inside an `ambHoverRow`, leaving one fill.
+
+### 1.5 Buttons (`style(controls): four-button system`)
+- New `Ambulando/Theme/AmbButtons.swift`: `.ambPrimary` (filled violet), `.ambSecondary` (grey fill, ink label;
+  red label for `role: .destructive`), `.ambGhost` (fill on hover), `.ambIcon` (grey glyph → ink on hover, hover fill).
+  Mac heights 24/28pt by control size; iPhone/iPad keep 44pt hit areas.
+- Swapped all 21 system `.bordered`/`.borderedProminent` buttons in app views (canvas, docs, management, sidebar,
+  workspaces) to secondary/primary. Settings buttons (Manage Workspace, Lock now, Remove identity, Refresh Nostr
+  profiles) → secondary; "Mark all read" and Tasks "Select" → ghost.
+- Mac `iconButton()` (composer photo/file/@ and others) → `.ambIcon`, so icon buttons are grey instead of accent.
+- One add button: Tasks, Docs, Files, Deck inbox and Canvas "+" are all `.ambIcon` with a plain plus.
+- Deck type filters lose their outlines (fill when on, hover otherwise). Decorative record icons (canvas, doc,
+  agent, naplet) grey instead of accent.

@@ -180,7 +180,7 @@ extension View {
         #if os(iOS)
         self
         #else
-        buttonStyle(.borderless)
+        buttonStyle(.ambIcon)   // UX lab: grey icon with hover fill (was accent-tinted .borderless)
         #endif
     }
 

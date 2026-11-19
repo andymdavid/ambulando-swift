@@ -39,7 +39,7 @@ struct DocumentsView: View {
                 WorkRecordLink(route: WorkRoute.doc(workspaceId: workspace.id, docId: doc.id)) {
                     VStack(alignment: .leading, spacing: 3) {
                         HStack(spacing: 6) {
-                            Image(systemName: "doc.text").foregroundStyle(Amb.primary)
+                            Image(systemName: "doc.text").foregroundStyle(Amb.mutedForeground)
                             Text(doc.title).font(.amb(.subheadline).weight(.semibold)).foregroundStyle(Amb.foreground).lineLimit(2)
                         }
                         HStack(spacing: 6) {
@@ -65,7 +65,8 @@ struct DocumentsView: View {
         .safeAreaInset(edge: .top, spacing: 0) {
             ListHeaderBar {
                 Spacer()
-                Button { creating = true } label: { Image(systemName: "plus.circle.fill").font(.amb(.title2)) }
+                Button { creating = true } label: { Image(systemName: "plus") }
+                    .buttonStyle(.ambIcon)
                     .accessibilityLabel("New document").accessibilityIdentifier("docs.new")
             }
         }
@@ -905,8 +906,8 @@ struct DocumentEditBar: View {
     }
 
     @ViewBuilder private var actions: some View {
-        DocumentCancelButton(editor: editor, onFinish: onFinish).buttonStyle(.bordered)
-        DocumentSaveButton(editor: editor, onFinish: onFinish).buttonStyle(.borderedProminent)
+        DocumentCancelButton(editor: editor, onFinish: onFinish).buttonStyle(.ambSecondary)
+        DocumentSaveButton(editor: editor, onFinish: onFinish).buttonStyle(.ambPrimary)
     }
 }
 

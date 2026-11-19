@@ -28,7 +28,7 @@ struct GroupManagementView: View {
                     .disabled(phase.isWorking).accessibilityLabel("Refresh groups")
                 NavigationLink { AdministrationEditor(kind: .group, workspace: workspace, connection: connection, members: members.value, groups: groups.value) } label: {
                     Label("New group", systemImage: "plus")
-                }.buttonStyle(.borderedProminent).disabled(!admin).accessibilityIdentifier("admin.editor.group")
+                }.buttonStyle(.ambPrimary).disabled(!admin).accessibilityIdentifier("admin.editor.group")
             }.padding(20)
             if !admin { Text(model.membership == nil ? "Checking access…" : "Read only · Workspace administrator access is required to change membership.").font(.caption).foregroundStyle(.secondary).padding(.bottom, 10) }
             Divider()
@@ -328,7 +328,7 @@ private struct GroupQuickAdd: View {
                     Text(fullKey).font(.caption.monospaced()).textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
                     Picker("Identity type", selection: $kind) { Text("Person").tag("human"); Text("Agent").tag("agent") }.pickerStyle(.segmented)
                     Text("Adds this identity to \(workspace.label) as a member, then to \(group.title).").font(.caption).foregroundStyle(.secondary)
-                    Button("Add to workspace and group…") { confirmNew = true }.accessibilityIdentifier("groups.enrol").buttonStyle(.borderedProminent).disabled(!current || !canEdit || working.contains(fullKey))
+                    Button("Add to workspace and group…") { confirmNew = true }.accessibilityIdentifier("groups.enrol").buttonStyle(.ambPrimary).disabled(!current || !canEdit || working.contains(fullKey))
                 }
             }
             ForEach(messages.keys.sorted(), id: \.self) { id in
