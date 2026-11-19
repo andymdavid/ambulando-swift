@@ -418,8 +418,8 @@ struct PriorityBadge: View {
         Text((TaskPriority(rawValue: priority)?.label ?? priority).uppercased())
             .font(.amb(.caption2).weight(.bold))
             .padding(.horizontal, 6).padding(.vertical, 2)
-            .foregroundStyle(priority == "rock" || priority == "urgent" || priority == "high" ? Amb.brandOrange : Amb.accentForeground)
-            .background(Amb.accent, in: Capsule())
+            .foregroundStyle(priority == "rock" || priority == "urgent" || priority == "high" ? Amb.brandOrange : Amb.mutedForeground)
+            .background(Amb.muted, in: Capsule())
     }
 }
 
@@ -562,7 +562,7 @@ struct TaskDetailView: View {
     private func chip(_ text: String, systemImage: String) -> some View {
         Label(text, systemImage: systemImage).font(.amb(.footnote).weight(.semibold)).lineLimit(1)
             .padding(.horizontal, 10).frame(minHeight: 32)
-            .background(Amb.accent, in: Capsule()).foregroundStyle(Amb.accentForeground)
+            .background(Amb.muted, in: Capsule()).foregroundStyle(Amb.foreground)
     }
 
     private var commentCount: Int { snapshot.value.comments.count + snapshot.value.pendingComments.count }

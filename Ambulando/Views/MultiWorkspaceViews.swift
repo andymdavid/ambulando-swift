@@ -314,7 +314,7 @@ struct WorkspaceHeaderTint: ViewModifier {
     private var background: Color {
         guard let entry = model.workspaceEntries.first(where: { $0.boundary == model.selectedWorkspaceBoundary }) else { return Amb.card }
         let rgb = entry.colour.rgb
-        let base: UInt32 = scheme == .dark ? 0x1A2238 : 0xFFFFFF
+        let base: UInt32 = scheme == .dark ? 0x101113 : 0xFFFFFF
         let amount = 0.12
         func channel(_ shift: UInt32) -> Double {
             (Double((base >> shift) & 255) * (1 - amount) + Double((rgb >> shift) & 255) * amount) / 255

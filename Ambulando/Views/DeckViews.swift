@@ -199,7 +199,7 @@ private struct DeckRowStyle: ViewModifier {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background((tint ?? .clear).opacity(0.06), in: RoundedRectangle(cornerRadius: Amb.radiusPanel))
             .background(Amb.card, in: RoundedRectangle(cornerRadius: Amb.radiusPanel))
-            .overlay(RoundedRectangle(cornerRadius: Amb.radiusPanel).stroke(unread ? Amb.brandOrange.opacity(0.7) : Amb.border, lineWidth: unread ? 1.2 : 0.8))
+            .overlay(RoundedRectangle(cornerRadius: Amb.radiusPanel).stroke(unread ? Amb.unread.opacity(0.6) : Amb.border, lineWidth: unread ? 1.2 : 0.8))
     }
 }
 
@@ -457,7 +457,7 @@ struct DeckInboxCard: View {
                 }
             }
         }
-        .modifier(DeckRowStyle(unread: item.isUnread, tint: DeckInbox.tint(item.kind)))
+        .modifier(DeckRowStyle(unread: item.isUnread))
     }
 
     private func kicker(_ item: DeckActivity.Item, _ labels: [String: String]) -> String {
@@ -592,15 +592,8 @@ enum DeckInbox {
         }
     }
 
-    /// A quiet colour per record type, so chats, tasks, documents and files can be told apart at a glance.
-    static func tint(_ kind: DeckActivity.Kind) -> Color {
-        switch kind {
-        case .chat: Amb.info
-        case .task: Amb.warning
-        case .document: Amb.success
-        case .file: Amb.mutedForeground
-        }
-    }
+    /// Record types are told apart by their icon, not colour (lab palette): status colours keep their meaning.
+    static func tint(_ kind: DeckActivity.Kind) -> Color { Amb.mutedForeground }
 
     static func toggleLabel(_ kind: DeckActivity.Kind) -> String {
         switch kind {

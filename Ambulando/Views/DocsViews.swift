@@ -814,7 +814,7 @@ struct DocumentPaper: ViewModifier {
             .frame(maxWidth: .infinity, maxHeight: fill ? .infinity : nil, alignment: .topLeading)
             .background(Color.white, in: RoundedRectangle(cornerRadius: 4))
             .overlay(RoundedRectangle(cornerRadius: 4).stroke(Color(PlatformColor(hex: 0xE4DFF0)), lineWidth: 1))
-            .shadow(color: Color(PlatformColor(hex: 0x2B1B3C)).opacity(0.06), radius: 10, y: 2)
+            .shadow(color: Color.black.opacity(0.06), radius: 10, y: 2)
             .environment(\.colorScheme, .light)
             .frame(maxWidth: 860)
     }

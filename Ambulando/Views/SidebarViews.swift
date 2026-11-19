@@ -145,10 +145,10 @@ struct WorkspaceAvatar: View {
     let label: String
     var size: CGFloat = 28
     var body: some View {
-        // sol `.sidebar-workspace-avatar-fallback`: solid primary with its foreground.
-        Text(initials).font(.system(size: size * 0.42, weight: .semibold)).foregroundStyle(Amb.primaryForeground)
+        // Neutral monogram (lab palette): avatars are identity, not actions.
+        Text(initials).font(.system(size: size * 0.42, weight: .semibold)).foregroundStyle(Amb.monogramForeground)
             .frame(width: size, height: size)
-            .background(Amb.primary, in: RoundedRectangle(cornerRadius: Amb.radiusControl))
+            .background(Amb.monogram, in: RoundedRectangle(cornerRadius: Amb.radiusControl))
             .accessibilityHidden(true)
     }
     private var initials: String {
@@ -230,7 +230,7 @@ struct SidebarContent: View {
                         if model.selectedWorkspace != nil {
                             Button { sheet = .manageScopes } label: {
                                 Label("Manage scopes in \(model.selectedWorkspace?.label ?? "workspace")", systemImage: "slider.horizontal.3")
-                                    .font(.amb(.subheadline).weight(.semibold)).foregroundStyle(Amb.primary)
+                                    .font(.amb(.subheadline).weight(.semibold)).foregroundStyle(Amb.mutedForeground)
                                     .frame(maxWidth: .infinity, minHeight: 36, alignment: .leading).padding(.horizontal, 10)
                             }
                             .buttonStyle(.plain)
@@ -290,7 +290,7 @@ struct SidebarContent: View {
                                 .accessibilityIdentifier("sidebar.collapse.\(group.scope.name)")
                                 Button { model.chooseInSidebar(WorkContext(scopeId: group.id)) } label: {
                                     Text(group.scope.name)
-                                        .font(.amb(.footnote).weight(.heavy)).foregroundStyle(context.scopeId == group.id && context.channelId == nil ? Amb.primary : Amb.mutedForeground)
+                                        .font(.amb(.footnote).weight(.heavy)).foregroundStyle(context.scopeId == group.id && context.channelId == nil ? Amb.foreground : Amb.mutedForeground)
                                         .lineLimit(1)
                                         .frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)
                                         .padding(.horizontal, 4)
@@ -338,7 +338,7 @@ struct SidebarContent: View {
                             // sol `.sidebar-manage-scopes-footer`.
                             Button { sheet = .manageScopes } label: {
                                 Label("Manage scopes", systemImage: "slider.horizontal.3").font(.amb(.subheadline).weight(.semibold))
-                                    .foregroundStyle(Amb.primary).frame(maxWidth: .infinity, minHeight: 36, alignment: .leading)
+                                    .foregroundStyle(Amb.mutedForeground).frame(maxWidth: .infinity, minHeight: 36, alignment: .leading)
                                     .padding(.horizontal, 10).contentShape(Rectangle())
                             }
                             .buttonStyle(.plain)
@@ -406,7 +406,7 @@ private struct ChannelRow: View {
                 Text(label).font(.amb(.subheadline).weight(active ? .bold : unread ? .semibold : .regular))
                     .foregroundStyle(active ? Amb.selectedForeground : unread ? Amb.foreground : Amb.mutedForeground).lineLimit(1)
                 Spacer(minLength: 0)
-                if unread { Circle().fill(Amb.brandOrange).frame(width: 7, height: 7).accessibilityHidden(true) }
+                if unread { Circle().fill(Amb.unread).frame(width: 7, height: 7).accessibilityHidden(true) }
             }
             .padding(.leading, 28).padding(.trailing, 10)
             .frame(minHeight: 36)
@@ -520,7 +520,7 @@ struct ChannelDirectoryView: View {
                                 Text(nav.label(channel)).foregroundStyle(Amb.foreground)
                                     .fontWeight(nav.unread.contains(channel.id) ? .semibold : .regular)
                                 Spacer()
-                                if nav.unread.contains(channel.id) { Circle().fill(Amb.brandOrange).frame(width: 8, height: 8).accessibilityLabel("Unread") }
+                                if nav.unread.contains(channel.id) { Circle().fill(Amb.unread).frame(width: 8, height: 8).accessibilityLabel("Unread") }
                                 Image(systemName: "chevron.right").font(.amb(.caption).weight(.semibold)).foregroundStyle(Amb.border)
                             }
                             .contentShape(Rectangle())

@@ -177,9 +177,9 @@ struct InitialsAvatar: View {
     var body: some View {
         Text(initials)
             .font(.system(size: size * 0.38, weight: .semibold))
-            .foregroundStyle(Amb.primaryForeground)
+            .foregroundStyle(Amb.monogramForeground)
             .frame(width: size, height: size)
-            .background(Amb.primary, in: Circle())
+            .background(Amb.monogram, in: Circle())
             .accessibilityHidden(true)
     }
 }

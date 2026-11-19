@@ -1,26 +1,32 @@
 import SwiftUI
 import AmbulandoCore
 
-/// Ambulando "perspective passage" tokens, copied from sol/src/ambulando-tokens.css (light / dark).
+/// Ambulando colour tokens (light / dark). Originally copied from sol/src/ambulando-tokens.css; the UX lab palette
+/// (ux/foundations) moves to neutral greys with a single accent: ink for text, accent for interaction only.
 enum Amb {
     fileprivate static func dynamicUI(_ light: UInt32, _ dark: UInt32) -> PlatformColor { .dynamic(light, dark) }
     private static func dynamic(_ light: UInt32, _ dark: UInt32) -> Color { Color(dynamicUI(light, dark)) }
 
     /// Page surface. The web paints its pages, header, sidebar, chat feed and section bar with `--card` (white in
     /// light mode; `styles.css` `body { background: var(--card) }`), not with `--background`.
-    static let background = dynamic(0xFFFFFF, 0x1A2238)
+    static let background = dynamic(0xFFFFFF, 0x101113)
     /// sol `--background`: the recessed grey the web keeps for a few inputs and nested cards.
-    static let canvas = dynamic(0xF6F6FA, 0x10162B)
+    static let canvas = dynamic(0xF7F7F8, 0x0B0C0D)
     static let foreground = dynamic(ChatTextPalette.foreground(false), ChatTextPalette.foreground(true))
-    static let card = dynamic(0xFFFFFF, 0x1A2238)
-    static let muted = dynamic(0xEEEFF5, 0x26314A)
+    static let card = dynamic(0xFFFFFF, 0x161719)
+    static let muted = dynamic(0xF0F0F2, 0x1F2023)
     static let mutedForeground = dynamic(ChatTextPalette.muted(false), ChatTextPalette.muted(true))
-    static let border = dynamic(0xD7D9E2, 0x48546D)
-    static let primary = dynamic(0x2B1B3C, 0xCBB8FF)
-    static let primaryForeground = dynamic(0xFFFFFF, 0x20123C)
-    static let itemHeading = primary
-    static let accent = dynamic(0xEEE8FA, 0x302447)
-    static let accentForeground = dynamic(0x2B1B3C, 0xE5DAFF)
+    /// Third text level: hints, placeholders and quiet timestamps.
+    static let faint = dynamic(0x9A9CA3, 0x65676D)
+    static let border = dynamic(0xDCDCE1, 0x2D2F33)
+    /// The one accent: buttons, selection controls, focus, mentions of you and unread. Never used for headings.
+    static let primary = dynamic(0x6E56CF, 0x7C6AE6)
+    static let primaryForeground = dynamic(0xFFFFFF, 0xFFFFFF)
+    /// Headings are ink, not accent.
+    static let itemHeading = foreground
+    /// Soft accent fill (mention chips, selected task rows).
+    static let accent = dynamic(0xF0EDFC, 0x24203A)
+    static let accentForeground = dynamic(0x5A43B8, 0xC6BBFF)
     static let destructive = dynamic(0xB42318, 0xFCA59D)
     static let destructiveBackground = dynamic(0xFEECEB, 0x411710)
     static let success = dynamic(0x25613E, 0xA4D1B5)
@@ -31,13 +37,19 @@ enum Amb {
     /// Web addresses in messages and documents: a clear blue, always underlined, so a link never reads as plain text.
     static let link = dynamic(ChatTextPalette.link(false), ChatTextPalette.link(true))
     static let infoBackground = dynamic(0xE8F1F9, 0x20384C)
-    /// Selected row (sol `.sidebar-scope-channel-row.active`, `.reaction-pill-active`): muted fill, primary text.
+    /// Selected row: a grey fill with ink text (selection is shown by shade, not colour).
     static let selectedFill = muted
-    static let selectedForeground = primary
-    /// Around a document's white page: a faint lavender in both appearances (what sits on it is drawn light too).
-    static let paperSurround = Color(PlatformColor(hex: 0xF5F3FB))
+    static let selectedForeground = foreground
+    /// The single unread signal, everywhere (sidebar, inbox, notifications).
+    static let unread = primary
+    /// Fallback monograms for people and workspaces: neutral, so avatars don't read as buttons.
+    static let monogram = dynamic(0xE4E4E8, 0x2A2B30)
+    static let monogramForeground = dynamic(0x3A3B40, 0xD0D1D6)
+    /// Around a document's white page: a faint neutral grey in both appearances (what sits on it is drawn light too).
+    static let paperSurround = Color(PlatformColor(hex: 0xF4F4F6))
     /// Ink on the white document page in both appearances.
     static let paperInk = Color(PlatformColor(hex: 0x10162B))
+    /// Reserved for urgency (urgent/rock priority, a busy agent); unread uses `unread`.
     static let brandOrange = Color(PlatformColor(hex: 0xBF4D0D))
     static let brandNavy = Color(PlatformColor(hex: 0x10162B))
 
@@ -56,10 +68,10 @@ extension Amb {
     static func applyControlAppearance() {
         #if os(iOS)
         let control = UISegmentedControl.appearance()
-        control.selectedSegmentTintColor = dynamicUI(0x2B1B3C, 0xCBB8FF)          // primary
-        control.setTitleTextAttributes([.foregroundColor: dynamicUI(0xFFFFFF, 0x20123C)], for: .selected)   // primary-foreground
-        control.setTitleTextAttributes([.foregroundColor: dynamicUI(0x10162B, 0xF5F3FC)], for: .normal)     // foreground
-        control.backgroundColor = dynamicUI(0xEEEFF5, 0x26314A)                    // muted
+        control.selectedSegmentTintColor = dynamicUI(0x6E56CF, 0x7C6AE6)          // primary
+        control.setTitleTextAttributes([.foregroundColor: dynamicUI(0xFFFFFF, 0xFFFFFF)], for: .selected)   // primary-foreground
+        control.setTitleTextAttributes([.foregroundColor: dynamicUI(0x1B1C1F, 0xECEDEE)], for: .normal)     // foreground
+        control.backgroundColor = dynamicUI(0xF0F0F2, 0x1F2023)                    // muted
         #endif
     }
 }
