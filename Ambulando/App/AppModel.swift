@@ -1156,7 +1156,7 @@ final class AppModel {
     }
 
     func openInbox(_ workspace: WorkspaceRecord, force: Bool = false) {
-        withWorkspace(workspace) { sync, c in await sync.refreshInbox(c, workspace, priority: .visible, force: force) }
+        withWorkspace(workspace) { sync, c in await sync.refreshInbox(c, workspace, priority: .visible, force: force, reuseBaseline: true) }
     }
 
     func download(_ file: FileRecord, in workspace: WorkspaceRecord) {

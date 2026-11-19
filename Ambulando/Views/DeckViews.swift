@@ -545,7 +545,7 @@ struct DeckInboxCard: View {
             // for every incoming reply. Sync and the focused conversation continue normally. Access
             // invalidation remains live even behind the modal; closing always reloads the current feed.
             (key.workspaceId == w || key.workspaceId == nil) &&
-                (key.table == .access || (liveInbox && [.threads, .messages, .tasks, .docs, .files, .viewStates, .comments, .channels, .agents, .members, .appState].contains(key.table)))
+                (key.table == .access || (liveInbox && [.threads, .messages, .tasks, .docs, .files, .viewStates, .comments, .channels, .agents, .members, .attentionPreferences].contains(key.table)))
         }) {
             var sources = DeckActivity.Sources()
             async let channels = store.reader.channels(workspaceId: w)

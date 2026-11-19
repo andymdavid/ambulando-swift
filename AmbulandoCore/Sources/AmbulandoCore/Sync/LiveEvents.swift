@@ -130,6 +130,7 @@ public struct EventPlan: Sendable, Equatable {
         case channelFiles(String)
         case reactions(channelId: String, messageId: String)
         case inbox
+        case attentionPreferences
         /// Scopes and channels (`complete` lists remove what the actor can no longer see).
         case structure
         /// Member directory and personal scope order.
@@ -254,7 +255,7 @@ public struct EventPlan: Sendable, Equatable {
                 if deleted, let id = e.entityId { plan.tombstones.insert(.reaction(id)) }
                 if let target = e.parentId, let channel, !fold { plan.refreshes.insert(.reactions(channelId: channel, messageId: target)) }
             case "private_preference":
-                plan.refreshes.insert(.inbox)
+                plan.refreshes.insert(.attentionPreferences)
             case "resource_view_state":
                 plan.refreshes.insert(.inbox)
             case "scope", "channel":

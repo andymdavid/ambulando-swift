@@ -10,7 +10,7 @@ extension TowerAPI {
     }
 
     /// Forward-paged list (`limit ≤ 200`, opaque `next_cursor`, `has_more`).
-    func pages(_ path: String, appNpub: String, key: String, query extra: [URLQueryItem] = [], maxPages: Int = 50) async throws -> [[String: Any]] {
+    func pages(_ path: String, appNpub: String, key: String, query extra: [URLQueryItem] = [], maxPages: Int = 50, requireComplete: Bool = false) async throws -> [[String: Any]] {
         var rows: [[String: Any]] = []
         var cursor: String?
         var seen = Set<String>()
@@ -20,7 +20,10 @@ extension TowerAPI {
             let o = try object(try await client.request(path: path, query: query, appNpub: appNpub), key)
             guard let page = o[key] as? [[String: Any]] else { throw TowerError.malformed(key) }
             rows += page
-            guard let next = o["next_cursor"] as? String, !next.isEmpty else { return rows }
+            guard let next = o["next_cursor"] as? String, !next.isEmpty else {
+                if requireComplete && o["has_more"] as? Bool == true { throw TowerError.malformed("\(key) incomplete page") }
+                return rows
+            }
             guard seen.insert(next).inserted else { throw TowerError.malformed("\(key) cursor") }
             cursor = next
         }
@@ -136,7 +139,7 @@ extension TowerAPI {
     // MARK: Inbox
 
     public func viewStates(workspaceId: String, appNpub: String) async throws -> [ViewStateRecord] {
-        let rows = try await pages(try Self.base(workspaceId) + "/resource-view-states", appNpub: appNpub, key: "states")
+        let rows = try await pages(try Self.base(workspaceId) + "/resource-view-states", appNpub: appNpub, key: "states", requireComplete: true)
         return rows.compactMap { try? ViewStateRecord(raw: rawJSON($0)) }.filter { $0.workspaceId == workspaceId }
     }
 

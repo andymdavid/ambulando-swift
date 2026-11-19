@@ -6,22 +6,29 @@ public struct AttentionTypes: Sendable, Equatable {
     public static let key = "ambulando.attention-types"
     public static let kinds = ["chat", "document", "task", "file", "other"]
     public let value: String?
-    public init(_ value: String? = nil) { self.value = value }
-    private var object: [String: Any]? {
+    private let disabled: Set<String>
+    private let compatible: Bool
+    public init(_ value: String? = nil) {
+        self.value = value
+        let object = Self.decode(value)
+        self.disabled = Set(object?["disabled"] as? [String] ?? [])
+        self.compatible = value == nil || object != nil
+    }
+    private static func decode(_ value: String?) -> [String: Any]? {
         guard let value, let data = value.data(using: .utf8),
               let o = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let version = o["version"] as? NSNumber, CFGetTypeID(version) != CFBooleanGetTypeID(), version.doubleValue == 1,
               o["disabled"] is [String] else { return nil }
         return o
     }
-    public var editable: Bool { value == nil || object != nil }
+    public var editable: Bool { compatible }
     public func allows(_ kind: String) -> Bool {
-        guard Self.kinds.contains(kind), let disabled = object?["disabled"] as? [String] else { return true }
+        guard Self.kinds.contains(kind) else { return true }
         return !disabled.contains(kind)
     }
     public func setting(_ kind: String, on: Bool) throws -> AttentionTypes {
         guard editable, Self.kinds.contains(kind) else { throw AttentionPreferenceError.incompatible }
-        var o = object ?? ["version": 1, "disabled": [String]()]
+        var o = Self.decode(value) ?? ["version": 1, "disabled": [String]()]
         var disabled = (o["disabled"] as? [String] ?? []).filter { $0 != kind }
         if !on { disabled.append(kind) }
         o["disabled"] = disabled
@@ -81,7 +88,11 @@ public struct AttentionPreferenceState: Codable, Sendable, Equatable {
     public init() {}
     public var types: AttentionTypes { AttentionTypes(value) }
     public static func cacheKey(_ boundary: WorkspaceBoundary) -> String { "attention-types.v1:" + boundary.id }
-    public func encoded() throws -> String { String(decoding: try JSONEncoder().encode(self), as: UTF8.self) }
+    public func encoded() throws -> String {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys]
+        return String(decoding: try encoder.encode(self), as: UTF8.self)
+    }
 }
 
 extension TowerAPI {
@@ -136,22 +147,29 @@ extension WorkspaceSync {
     public func setAttentionType(_ connection: ConnectionRecord, _ workspace: WorkspaceRecord, kind: String, on: Bool) async throws {
         let sync = self
         try await engine.perform(Self.attentionTypesKey(workspace.id)) {
-            try await sync.identity.requireSigner(npub: connection.signerNpub)
             let boundary = try WorkspaceBoundary(connection: connection, workspace: workspace)
-            var state = try await sync.store.reader.attentionPreference(boundary)
-            guard state.pending == nil else { throw AttentionPreferenceError.pending }
-            if !state.loaded { try await sync.synchronizeAttentionTypes(connection, workspace); state = try await sync.store.reader.attentionPreference(boundary) }
-            let value = try state.types.setting(kind, on: on).value!
-            state.pending = .init(value: value, expectedRowVersion: state.rowVersion, id: UUID().uuidString.lowercased())
-            try await sync.store.writer.setState(AttentionPreferenceState.cacheKey(boundary), state.encoded())
-            try await sync.synchronizeAttentionTypes(connection, workspace)
+            try await sync.attentionAccess.perform(boundary.id) {
+                try await sync.identity.requireSigner(npub: connection.signerNpub)
+                var state = try await sync.store.reader.attentionPreference(boundary)
+                guard state.pending == nil else { throw AttentionPreferenceError.pending }
+                if !state.loaded { try await sync.synchronizeAttentionTypesUnlocked(connection, workspace); state = try await sync.store.reader.attentionPreference(boundary) }
+                let value = try state.types.setting(kind, on: on).value!
+                state.pending = .init(value: value, expectedRowVersion: state.rowVersion, id: UUID().uuidString.lowercased())
+                try await sync.store.writer.setAttentionPreference(boundary, state)
+                try await sync.synchronizeAttentionTypesUnlocked(connection, workspace)
+            }
         }
     }
     /// Retry uncertain writes byte-for-byte before reading; CAS conflicts never silently rebase a stale choice.
     func synchronizeAttentionTypes(_ connection: ConnectionRecord, _ workspace: WorkspaceRecord) async throws {
+        let key = try WorkspaceBoundary(connection: connection, workspace: workspace).id
+        let sync = self
+        try await attentionAccess.perform(key) { try await sync.synchronizeAttentionTypesUnlocked(connection, workspace) }
+    }
+
+    private func synchronizeAttentionTypesUnlocked(_ connection: ConnectionRecord, _ workspace: WorkspaceRecord) async throws {
         try await identity.requireReader(npub: connection.signerNpub)
         let boundary = try WorkspaceBoundary(connection: connection, workspace: workspace)
-        let key = AttentionPreferenceState.cacheKey(boundary)
         var state = try await store.reader.attentionPreference(boundary)
         let api = api(origin: try TowerOrigin(connection.origin))
         do {
@@ -161,18 +179,55 @@ extension WorkspaceSync {
                 catch TowerError.http(let status, let code, _) where status == 409 && ["preference_conflict", "mutation_id_reused"].contains(code ?? "") {
                     state = try await api.attentionPreference(workspaceId: workspace.id, appNpub: workspace.appNpub)
                     state.error = AttentionPreferenceError.changedElsewhere.localizedDescription
-                    try await store.writer.setState(key, state.encoded())
+                    try await store.writer.setAttentionPreference(boundary, state)
                     throw AttentionPreferenceError.changedElsewhere
                 }
             }
             // An idempotent acknowledgement may be older than a subsequent write on another device.
             let latest = try await api.attentionPreference(workspaceId: workspace.id, appNpub: workspace.appNpub)
             state = latest
-            try await store.writer.setState(key, state.encoded())
+            try await store.writer.setAttentionPreference(boundary, state)
         } catch {
             state.error = error.localizedDescription
-            try await store.writer.setState(key, state.encoded())
+            try await store.writer.setAttentionPreference(boundary, state)
             throw error
         }
+    }
+}
+
+
+extension StoreWriter {
+    /// Compare the complete decoded state, including pending/error/loaded/version transitions.
+    @discardableResult
+    public func setAttentionPreference(_ boundary: WorkspaceBoundary, _ state: AttentionPreferenceState) async throws -> Bool {
+        let key = AttentionPreferenceState.cacheKey(boundary)
+        let query = try db.prepare("SELECT value FROM app_state WHERE key = ?")
+        try query.bind([.text(key)])
+        if try query.step(), let text = query.text(0),
+           let old = try? JSONDecoder().decode(AttentionPreferenceState.self, from: Data(text.utf8)), old == state { return false }
+        try db.prepare("INSERT INTO app_state(key, value) VALUES(?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value")
+            .run([.text(key), .text(try state.encoded())])
+        await emit([ChangeKey(.appState), ChangeKey(.attentionPreferences, boundary.workspaceId)])
+        return true
+    }
+}
+
+/// Serializes event reads with the entire durable mutation sequence without nesting SyncEngine slots.
+actor AttentionPreferenceAccess {
+    private var tails: [String: (UUID, Task<Void, Error>)] = [:]
+    func perform(_ key: String, work: @escaping @Sendable () async throws -> Void) async throws {
+        let previous = tails[key]?.1
+        let id = UUID()
+        let task = Task {
+            _ = try? await previous?.value
+            try Task.checkCancellation()
+            try await work()
+        }
+        tails[key] = (id, task)
+        defer { if tails[key]?.0 == id { tails[key] = nil } }
+        try await withTaskCancellationHandler {
+            try await task.value
+            try Task.checkCancellation()
+        } onCancel: { task.cancel() }
     }
 }

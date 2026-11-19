@@ -278,10 +278,12 @@ extension WorkspaceSync {
     func reseed(_ connection: ConnectionRecord, _ workspace: WorkspaceRecord, api: TowerAPI) async throws {
         let head = try await api.eventHead(workspaceId: workspace.id, appNpub: workspace.appNpub)
         try Task.checkCancellation()
-        // The head is saved before the catch-up runs, so changes made meanwhile are replayed, never skipped.
+        // Materialize the complete Inbox before accepting this head. A failed page keeps the old cursor/cache.
+        // The head was captured before the snapshot, so changes during the fetch are still replayed.
+        try await synchronizeInbox(connection, workspace)
         try await store.writer.saveEventCursor(connectionId: connection.id, workspaceId: workspace.id, head)
         await refreshWorkspace(connection, workspace, priority: .background)
-        await refreshInbox(connection, workspace, priority: .background)
+        await refreshAttentionTypes(connection, workspace)
         await refreshNotifications(connection, workspace, priority: .background)
         let feed = await live.feed(workspace.id)
         let visible = await feed.visibleChannelId
@@ -343,7 +345,7 @@ extension WorkspaceSync {
         case .message(let c, _), .thread(let c, _), .channelMessages(let c), .reactions(let c, _): c == visible ? 0 : 2
         case .channelTasks(let c), .channelDocs(let c), .channelFiles(let c): c == visible ? 1 : 3
         case .task, .doc: 2
-        case .inbox, .pins, .notifications: 3
+        case .inbox, .attentionPreferences, .pins, .notifications: 3
         case .agentActivity(let c): c == visible ? 1 : 3
         case .canvas, .contextReferences: 3
         case .structure, .directory, .access, .canvases, .contextTree, .agents, .toolbox: 4
@@ -418,10 +420,14 @@ extension WorkspaceSync {
         case .reactions(_, let message):
             let list = try await api.reactions(workspaceId: w, appNpub: app, targetType: "message", targetId: message)
             try await store.writer.replaceReactions(workspaceId: w, targets: [message], list)
+        case .attentionPreferences:
+            // Await materialization so a failed preference read cannot advance the event cursor.
+            do { try await synchronizeAttentionTypes(connection, workspace) }
+            catch TowerError.http(let status, _, _) where status == 404 || status == 501 {
+                // Unrelated preference events on older Towers must not poison event catch-up.
+            }
         case .inbox:
-            await refreshAttentionTypes(connection, workspace, force: true)
-            let states = try await api.viewStates(workspaceId: w, appNpub: app)
-            try await store.writer.upsertViewStates(workspaceId: w, states, complete: true)
+            try await synchronizeInbox(connection, workspace)
             // The same snapshot the Inbox job reads: a connection failure recorded for that job is now obsolete.
             await engine.clearConnectionFailure(Self.inboxKey(w))
         case .structure:
@@ -430,6 +436,7 @@ extension WorkspaceSync {
         case .directory:
             await refreshDirectory(connection, workspace, priority: .background)
         case .access:
+            await inboxSnapshots.invalidate(try WorkspaceBoundary(connection: connection, workspace: workspace).id)
             await discover(connection, priority: .background, force: true)
         case .canvases:
             try await store.writer.replaceCanvases(workspaceId: w, try await api.canvases(workspaceId: w, appNpub: app))

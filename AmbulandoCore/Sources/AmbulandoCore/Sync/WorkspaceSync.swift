@@ -12,6 +12,8 @@ public struct WorkspaceSync: Sendable {
     /// Background `URLSession` transfers for presigned object-store URLs, when the app provides them.
     public let transfers: BackgroundTransfers?
     public let boundary: WorkspaceBoundary?
+    let attentionAccess = AttentionPreferenceAccess()
+    let inboxSnapshots = InboxSnapshots()
     public let discoveryOnly: Bool
 
     public init(store: LocalStore, engine: SyncEngine, identity: IdentityService, transport: HTTPTransport,

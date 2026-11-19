@@ -234,6 +234,34 @@ final class LiveSyncTests: XCTestCase {
         XCTAssertEqual(h.chat.tower.recordedGets.count, gets)
     }
 
+    func testIncompleteInboxEventKeepsCursorAndCompleteCacheThenReplays() async throws {
+        let h = try await LiveHarness.make()
+        try await h.store.writer.saveEventCursor(connectionId: h.connection.id, workspaceId: h.workspace.id, FakeEventTower.cursor(0))
+        let resource = "missing-task"
+        try await h.store.writer.upsertViewStates(workspaceId: h.workspace.id, [.init(workspaceId: h.workspace.id,
+            resourceType: .task, resourceId: resource, scopeId: nil, channelId: Fixtures.channel1,
+            activityVersion: 9, viewedActivityVersion: 8, updatedAt: "today")])
+        h.tower.emit("resource_view_state", id: nil, channel: nil)
+        h.transport.setHandler { request in
+            if request.url!.path.hasSuffix("/resource-view-states") {
+                if request.url!.query?.contains("cursor=") == true { throw URLError(.notConnectedToInternet) }
+                return (200, ["states": [], "next_cursor": "page-2", "has_more": true])
+            }
+            return try h.tower.handler()(request)
+        }
+        do { _ = try await h.sync.catchUpEventsAndWait(h.connection, h.workspace); XCTFail("expected incomplete snapshot failure") } catch {}
+        let cursor = try await h.cursor()
+        XCTAssertEqual(cursor, FakeEventTower.cursor(0))
+        let retained = try await h.store.reader.viewStates(workspaceId: h.workspace.id)
+        XCTAssertEqual(retained.first?.resourceId, resource)
+        XCTAssertEqual(retained.first?.viewedActivityVersion, 8)
+        h.transport.setHandler(h.tower.handler())
+        await h.sync.engine.waitUntilIdle()
+        _ = try await h.sync.catchUpEventsAndWait(h.connection, h.workspace)
+        let repairedCursor = try await h.cursor()
+        XCTAssertEqual(repairedCursor, FakeEventTower.cursor(1))
+    }
+
     func testFailedFetchKeepsCursorAndReplays() async throws {
         let h = try await LiveHarness.make()
         _ = try await h.sync.catchUpEventsAndWait(h.connection, h.workspace)

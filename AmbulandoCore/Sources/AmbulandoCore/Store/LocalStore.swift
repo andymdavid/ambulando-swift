@@ -6,6 +6,7 @@ public enum StoreTable: String, Sendable, Hashable, CaseIterable {
     case contextTree, canvases, boards, agents, toolbox, pins
     /// The durable notification inbox (`notification_items`, `notification_sync`).
     case notifications
+    case attentionPreferences
     /// Public Nostr profiles; connection-scoped, so their change key has no workspace.
     case profiles
     /// Not a table: emitted whenever stored records are removed because they were deleted or are no longer visible

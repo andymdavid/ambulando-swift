@@ -152,9 +152,123 @@ final class AttentionTypesTests: XCTestCase {
         }
     }
 
+    func testSidebarSQLMatchesRecordSemanticsForEverySwitchCombination() async throws {
+        let h = try await ChatHarness.make()
+        defer { try? FileManager.default.removeItem(at: h.directory) }
+        let boundary = try WorkspaceBoundary(connection: h.connection, workspace: h.workspace)
+        var rows: [ViewStateRecord] = []
+        for type in [ViewStateRecord.ResourceType.thread, .task, .document] {
+            for variant in 0..<6 {
+                rows.append(.init(workspaceId: h.workspace.id, resourceType: type, resourceId: "\(type)-\(variant)", scopeId: nil,
+                    channelId: "\(type)-\(variant)", activityVersion: variant == 0 ? 2 : 8, viewedActivityVersion: 3,
+                    attentionActivityVersion: variant == 0 ? 9 : nil, mentionActivityVersion: variant == 3 ? 7 : nil,
+                    channelMentionsOnly: variant >= 2, updatedAt: "today"))
+            }
+        }
+        try await h.store.writer.upsertViewStates(workspaceId: h.workspace.id, rows)
+        var values: [String?] = [nil, "bad", "{}", "{\"version\":2,\"disabled\":[\"chat\",\"task\",\"document\"]}"]
+        for mask in 0..<32 {
+            var types = AttentionTypes()
+            for (i, kind) in AttentionTypes.kinds.enumerated() { types = try types.setting(kind, on: mask & (1 << i) != 0) }
+            values.append(types.value)
+        }
+        for value in values {
+            var preference = AttentionPreferenceState(); preference.value = value; preference.loaded = true
+            try await h.store.writer.setAttentionPreference(boundary, preference)
+            let types = AttentionTypes(value)
+            let expected = Set(rows.filter { types.allows($0) && ($0.unread || $0.needsAttention) }.compactMap(\.channelId))
+            let actual = try await h.store.reader.unreadChannelIds(workspaceId: h.workspace.id)
+            XCTAssertEqual(actual, expected, "preference \(value ?? "nil")")
+        }
+        let retained = try await h.store.reader.viewStates(workspaceId: h.workspace.id)
+        XCTAssertEqual(retained.count, rows.count)
+        XCTAssertTrue(retained.allSatisfy { $0.viewedActivityVersion == 3 })
+    }
+
+    func testSidebarLifecycleExclusionsAndMissingParentsAcrossAllSwitches() async throws {
+        let h = try await ChatHarness.make()
+        defer { try? FileManager.default.removeItem(at: h.directory) }
+        let w = h.workspace.id
+        let boundary = try WorkspaceBoundary(connection: h.connection, workspace: h.workspace)
+        for state in ["archived", "cancelled", "canceled"] {
+            try await h.store.writer.upsertTasks(workspaceId: w, [.init(workspaceId: w, id: state, scopeId: nil,
+                channelId: state, title: "Synthetic", description: nil, state: state, priority: "sand", assignedToNpub: nil,
+                rowVersion: 1, createdAt: "today", updatedAt: "today")])
+        }
+        try await h.store.writer.upsertDocs(workspaceId: w, [.init(workspaceId: w, id: "doc", scopeId: nil,
+            channelId: "doc", storageObjectId: nil, title: "Synthetic", summary: nil, archived: true,
+            rowVersion: 1, createdAt: "today", updatedAt: "today")])
+        for id in ["archived-thread", "deleted-thread"] {
+            try await h.store.writer.upsertThreads(workspaceId: w, [.init(workspaceId: w, id: id, channelId: id,
+                sourceMessageId: nil, title: "Synthetic", archived: id == "archived-thread", deleted: id == "deleted-thread", updatedAt: "today")])
+        }
+        let excluded: [(ViewStateRecord.ResourceType, String)] = [(.task, "archived"), (.task, "cancelled"), (.task, "canceled"),
+            (.document, "doc"), (.thread, "archived-thread"), (.thread, "deleted-thread")]
+        let missing: [(ViewStateRecord.ResourceType, String)] = [(.task, "absent-task"), (.document, "absent-doc"), (.thread, "absent-thread")]
+        try await h.store.writer.upsertViewStates(workspaceId: w, (excluded + missing).map { type, id in
+            .init(workspaceId: w, resourceType: type, resourceId: id, scopeId: nil, channelId: id,
+                activityVersion: 9, viewedActivityVersion: 2, mentionActivityVersion: 8, channelMentionsOnly: true, updatedAt: "today")
+        })
+        for mask in 0..<32 {
+            var types = AttentionTypes()
+            for (i, kind) in AttentionTypes.kinds.enumerated() { types = try types.setting(kind, on: mask & (1 << i) != 0) }
+            var state = AttentionPreferenceState(); state.value = types.value
+            try await h.store.writer.setAttentionPreference(boundary, state)
+            let actual = try await h.store.reader.unreadChannelIds(workspaceId: w)
+            let expected = Set(missing.filter { types.allows($0.0 == .thread ? "chat" : $0.0.rawValue) }.map { $0.1 })
+            XCTAssertEqual(actual, expected)
+        }
+    }
+
+    func testPreferencePublicationRequiresSemanticStateChange() async throws {
+        let h = try await ChatHarness.make()
+        defer { try? FileManager.default.removeItem(at: h.directory) }
+        let boundary = try WorkspaceBoundary(connection: h.connection, workspace: h.workspace)
+        var state = AttentionPreferenceState()
+        for step in 0..<7 {
+            switch step {
+            case 1: state.loaded = true
+            case 2: state.value = try AttentionTypes().setting("task", on: false).value
+            case 3: state.rowVersion = 2
+            case 4: state.pending = .init(value: "pending", expectedRowVersion: 2, id: "mutation")
+            case 5: state.error = "offline"
+            case 6: state.pending = nil; state.error = nil
+            default: break
+            }
+            let before = h.store.changes.revisions.value(of: [.appState, .attentionPreferences])
+            let changed = try await h.store.writer.setAttentionPreference(boundary, state)
+            XCTAssertTrue(changed)
+            let after = h.store.changes.revisions.value(of: [.appState, .attentionPreferences])
+            XCTAssertGreaterThan(after, before)
+            let unchanged = try await h.store.writer.setAttentionPreference(boundary, state)
+            XCTAssertFalse(unchanged)
+            XCTAssertEqual(h.store.changes.revisions.value(of: [.appState, .attentionPreferences]), after)
+        }
+    }
+
+    func testOtherDevicePreferenceEventUpdatesProjectionWithoutFetchingStates() async throws {
+        let h = try await ChatHarness.make()
+        defer { try? FileManager.default.removeItem(at: h.directory) }
+        let fake = PreferenceTower(workspace: h.workspace.id)
+        let sync = WorkspaceSync(store: h.store, engine: h.engine, identity: h.identity, transport: StubTransport(fake.handle))
+        try await sync.synchronizeAttentionTypes(h.connection, h.workspace)
+        let before = h.store.changes.revisions.value(of: [.appState])
+        try await sync.synchronizeAttentionTypes(h.connection, h.workspace)
+        XCTAssertEqual(h.store.changes.revisions.value(of: [.appState]), before)
+        fake.changeElsewhere()
+        let event = TowerEvent(rowVersion: 1, cursor: "x", workspaceId: h.workspace.id, entityType: "private_preference", entityId: nil, operation: "updated")
+        try await sync.applyEvents([event], h.connection, h.workspace)
+        let boundary = try WorkspaceBoundary(connection: h.connection, workspace: h.workspace)
+        let state = try await h.store.reader.attentionPreference(boundary)
+        XCTAssertFalse(state.types.allows("document"))
+        XCTAssertGreaterThan(h.store.changes.revisions.value(of: [.appState]), before)
+        // PreferenceTower asserts every request uses the preference route; any read-state fetch fails this test.
+    }
+
     func testPrivatePreferenceEventsRefreshThroughSyncOwner() {
         let event = TowerEvent(rowVersion: 1, cursor: "x", workspaceId: Fixtures.workspaceId, entityType: "private_preference", entityId: nil, operation: "updated")
-        XCTAssertTrue(EventPlan.make([event], workspaceId: Fixtures.workspaceId).refreshes.contains(.inbox))
+        XCTAssertTrue(EventPlan.make([event], workspaceId: Fixtures.workspaceId).refreshes.contains(.attentionPreferences))
+        XCTAssertFalse(EventPlan.make([event], workspaceId: Fixtures.workspaceId).refreshes.contains(.inbox))
     }
 }
 

@@ -63,7 +63,19 @@ extension StoreReader {
     /// Channels with unread or attention-needing activity (any resource in them), for the sidebar.
     public func unreadChannelIds(workspaceId: String) throws -> Set<String> {
         let types = try attentionTypes(workspaceId: workspaceId)
-        let ids = Set(try viewStates(workspaceId: workspaceId).filter { types.allows($0) && ($0.unread || $0.needsAttention) }.compactMap(\.channelId))
+        let allowed = ["thread", "task", "document"].filter { types.allows($0 == "thread" ? "chat" : $0) }
+        guard !allowed.isEmpty else { return [] }
+        let query = try db.prepare("""
+        SELECT DISTINCT channel_id FROM view_states
+        WHERE workspace_id = ? AND channel_id IS NOT NULL
+          AND resource_type IN (\(allowed.map { _ in "?" }.joined(separator: ",")))
+          AND (\(Self.attentionEligibleSQL))
+          AND (CASE WHEN channel_mentions_only = 1 THEN COALESCE(mention_activity_version, 0)
+               ELSE MAX(activity_version, COALESCE(attention_activity_version, 0)) END) > viewed_activity_version
+        """)
+        try query.bind([.text(workspaceId)] + allowed.map(SQLValue.text))
+        var ids = Set<String>()
+        while try query.step() { if let id = query.text(0) { ids.insert(id) } }
         return ids
     }
 }

@@ -111,10 +111,19 @@ extension WorkspaceSync {
     // MARK: Inbox
 
     /// View states (unread and attention), then the few records they point at that are not stored yet.
-    public func refreshInbox(_ connection: ConnectionRecord, _ workspace: WorkspaceRecord, priority: SyncPriority = .visible, force: Bool = false) async {
+    public func refreshInbox(_ connection: ConnectionRecord, _ workspace: WorkspaceRecord, priority: SyncPriority = .visible, force: Bool = false, reuseBaseline: Bool = false) async {
         await refreshAttentionTypes(connection, workspace, force: force)
         let sync = self
         await engine.enqueue(Self.inboxKey(workspace.id), priority: priority, force: force, retries: SyncBackoff.readRetries) {
+            try await sync.synchronizeInbox(connection, workspace, reuseBaseline: reuseBaseline && !force)
+        }
+    }
+
+    /// Shared by visible refresh and event materialization. Events await every dirty rerun before committing their cursor.
+    func synchronizeInbox(_ connection: ConnectionRecord, _ workspace: WorkspaceRecord, reuseBaseline: Bool = false) async throws {
+        let key = try WorkspaceBoundary(connection: connection, workspace: workspace).id
+        let sync = self
+        try await inboxSnapshots.refresh(key, reuseBaseline: reuseBaseline) {
             try await sync.identity.requireReader(npub: connection.signerNpub)
             let api = sync.api(origin: try TowerOrigin(connection.origin))
             let states = try await api.viewStates(workspaceId: workspace.id, appNpub: workspace.appNpub)
