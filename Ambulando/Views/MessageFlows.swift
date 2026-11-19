@@ -77,7 +77,7 @@ struct GetItDoneSheet: View {
                     TextField("Extra instructions (optional)", text: $instructions, axis: .vertical)
                 }
                 Section("From this conversation") {
-                    Text(GetItDone.excerpt(thread)).font(.amb(.footnote)).foregroundStyle(Amb.mutedForeground)
+                    Text(GetItDone.excerpt(thread)).font(.amb(.footnote)).foregroundStyle(Amb.secondaryForeground)
                 }
                 if let failure { Text(failure).foregroundStyle(Amb.destructive).font(.amb(.footnote)) }
             }

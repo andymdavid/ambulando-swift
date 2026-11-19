@@ -592,14 +592,14 @@ struct TaskDetailView: View {
                 LazyVStack(alignment: .leading, spacing: 12) {
                     ForEach(snapshot.value.pendingComments.reversed()) { item in
                         VStack(alignment: .leading, spacing: 4) {
-                            Text(item.string("body") ?? "").font(.amb(.body)).foregroundStyle(Amb.mutedForeground)
+                            Text(item.string("body") ?? "").font(.amb(.body)).foregroundStyle(Amb.secondaryForeground)
                             WriteStatusLine(item: item, label: "Comment")
                         }
                         .accessibilityIdentifier("comment.pending")
                     }
                     ForEach(newestFirst) { c in CommentRow(comment: c, people: snapshot.value.people, workspace: workspace) }
                     if commentCount == 0 {
-                        Text("No comments yet.").font(.amb(.footnote)).foregroundStyle(Amb.mutedForeground)
+                        Text("No comments yet.").font(.amb(.footnote)).foregroundStyle(Amb.faint)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)

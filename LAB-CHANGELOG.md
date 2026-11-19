@@ -49,3 +49,18 @@ Review: https://claude.ai/artifact/S4HCkDSDtn2gJtky9eWTNH
   Dark #EDEDED / #B8B8B8 / #8A8A8A / #636363; light #1B1C1F / #45474D / #6B6E75 / #9A9CA3.
 - Preview promotions only: unselected sidebar channels, Deck inbox subtitles and thread previews, app/agent and
   canvas subtitles, notification bodies → secondary; "Nothing here" → faint. Full pass of ~240 uses comes in 1.3.
+
+### 1.3 Geist, Mac type scale, tabular figures, text levels (`style(type): Geist type system`)
+- Bundled Geist (Regular, Italic, Medium, SemiBold, Bold, BoldItalic, ExtraBold) and Geist Mono (Regular–Bold) in
+  `Ambulando/Resources/Fonts` with the OFL licence; registered on first use. No project-file or Info.plist edits.
+- New `Ambulando/Theme/AmbTypography.swift`: every `Font.amb` style is Geist; `.monospaced` → Geist Mono;
+  serif/rounded → Geist (task and document titles leave the serif). Headlines semibold. Tabular figures everywhere.
+- Mac scale (pt): caption 11, footnote 12, subheadline/callout 13, body/headline 14, title3 16, title2 18,
+  title 22, largeTitle 28. Measured baseline was the system's 10/10/11/13/15/17/22/26, so Mac text is a point or
+  two larger; the View › Text Size menu still scales it. iPhone/iPad keep Dynamic Type sizes, in Geist.
+- AppKit composer uses Geist via `TextScale.nsFont`. Not yet Geist: iOS composer (UIKit), document body
+  (`DocumentTypography`, web editor), ~37 hard-coded `.system(size:)` sites (mostly icons).
+- Text levels, full pass: supporting content → secondary (search snippets, comment bodies, excerpts, attachment
+  previews, WApp descriptions, suggestion details, agent activity lines, notification detail); empty states → faint.
+  Remaining ~215 grey uses reviewed and left as metadata (timestamps, counts, labels, icons, status lines).
+- Correction to the review: Mac text was not "large"; it was small (10–11pt for most labels).

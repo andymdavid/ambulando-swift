@@ -168,7 +168,7 @@ private struct ThreadActivityCard: View {
                 VStack(alignment: .leading, spacing: 3) {
                     ForEach(lines) { entry in
                         HStack(alignment: .firstTextBaseline, spacing: 6) {
-                            Text(entry.text).font(.amb(.caption)).foregroundStyle(phase.isLive ? Amb.foreground : Amb.mutedForeground)
+                            Text(entry.text).font(.amb(.caption)).foregroundStyle(phase.isLive ? Amb.foreground : Amb.secondaryForeground)
                                 .lineLimit(open(phase) ? nil : 2).multilineTextAlignment(.leading).textSelection(.enabled)
                             Spacer(minLength: 4)
                             Text(ChatTime.label(entry.createdAt)).font(.amb(.caption2)).foregroundStyle(Amb.mutedForeground)

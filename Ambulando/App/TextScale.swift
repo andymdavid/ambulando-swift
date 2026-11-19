@@ -39,12 +39,13 @@ final class TextScale {
     #if os(macOS)
     /// The system point size of a text style at the current scale.
     func pointSize(_ style: Font.TextStyle) -> CGFloat {
-        NSFont.preferredFont(forTextStyle: style.appKit).pointSize * factor
+        AmbTypography.macSize(style) * factor   // UX lab scale (was the system size for the style)
     }
 
     /// AppKit text (composer, document selection) at the current scale.
     func nsFont(_ style: Font.TextStyle, weight: NSFont.Weight = .regular) -> NSFont {
-        factor == 1 && weight == .regular ? .preferredFont(forTextStyle: style.appKit) : .systemFont(ofSize: pointSize(style), weight: weight)
+        AmbTypography.nsFont(size: pointSize(style), weight: weight)
+            ?? (factor == 1 && weight == .regular ? .preferredFont(forTextStyle: style.appKit) : .systemFont(ofSize: pointSize(style), weight: weight))
     }
     #endif
 }
@@ -52,13 +53,12 @@ final class TextScale {
 extension Font {
     /// A text style at the app's text size (see `TextScale`).
     @MainActor static func amb(_ style: Font.TextStyle, design: Font.Design? = nil) -> Font {
+        // UX lab: Geist type system (see `AmbTypography`).
         #if os(macOS)
-        let scale = TextScale.shared
-        if scale.factor != 1 {
-            return .system(size: scale.pointSize(style), weight: style == .headline ? .bold : .regular, design: design)
-        }
+        return AmbTypography.font(style, design: design, size: TextScale.shared.pointSize(style))
+        #else
+        return AmbTypography.font(style, design: design, size: nil)
         #endif
-        return .system(style, design: design)
     }
 }
 

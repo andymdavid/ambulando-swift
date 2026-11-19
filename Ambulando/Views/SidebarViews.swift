@@ -315,7 +315,7 @@ struct SidebarContent: View {
                             .padding(.top, 6)
                             if !collapsed {
                                 if group.channels.isEmpty {
-                                    Text("No channels visible").font(.amb(.caption)).foregroundStyle(Amb.mutedForeground).padding(.leading, 34).padding(.vertical, 4)
+                                    Text("No channels visible").font(.amb(.caption)).foregroundStyle(Amb.faint).padding(.leading, 34).padding(.vertical, 4)
                                 }
                                 ForEach(group.channels) { channel in
                                     HStack(spacing: 0) {
@@ -509,7 +509,7 @@ struct ChannelDirectoryView: View {
             ForEach(groups) { group in
                 Section {
                     if group.channels.isEmpty {
-                        Text("No channels visible").font(.amb(.footnote)).foregroundStyle(Amb.mutedForeground)
+                        Text("No channels visible").font(.amb(.footnote)).foregroundStyle(Amb.faint)
                     }
                     ForEach(group.channels) { channel in
                         Button { model.selectContext(WorkContext(scopeId: group.id, channelId: channel.id)) } label: {

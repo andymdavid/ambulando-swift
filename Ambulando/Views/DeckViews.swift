@@ -1394,7 +1394,7 @@ struct DeckThreadComposer: View {
             .accessibilityIdentifier("deck.compose.channel")
             if let channelId, !choosingChannel, let connection = model.connection {
                 Text("New conversation").font(.amb(.headline))
-                Text("Write the first message to start a thread.").foregroundStyle(Amb.mutedForeground)
+                Text("Write the first message to start a thread.").foregroundStyle(Amb.faint)
                 Spacer(minLength: 0)
                 if requestId == nil {
                     Composer(target: ChatTarget(connectionId: connection.id, workspaceId: workspace.id, channelId: channelId),

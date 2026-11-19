@@ -1336,7 +1336,7 @@ struct MentionPicker: View {
                                 MentionIcon(mention: suggestion.mention, people: people)
                                 VStack(alignment: .leading, spacing: 1) {
                                     Text(suggestion.mention.label).font(.amb(.subheadline).weight(.semibold)).foregroundStyle(Amb.foreground).lineLimit(1)
-                                    Text(suggestion.detail).font(.amb(.caption)).foregroundStyle(Amb.mutedForeground)
+                                    Text(suggestion.detail).font(.amb(.caption)).foregroundStyle(Amb.secondaryForeground)
                                 }
                                 Spacer()
                             }

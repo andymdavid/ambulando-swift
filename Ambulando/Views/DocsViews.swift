@@ -724,7 +724,7 @@ struct DocumentView: View {
             }
             ForEach(snapshot.value.pendingComments) { item in
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(item.string("body") ?? "").foregroundStyle(Amb.mutedForeground)
+                    Text(item.string("body") ?? "").foregroundStyle(Amb.secondaryForeground)
                     WriteStatusLine(item: item, label: "Comment")
                 }
             }

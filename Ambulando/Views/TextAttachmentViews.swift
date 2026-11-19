@@ -757,7 +757,7 @@ struct ComposerTextCards: View {
                                 .accessibilityIdentifier("composer.textcard.name")
                             Text(TextAttachmentCardText.detail(a)).font(.amb(.caption)).foregroundStyle(Amb.mutedForeground)
                             if let preview = previews[a.id], !preview.isEmpty {
-                                Text(preview).font(.system(.caption, design: .monospaced)).foregroundStyle(Amb.mutedForeground).lineLimit(1)
+                                Text(preview).font(.system(.caption, design: .monospaced)).foregroundStyle(Amb.secondaryForeground).lineLimit(1)
                                     .accessibilityIdentifier("composer.textcard.preview")
                             }
                         }

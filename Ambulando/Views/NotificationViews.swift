@@ -573,7 +573,7 @@ struct PushAlertsRows: View {
     var body: some View {
         Group {
             LabeledContent("Alerts on this \(Device.name)", value: label).accessibilityIdentifier("settings.notifications.alerts")
-            if let detail { Text(detail).font(.amb(.footnote)).foregroundStyle(Amb.mutedForeground).accessibilityIdentifier("settings.notifications.alerts.detail") }
+            if let detail { Text(detail).font(.amb(.footnote)).foregroundStyle(Amb.secondaryForeground).accessibilityIdentifier("settings.notifications.alerts.detail") }
             if let status, model.pushAvailable {
                 switch status.phase {
                 case .off where status.permission != .denied:

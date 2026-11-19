@@ -75,7 +75,7 @@ struct ToolboxView: View {
             Image(systemName: "app.dashed").font(.amb(.title3)).foregroundStyle(Amb.primary).frame(width: 28)
             VStack(alignment: .leading, spacing: 2) {
                 Text(wapp.title).font(.amb(.subheadline).weight(.semibold)).foregroundStyle(Amb.foreground)
-                if let d = wapp.description { Text(d).font(.amb(.caption)).foregroundStyle(Amb.mutedForeground).lineLimit(2) }
+                if let d = wapp.description { Text(d).font(.amb(.caption)).foregroundStyle(Amb.secondaryForeground).lineLimit(2) }
                 Text(origin.map { "Web content · \($0)" } ?? "Not opened: its address is not HTTPS").font(.amb(.caption2)).foregroundStyle(Amb.mutedForeground)
             }
         }
