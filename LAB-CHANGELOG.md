@@ -32,3 +32,9 @@ Review: https://claude.ai/artifact/S4HCkDSDtn2gJtky9eWTNH
   Halaska UI's pure neutral greys with clearer steps: page #0A0A0A, chrome #111111, panels #171717, muted #202020,
   selected #262626, lines #262626; dark text #F2F2F2 / #8F8F8F / #6E6E6E.
 - Light theme and the accent are unchanged from 1.2b.
+
+### 1.2d Dark structure: darkest chrome, lighter content (`style(theme): dark chrome darkest, content a step lighter`)
+- Test of a reference the user shared: in dark mode the window chrome (title bar + sidebar) is the darkest surface
+  (#080808) and content sits a step lighter (#131313), with cards #1A1A1A, raised #1F1F1F, muted #232323 and
+  selected #2A2A2A above it. Reverses 1.2c's order (page darker than sidebar). Light theme and accent unchanged.
+- The rounded inset content panel from the reference is shell work (Phase 4).
