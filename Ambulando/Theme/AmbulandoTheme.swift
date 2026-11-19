@@ -69,6 +69,20 @@ enum Amb {
     static let radiusControl: CGFloat = 6     // --radius-control 0.375rem
     static let touchTarget: CGFloat = 44      // --touch-target 2.75rem
 
+    /// UX lab spacing scale (4pt base). New and reworked views use these instead of literal paddings; the ~245
+    /// existing literals move over screen by screen as each screen is reworked.
+    enum Space {
+        static let xxs: CGFloat = 2
+        static let xs: CGFloat = 4
+        static let s: CGFloat = 8
+        static let m: CGFloat = 12
+        static let l: CGFloat = 16
+        static let xl: CGFloat = 24
+        static let xxl: CGFloat = 32
+    }
+    /// Row heights (Mac): compact list/sidebar row and standard control.
+    static let rowHeight: CGFloat = 32
+
     // Computed so they follow the app text size (`TextScale`).
     @MainActor static var editorial: Font { .amb(.title2, design: .serif).weight(.semibold) }   // --font-editorial
     @MainActor static var heading: Font { .amb(.headline) }

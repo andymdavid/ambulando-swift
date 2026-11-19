@@ -94,3 +94,7 @@ Review: https://claude.ai/artifact/S4HCkDSDtn2gJtky9eWTNH
 - One add button: Tasks, Docs, Files, Deck inbox and Canvas "+" are all `.ambIcon` with a plain plus.
 - Deck type filters lose their outlines (fill when on, hover otherwise). Decorative record icons (canvas, doc,
   agent, naplet) grey instead of accent.
+
+### 1.6 Spacing values (`style(theme): spacing scale`)
+- `Amb.Space` (2/4/8/12/16/24/32) and `Amb.rowHeight` (32). No visual change; later phases use them as each screen
+  is reworked instead of converting all ~245 literal paddings at once (keeps merges with upstream small).
