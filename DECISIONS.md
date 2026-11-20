@@ -56,10 +56,12 @@ Goal: Linear-level polish for the Mac app without changing what the product does
 
 ## Chat
 
-- **Flat messages, no cards.** A one-line message took ~140pt inside a bordered card; now about half, so twice as
-  many messages fit. Hover highlights the message.
-- **Group consecutive messages** from the same person within five minutes (one avatar and name), as Slack and
-  Linear do.
+- **A channel is a list of conversations; a thread is chat.** Each channel post starts a conversation (a thread
+  root, often titled, often a long brief), so it's shown as a distinct block: title as heading, long bodies cut to
+  ~5 lines with "Read more", a quiet reply footer, a hairline between blocks. No cards, and never grouped with the
+  next post. Replies inside a thread read as chat: flat, same-sender runs grouped (5 min).
+- **"Read more" opens the conversation** rather than expanding inline: the channel previews, the thread shows it
+  all, and the whole block is already the way in.
 - **Reactions only when they exist.** The always-on 👍 and + under every message moved into a small hover toolbar
   with the ••• menu. Pills have no outline; yours use the soft accent.
 - **Status dot only when something's wrong** (waiting or refused); "synced" is the normal state.

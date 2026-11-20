@@ -76,12 +76,14 @@ struct RepliesRule: View {
     }
 }
 
-/// One conversation in a channel's message list. UX lab: a flat row on the page (no card or border), as in Linear
-/// and Slack; each message highlights on hover (see `MessageCell`). Was the web's bordered `.channel-thread-card`.
+/// One conversation in a channel's message list. UX lab: a block on the page separated by space and a hairline
+/// (no card), so conversations stay distinct without boxes; the block highlights on hover (see `MessageCell`).
+/// Was the web's bordered `.channel-thread-card`.
 struct ConversationCard: ViewModifier {
     func body(content: Content) -> some View {
         content
-            .padding(.horizontal, 8).padding(.vertical, 1)
+            .padding(.horizontal, 8).padding(.vertical, 6)
+            .overlay(alignment: .bottom) { Rectangle().fill(Amb.border).frame(height: 1).padding(.horizontal, 20) }
     }
 }
 

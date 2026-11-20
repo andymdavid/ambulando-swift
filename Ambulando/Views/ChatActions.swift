@@ -11,7 +11,7 @@ import AppKit
 struct MessageCell: View, Equatable {
     nonisolated static func == (lhs: Self, rhs: Self) -> Bool {
         lhs.message == rhs.message && lhs.people == rhs.people && lhs.workspace == rhs.workspace && lhs.extras == rhs.extras
-            && lhs.effectiveThreadId == rhs.effectiveThreadId && lhs.route == rhs.route && lhs.replyCount == rhs.replyCount && lhs.lastReplyAt == rhs.lastReplyAt && lhs.threadTitle == rhs.threadTitle && lhs.continued == rhs.continued
+            && lhs.effectiveThreadId == rhs.effectiveThreadId && lhs.route == rhs.route && lhs.replyCount == rhs.replyCount && lhs.lastReplyAt == rhs.lastReplyAt && lhs.threadTitle == rhs.threadTitle && lhs.continued == rhs.continued && lhs.collapsible == rhs.collapsible
     }
 
     @Environment(AppModel.self) private var model
@@ -26,8 +26,10 @@ struct MessageCell: View, Equatable {
     var lastReplyAt: String? = nil
     /// Tower's thread title, shown above the root when it says something the root's first words do not.
     var threadTitle: String? = nil
-    /// UX lab: continues the previous message's block (no avatar or name line).
+    /// UX lab: continues the previous message's block (no avatar or name line). Thread replies only.
     var continued = false
+    /// UX lab: collapse long bodies (channel conversation list).
+    var collapsible = false
     @Environment(\.editChatMessage) private var editChatMessage
     @State private var confirmDelete = false
     @State private var gettingItDone = false
@@ -57,26 +59,21 @@ struct MessageCell: View, Equatable {
                     ThreadRouteLink(route: route) {
                         VStack(alignment: .leading, spacing: 0) {
                             if let title = distinctTitle {
-                                Label(title, systemImage: "text.bubble")
-                                    .font(.amb(.caption).weight(.semibold)).foregroundStyle(Amb.itemHeading).lineLimit(1)
-                                    .padding(.leading, 60).padding(.trailing, 16).padding(.top, 6)
+                                // UX lab: the conversation's title is its heading (was a small caption with an icon).
+                                Text(title)
+                                    .font(.amb(.headline)).foregroundStyle(Amb.foreground).lineLimit(2)
+                                    .padding(.leading, 56).padding(.trailing, 16).padding(.top, 10)
                             }
                             row
                             if replyCount > 0 {
-                                // sol `.chat-post-reply-bar.channel-thread-card-open`: a rule, then the reply count in primary.
-                                VStack(spacing: 0) {
-                                    Rectangle().fill(Amb.border).frame(height: 1)
-                                    HStack(spacing: 6) {
-                                        Image(systemName: "bubble.left.and.text.bubble.right")
-                                        Text("\(replyCount) \(replyCount == 1 ? "reply" : "replies")").fontWeight(.bold)
-                                        if let lastReplyAt { Text("· last \(ChatTime.label(lastReplyAt))").fontWeight(.regular).foregroundStyle(Amb.mutedForeground) }
-                                        Spacer(minLength: 4)
-                                        Image(systemName: "chevron.right").font(.amb(.caption2).weight(.bold)).foregroundStyle(Amb.mutedForeground)
-                                    }
-                                    .font(.amb(.caption)).foregroundStyle(Amb.primary)
-                                    .padding(.vertical, 8)
+                                // UX lab: a quiet footer (was a rule plus the count in the accent colour).
+                                HStack(spacing: 6) {
+                                    Image(systemName: "bubble.left.and.bubble.right").foregroundStyle(Amb.mutedForeground)
+                                    Text("\(replyCount) \(replyCount == 1 ? "reply" : "replies")").fontWeight(.medium).foregroundStyle(Amb.primary)
+                                    if let lastReplyAt { Text("Last reply \(ChatTime.label(lastReplyAt))").foregroundStyle(Amb.mutedForeground) }
                                 }
-                                .padding(.leading, 60).padding(.trailing, 16).padding(.bottom, 2)
+                                .font(.amb(.caption))
+                                .padding(.leading, 56).padding(.trailing, 16).padding(.bottom, 8)
                             }
                         }
                         .contentShape(Rectangle())
@@ -239,7 +236,7 @@ struct MessageCell: View, Equatable {
     #endif
 
     private var row: some View {
-        MessageRow(message: message, people: people, bodyOverride: pendingEdit?.isPending == true ? pendingEdit?.string("body") : nil, workspace: workspace, continued: continued)
+        MessageRow(message: message, people: people, bodyOverride: pendingEdit?.isPending == true ? pendingEdit?.string("body") : nil, workspace: workspace, continued: continued, collapsible: collapsible)
             .opacity(pendingDelete?.isPending == true ? 0.45 : 1)
     }
 

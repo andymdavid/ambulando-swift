@@ -249,13 +249,11 @@ struct ChannelView: View {
                 }
                 // Each conversation is a card (sol `.channel-thread-card`); a date label starts each day.
                 // One view per element (a lazy stack mis-lays rows whose element yields a varying number of views).
-                let continued = ChatGrouping.continued(snapshot.value.posts, dayStarts: snapshot.value.dayStarts)
                 ForEach(snapshot.value.posts) { post in
                     VStack(spacing: 0) {
                         if let day = snapshot.value.dayStarts[post.id] { DaySeparator(day: day) }
                         PostRow(post: post, people: snapshot.value.people, workspace: workspace, extras: snapshot.value.extras,
-                                threadTitle: post.message.threadId.flatMap { snapshot.value.threadTitles[$0] },
-                                continued: continued.contains(post.id))
+                                threadTitle: post.message.threadId.flatMap { snapshot.value.threadTitles[$0] })
                             .conversationCard()
                     }
                 }
@@ -356,14 +354,13 @@ struct ThreadView: View {
                 if let threadId = target.threadId { SyncErrorNote(key: WorkspaceSync.threadKey(workspace.id, threadId)) }
                 if snapshot.value.archived { SyncNote(text: "This thread is archived. Replying reopens it.") }
                 // The first message, a labelled rule, then the replies; a date label starts each day. No line between replies.
+                let continued = ChatGrouping.continuedReplies(snapshot.value.messages, dayStarts: snapshot.value.dayStarts)
                 ForEach(Array(snapshot.value.messages.enumerated()), id: \.element.id) { index, message in
                     VStack(spacing: 0) {
                         if let day = snapshot.value.dayStarts[message.id] { DaySeparator(day: day) }
-                        #if os(macOS)
-                        // A faint line shows where one message ends and the next begins (not under the replies rule).
-                        if index > 0 && !(index == 1 && snapshot.value.messages[0].isThreadRoot) { Rectangle().fill(Amb.border.opacity(0.45)).frame(height: 1).padding(.horizontal, 24) }
-                        #endif
-                        MessageCell(message: message, people: snapshot.value.people, workspace: workspace, extras: snapshot.value.extras.forMessage(message.id), effectiveThreadId: target.threadId).equatable()
+                        // UX lab: replies read as chat (no rule between them; same-sender runs grouped).
+                        MessageCell(message: message, people: snapshot.value.people, workspace: workspace, extras: snapshot.value.extras.forMessage(message.id), effectiveThreadId: target.threadId,
+                                    continued: continued.contains(message.id)).equatable()
                         // The root, or the first message of a thread stored without its source id.
                         if (message.isThreadRoot || (index == 0 && snapshot.value.windowStart == 0)) && snapshot.value.order.count > 1 {
                             RepliesRule(count: snapshot.value.order.count - 1)
@@ -488,7 +485,7 @@ struct ThreadView: View {
             let rows = window.messages
             MessageDisplayCache.shared.prepare(rows)
             let record = try await thread
-            let title = record?.title.map(MentionCodec.plain) ?? history.first.map { MentionCodec.plain($0.body) } ?? ""
+            let title = ThreadTitleText.clean(record?.title.map(MentionCodec.plain) ?? history.first.map { MentionCodec.plain($0.body) } ?? "")
             let extras = try await messageExtras(store, target.workspaceId, connectionId: target.connectionId, ids: rows.map(\.id))
             let days = ChatDay.breaks(rows, id: \.id, time: \.createdAt)
             return ThreadSnapshot(order: window.order, windowStart: window.start, hasEarlier: window.hasEarlier, hasNewer: window.hasNewer,
@@ -519,17 +516,15 @@ struct PostRow: View {
     let workspace: WorkspaceRecord
     let extras: MessageExtras
     var threadTitle: String? = nil
-    /// UX lab: continues the previous message's block (same sender, within five minutes).
-    var continued = false
 
     var body: some View {
         if let thread = post.message.threadId {
             // Only the message opens the thread; reactions and status lines below it stay separately tappable.
             MessageCell(message: post.message, people: people, workspace: workspace, extras: extras,
                         route: ChatRoute.thread(workspaceId: workspace.id, channelId: post.message.channelId, threadId: thread),
-                        replyCount: post.replyCount, lastReplyAt: post.lastReplyAt, threadTitle: threadTitle, continued: continued)
+                        replyCount: post.replyCount, lastReplyAt: post.lastReplyAt, threadTitle: threadTitle, collapsible: true)
         } else {
-            MessageCell(message: post.message, people: people, workspace: workspace, extras: extras, continued: continued)
+            MessageCell(message: post.message, people: people, workspace: workspace, extras: extras, collapsible: true)
         }
     }
 }
@@ -541,6 +536,8 @@ struct MessageRow: View {
     var workspace: WorkspaceRecord?
     /// UX lab: no avatar or name line; the message continues the block above.
     var continued = false
+    /// UX lab: long bodies collapse to a few lines with "Show more" (channel conversation list).
+    var collapsible = false
 
     /// Resolved from the store with the snapshot: workspace name, Tower's label, public profile, else the short npub.
     private var sender: PersonDisplay { people.person(message.senderNpub, senderLabel: message.senderLabel) }
@@ -574,10 +571,12 @@ struct MessageRow: View {
                     }
                     .richLayoutFrame("metadata")
                 }
-                if let bodyOverride {
-                    if !bodyOverride.isEmpty { MessageBody(text: bodyOverride, muted: true) }
-                } else if !message.body.isEmpty {
-                    if let blocks = display.blocks { RichBlocksView(blocks: blocks, workspace: workspace) } else { MessageBody(plain: message.body) }
+                CollapsibleMessageBody(enabled: collapsible) {
+                    if let bodyOverride {
+                        if !bodyOverride.isEmpty { MessageBody(text: bodyOverride, muted: true) }
+                    } else if !message.body.isEmpty {
+                        if let blocks = display.blocks { RichBlocksView(blocks: blocks, workspace: workspace) } else { MessageBody(plain: message.body) }
+                    }
                 }
                 if let workspace {
                     ForEach(display.attachments, id: \.storageObjectId) { attachment in

@@ -149,3 +149,17 @@ Review: https://claude.ai/artifact/S4HCkDSDtn2gJtky9eWTNH
 - `AmbRevealPolicy`: hover-revealed controls stay visible with VoiceOver, Full Keyboard Access or `-AmbulandoMac*`
   checks (read once at launch). Found via `-AmbulandoMacThreadRegression`; it now fails only at the known
   environmental step.
+
+### 3.1b Conversations, not chat lines (`style(chat): channel as a list of conversations`)
+- User feedback: grouping merged separate conversations (each channel post is a thread root, often titled and long).
+  Grouping removed from the channel; `ChatGrouping.continuedReplies` now groups same-sender replies inside a thread
+  only, and the thread view drops the rule between replies.
+- `ConversationCard`: block with 6pt vertical padding and a hairline between conversations (no card).
+- Thread title (when Tower's differs from the body) is the block heading (headline, ink), not a caption with icon.
+- Reply footer: quiet line (icon, "N replies" in accent, "Last reply …" in metadata grey), no rule above.
+- New `CollapsibleMessageBody.swift`: channel bodies over ~5 lines are cut with a fade and "Read more" (the block
+  opens the thread). Inline expansion was tried; the block's thread link wins the click on the Mac.
+- `ThreadTitleText.clean`: thread header titles derived from a body drop Markdown marks ("## Build checklist" →
+  "Build checklist"). Pre-existing bug.
+- Known: hover toolbars on channel rows can stay visible behind the thread overlay (hover-ended not delivered);
+  to fix with the thread side panel (3.3). Reply participants aren't in the feed data, so the footer has no avatars.

@@ -1,20 +1,22 @@
 import SwiftUI
 import AmbulandoCore
 
-/// UX lab: consecutive messages from the same person within five minutes read as one block (no repeated avatar and
-/// name), as in Slack and Linear. A new day, a thread with replies, or a gap starts a new block.
+/// UX lab: inside a thread, consecutive replies from the same person within five minutes read as one block (no
+/// repeated avatar and name), as in Slack and Linear. Never used in a channel: there each post starts its own
+/// conversation. A new day, the thread's root, or a gap starts a new block.
 enum ChatGrouping {
     static let window: TimeInterval = 5 * 60
 
-    /// Ids of posts that continue the previous post's block.
-    static func continued(_ posts: [FeedPost], dayStarts: [String: ChatDay]) -> Set<String> {
+    /// Ids of replies that continue the previous reply's block.
+    static func continuedReplies(_ messages: [MessageRecord], dayStarts: [String: ChatDay]) -> Set<String> {
         var result = Set<String>()
-        for (previous, post) in zip(posts, posts.dropFirst()) {
-            guard dayStarts[post.id] == nil, previous.replyCount == 0, !previous.message.deleted, !post.message.deleted,
-                  let sender = post.message.senderNpub, sender == previous.message.senderNpub,
-                  let a = ChatTime.date(previous.message.createdAt), let b = ChatTime.date(post.message.createdAt),
+        for (previous, message) in zip(messages, messages.dropFirst()) {
+            guard !previous.isThreadRoot, !message.isThreadRoot, dayStarts[message.id] == nil,
+                  !previous.deleted, !message.deleted,
+                  let sender = message.senderNpub, sender == previous.senderNpub,
+                  let a = ChatTime.date(previous.createdAt), let b = ChatTime.date(message.createdAt),
                   b.timeIntervalSince(a) >= 0, b.timeIntervalSince(a) <= window else { continue }
-            result.insert(post.id)
+            result.insert(message.id)
         }
         return result
     }
