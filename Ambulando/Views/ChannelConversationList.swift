@@ -70,11 +70,19 @@ struct ChannelConversationList: View {
                 }
             }
             Spacer(minLength: 0)
+            // Who's in this channel's conversations, most recent first (Buzz-style facepile).
+            if !channelPeople.people.isEmpty { ParticipantFacepile(participants: channelPeople).padding(.trailing, 4) }
             Button { composing = true } label: { Label("New thread", systemImage: "square.and.pencil") }
                 .buttonStyle(.ambPrimary)
                 .accessibilityIdentifier("channel.newThread")
         }
         .padding(.horizontal, 12).padding(.top, Amb.Space.m).padding(.bottom, Amb.Space.s)
+    }
+
+    private var channelPeople: ThreadParticipants {
+        var seen = Set<String>(), order: [String] = []
+        for c in conversations { for npub in c.participants + [c.root.senderNpub].compactMap({ $0 }) where seen.insert(npub).inserted { order.append(npub) } }
+        return ThreadParticipants(threadId: target.channelId, people: order.map { people.person($0) }, agents: Set(order.filter(people.isAgent)))
     }
 
     private var empty: some View {
