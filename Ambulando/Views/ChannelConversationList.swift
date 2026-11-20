@@ -107,13 +107,15 @@ struct ChannelConversationList: View {
     }
 }
 
-private struct ConversationRow: View {
+struct ConversationRow: View {
     @Environment(AppModel.self) private var model
     let conversation: ChannelConversation
     let workspace: WorkspaceRecord
     let people: PeopleDirectory
     let title: String
     let me: String?
+    /// Where the conversation lives, when the list spans several channels (the Chat tab at Home or a scope).
+    var place: ConversationPlace? = nil
 
     var body: some View {
         Group {
@@ -175,20 +177,29 @@ private struct ConversationRow: View {
 
     @ViewBuilder private var meta: some View {
         HStack(spacing: Amb.Space.s) {
-            ParticipantStack(npubs: conversation.participants, people: people)
+            if let place { ConversationPlaceTag(place: place, people: people) }
+            // In a DM the place already shows the one face; a facepile only where people vary.
+            if place?.direct != true { ParticipantStack(npubs: conversation.participants, people: people) }
             TimelineView(.periodic(from: .now, by: 15)) { context in
                 if let agent = workingAgent(now: context.date) {
                     WorkingLabel(name: people.person(agent).name)
                 } else if let reply = conversation.latestReply {
-                    (Text(senderName(reply) + ": ").fontWeight(.medium).foregroundColor(Amb.secondaryForeground)
+                    // In a DM the place already names the other person: only "You:" is said.
+                    (Text(namedInPlace(reply) ? "" : senderName(reply) + ": ").fontWeight(.medium).foregroundColor(Amb.secondaryForeground)
                      + Text(ConversationPreview.plain(reply.body)).foregroundColor(Amb.mutedForeground))
                         .font(.amb(.footnote)).lineLimit(1)
-                } else {
+                } else if !namedInPlace(conversation.root) {
                     // No replies yet: who started it.
                     Text(senderName(conversation.root)).font(.amb(.footnote).weight(.medium)).foregroundStyle(Amb.secondaryForeground).lineLimit(1)
                 }
             }
         }
+    }
+
+    /// The sender is the DM's other person, already shown as the place.
+    private func namedInPlace(_ message: MessageRecord) -> Bool {
+        guard let place, place.direct else { return false }
+        return place.person == nil ? message.senderNpub == me : message.senderNpub == place.person
     }
 
     private func senderName(_ message: MessageRecord) -> String {
@@ -205,10 +216,48 @@ private struct ConversationRow: View {
 
     private var accessibilityText: String {
         var parts = [title]
+        if let place { parts.append("in \(place.label)") }
         if conversation.unread { parts.append("unread") }
         if conversation.replyCount > 0 { parts.append("\(conversation.replyCount) \(conversation.replyCount == 1 ? "reply" : "replies")") }
         if let reply = conversation.latestReply { parts.append("latest from \(senderName(reply))") }
         return parts.joined(separator: ", ")
+    }
+}
+
+/// Where a conversation lives: a channel ("# general"), or a DM shown by the other person's or agent's face and name
+/// (Note to self by its icon).
+struct ConversationPlace: Equatable {
+    let label: String
+    var direct = false
+    /// The other participant of a DM; nil for a channel or Note to self.
+    var person: String? = nil
+
+    static func of(_ channel: ChannelRecord, nav: NavigationSnapshot, viewer: String?) -> ConversationPlace {
+        let label = nav.label(channel)
+        guard SidebarNavigation.isDirectMessageChannel(channel) else { return ConversationPlace(label: label) }
+        return ConversationPlace(label: label, direct: true, person: SidebarNavigation.participants(channel).first { $0 != viewer })
+    }
+}
+
+private struct ConversationPlaceTag: View {
+    let place: ConversationPlace
+    let people: PeopleDirectory
+
+    var body: some View {
+        HStack(spacing: 5) {
+            if let person = place.person {
+                PersonAvatar(person: people.person(person), size: 16, agent: people.isAgent(person))
+            } else if place.direct {
+                Image(systemName: "note.text").font(.amb(.caption2))
+            } else {
+                Text("#").foregroundStyle(Amb.faint)
+            }
+            // A DM is named after the person, as in the sidebar (Tower leaves DM titles empty).
+            Text(place.person.map { people.person($0).name } ?? place.label).lineLimit(1)
+        }
+        .font(.amb(.footnote).weight(.medium)).foregroundStyle(Amb.secondaryForeground)
+        .fixedSize()
+        .accessibilityHidden(true)
     }
 }
 

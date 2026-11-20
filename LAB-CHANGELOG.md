@@ -437,3 +437,14 @@ Proposal and mockups: https://claude.ai/artifact/PFA62Dm9pTnTHMNrHH686J. Mac onl
   column headings use the list's status ring and name instead of a chip; card size shows as `TaskSizeLabel`.
 - `-UXStartTab board` opens Tasks as a board in the sample app, for captures.
 - iPhone and iPad unchanged; no iPad check needed.
+
+### 5.2 Chat tab at Home or a scope (`feat(chat): the place's conversations, newest activity first`)
+- New `MacPlaceConversations` replaces the Mac channel directory (`ChannelDirectoryView`, still used on iPhone and
+  iPad): every conversation in the place's channels (a scope's, or all at Home, Solo and DMs included), newest
+  activity first, using the channel's `ConversationRow` (now internal). Filters All · Unread · Mine; New thread opens
+  the composer with its channel menu. A conversation opens in place of the list (the channels are inline-thread
+  hosts while it's shown); leaving Chat closes it.
+- Rows say where they live (`ConversationPlace`): "# deploys", or a DM's person or agent (face and name) or Note to
+  self. A DM shows its face once: no facepile, and the other person's own messages don't repeat their name.
+- Supersedes 4.9's grouped directory on the Mac. Rounds 1–3: https://claude.ai/artifact/PFA62Dm9pTnTHMNrHH686J.
+- No iPad check needed (Mac paths only).

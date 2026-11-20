@@ -65,7 +65,12 @@ struct ChatContextRoot: View {
 
                         .id("\(workspace.id):\(channelId)")   // a fresh observer per channel: no rows cross over
                 } else {
+                    #if os(macOS)
+                    // UX lab: every conversation in the place (MacPlaceConversations), not a list of channels.
+                    MacPlaceConversations(workspace: workspace, store: store)
+                    #else
                     ChannelDirectoryView()
+                    #endif
                 }
             }
             .id(model.selectedWorkspaceBoundary?.id ?? workspace.id)

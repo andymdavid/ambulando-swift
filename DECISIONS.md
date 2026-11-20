@@ -145,14 +145,15 @@ Goal: Linear-level polish for the Mac app without changing what the product does
   Rows don't repeat their group's status. Size is a dot scaled to Rock/Pebble/Sand plus the word (Rock orange), not
   capitals in a pill.
 - **Board: cards are the only layer.** Columns sit on the page with the list's ring heading.
+- **The Chat tab at Home or a scope lists the place's conversations, newest first** (one list across its channels and
+  DMs, each row tagged with where it lives), not its channels again. The sidebar already lists channels by type, so
+  filters are about state (All, Unread, Mine), not type. A DM shows its face once. A refined channel overview (C1) was
+  mocked and not chosen.
 - **"New task" and "New document" are labelled primary buttons**, like "New thread" in a channel. What they open is
   still being designed (a compact composer is proposed).
 
 ## Deferred
 
-- **Chat channel list (Phase 5).** The Chat tab at Home or a scope is still upstream's plain list (full-width rules,
-  chevrons, no activity). Redesign it as an activity-led list like a channel's conversations: latest conversation,
-  who's active, unread, in the reading column. Replaces the list, and with it the doubled line under its first heading.
 - **Flatten the Deck (Phase 5).** Four stacked layers (page, section panel, row card, tiles). Two is enough.
 - **Product direction.** Agents-first onboarding and scopes as business domains (Finance, Sales, Clients…). Out of
   scope for a polish pass.
