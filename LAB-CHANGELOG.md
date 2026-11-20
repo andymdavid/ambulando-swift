@@ -273,3 +273,8 @@ Review: https://claude.ai/artifact/S4HCkDSDtn2gJtky9eWTNH
 - 3.11b (`fix(deck): Channel menu is the only channel control on the Mac`): the plain rows kept for the check showed
   under the menu as a second picker (user: "why do we have both"). Removed; the hint reads "Choose a channel to start
   your thread." `MacDeckComposerCheck` now picks #general through the real menu (`menuAction`); passes.
+- 3.12b (`style(chat): your messages' highlight hugs the message with even padding`): user: bottom padding thinner
+  than elsewhere and the hover stretched edge to edge. `OwnMessageRow` draws its own highlight on the message block
+  only (10pt inset on all four sides, `ambHoverTracking()` for hover without a row fill); the gap between senders is
+  outside it; the hover toolbar hangs just left of the message instead of covering the name and time. Unsent messages
+  use the same geometry. Other people's rows unchanged (their highlight still spans the row, 14pt top / 4pt bottom).
