@@ -57,17 +57,21 @@ Goal: Linear-level polish for the Mac app without changing what the product does
 ## Chat
 
 - **A channel is a list of conversations; a thread is chat.** Each channel post starts a conversation (a thread
-  root, often titled, often a long brief), so it's shown as a distinct block: title as heading, long bodies cut to
-  ~5 lines with "Read more", a quiet reply footer, a hairline between blocks. No cards, and never grouped with the
-  next post. Replies inside a thread read as chat: flat, same-sender runs grouped (5 min).
+  root, often titled, often a long brief). Replies inside a thread read as chat: flat, same-sender runs grouped
+  (5 min). (The first block layout of the list is superseded by the conversation list below.)
 - **"Read more" opens the conversation** rather than expanding inline: the channel previews, the thread shows it
   all, and the whole block is already the way in.
 - **Reactions only when they exist.** The always-on 👍 and + under every message moved into a small hover toolbar
   with the ••• menu. Pills have no outline; yours use the soft accent.
 - **Chat sits in a centred column (Mac)** with real side margins, as in Buzz; full-width rows read as a log.
-- **In a thread, only your own messages are bubbles, on the right**; everyone else's stay flat rows. Bubbles for
-  everything were tried and dropped: long agent replies (lists, tables) don't belong in a bubble, and the channel is a
-  list of conversations, not chat. iPhone/iPad unchanged for now.
+- **No bubbles.** Tried for everything, then for your own messages: they suit quick back-and-forth between people,
+  not briefs and long agent replies (lists, tables). Messages are flat rows.
+- **In a thread your own messages sit on the right** (flat, mirrored), with more space between senders.
+- **Agents have rounded-square avatars**, people circles, so the two read apart at a glance.
+- **Relative times** ("12m ago") for today; older messages show the clock time under a day label.
+- **A channel is a list of conversations, newest activity first** (direction A of the mockups): title, brief, who's
+  involved, latest reply or which agent is working, unread. Keeps the live app's Threads-view ordering, which upstream
+  dropped; deliberately not chat, so "New thread" is a button, not a composer under the list.
 - **A thread opens in place of its channel's list** (Mac, Chat section), like opening an email: one composer at a
   time, ← back (or Esc) to the list. The channel's composer starts new threads ("Start a thread in #…"). A side
   panel was tried and dropped: two chats side by side, and it floated over other sections.

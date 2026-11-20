@@ -216,3 +216,30 @@ Review: https://claude.ai/artifact/S4HCkDSDtn2gJtky9eWTNH
   hairline again (`ConversationCard` restored), inside the column.
 - `UXLabOptions.hideSampleBanner`: launch the Test app with `-UXHideSampleBanner YES` (or `defaults write`) to hide the
   sample-data banner. Ignored while `-AmbulandoMac*` checks run (they find the window by the banner).
+
+### 3.6 Flat thread messages, yours on the right (`style(chat): flat thread messages, yours on the right, agent avatars`)
+- User feedback: bubbles suit Slack-style back-and-forth, not briefs and long agent replies. Bubbles removed.
+- `ChatBubbles.swift` → `ChatLayout.swift`. `OwnMessageRow`: in a thread your message is the flat row mirrored to the
+  right (time, name, avatar; text still left-aligned, fits its width); hover toolbar on the left. `OutboxRow` matches.
+- More air between senders in a thread (`ChatLayout.senderGap` 14pt above a new sender; runs stay tight).
+- Agents get rounded-square avatars (`AvatarShape`; `PersonAvatar`/`InitialsAvatar` take `agent:`), in messages and
+  the channel list. Bubble tokens removed from the theme; `chatColumnWidth` kept.
+
+### 3.7 Relative times (`style(chat): relative message times`)
+- `MessageTimeText` / `RelativeTime`: today "now", "12m ago", "3h ago" (refreshes each minute); older: clock time in a
+  thread (day label above), "Yesterday" / weekday / "17 Nov" elsewhere. Exact date and time in the tooltip.
+- `-AmbulandoMacThreadRegression` crashed once in five runs with an AppKit "Update Constraints in Window" loop during
+  the resize steps; four runs (with and without the time tooltip) ended at the known failure. Cause not found.
+
+### 3.8 Channel as a list of conversations (`style(chat): channel as a list of conversations, newest activity first`)
+- Direction A from the channel-list mockups (https://claude.ai/artifact/7NSjSt4mPHP96Y8wEnZ5og), after the live app's
+  Threads view (upstream removed it in `7908759`, Mac build 22; Andy's build 19 still has it).
+- New Core read `channelConversations` (new file `ChannelConversations.swift`; `channelFeed` untouched): newest
+  activity first, reply count, newest reply, up to four participants, unread (thread view state), agent lifecycles.
+- New `ChannelConversationList.swift` (Mac): All / Unread / Mine filters; "New thread" opens the existing composer
+  (`model.composingThread`); rows show unread dot, title, brief (when it adds to the title), participant avatars,
+  newest reply ("You:" for yours, Markdown stripped) or "Rick is working" with pulsing dots, starter name when no
+  replies, relative time and reply count. Opens in place as before. No composer under the list.
+- iPhone/iPad keep the message feed. Channel refreshes on view-state and agent changes too. iOS builds; regression
+  harness at the known failure.
+- Not carried over to the list: the per-message actions on a conversation's first message (they're in the thread).
