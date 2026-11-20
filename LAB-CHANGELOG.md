@@ -305,3 +305,12 @@ Review: https://claude.ai/artifact/S4HCkDSDtn2gJtky9eWTNH
 - 3.18 (`style(chat): channel participants facepile beside New thread`): everyone in the channel's conversations,
   most recent first, agents as rounded squares, names in the tooltip.
 - Checks for the batch: thread harness at the known failure; `MacDeckComposerCheck` passes; iOS builds.
+
+## Upstream merge (2026-11-20)
+- `main` fast-forwarded to upstream `548b4e8` (Pete: Mac "Refresh data" without discarding current work) and merged
+  into `lab` (`bb2e379`). Two neighbouring-line conflicts, both kept: `ThreadFocus.swift` header = facepile, then
+  Pete's `MacRefreshDataButton`, then pin and menu; `MacWorkspaceShell.swift` section row = Pete's button with the
+  lab's `Amb.background`. Project file identical to upstream.
+- Checks: thread harness at the known failure. Pete's new `-AmbulandoMacDataRefreshCheck` fails at "Timed out: same
+  open thread receives remote reply", and fails the same way on upstream itself (`main` + the Xcode 27 fix), so it's
+  the same environmental synced-reply issue, not the lab.
