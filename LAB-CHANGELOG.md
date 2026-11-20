@@ -190,3 +190,20 @@ Review: https://claude.ai/artifact/S4HCkDSDtn2gJtky9eWTNH
 - Channel composer placeholder: "Start a thread in #…". Thread replies inset 8pt so hover doesn't touch the edges.
 - Removed `MacThreadSidePanel`. Harness back at the known failure; iOS builds.
 - Next: optional side-by-side (list + thread) toggle; Solo section with the Phase 4 sidebar.
+
+### 3.5 Chat bubbles in a reading column (`style(chat): bubbles in a centred column on the Mac`)
+- User direction (Buzz reference): messages as bubbles, your own on the right, real side margins instead of full width.
+- New `ChatBubbles.swift`: `BubbleMessageRow` (name and time above, bubble sized to its text, 32pt avatar level with the
+  bubble's last line; reactions inside the bubble; reply summary below), `chatColumn()` (centred, 820pt + 24pt
+  margins, follows text size), `chatBubbleFit` environment so `RichBlocksView`/`MessageBody` fit their text in a bubble.
+- Theme: `Amb.bubble` (neutral), `Amb.bubbleMine` (soft violet), `radiusBubble` 18, `chatColumnWidth` 820.
+- `MessageCell` picks the bubble layout on the Mac (`flatCell` kept for iPhone/iPad); hover darkens the bubble and
+  shows the toolbar (on the left for your messages). Thread runs show the avatar on the run's last message
+  (`lastInRun`). `OutboxRow` shows your unsent message as your bubble with its delivery state below.
+- Channel and thread content and their composers sit in the column; no hairline between channel conversations and no
+  divider or card band above the composer on the Mac.
+- iPhone/iPad unchanged (all gated on `ChatBubbles.enabled`); iOS builds.
+- `-AmbulandoMacThreadRegression`: the channel-opened thread scenario now passes fully (it used to stop at "synced
+  reply must render"). The Deck-composed quick-view scenario now fails later, at "native menu must open and perform
+  FD Ref" after 12 synced replies. Likely cause, not verified: the harness clicks the first message's menu, which
+  taller bubble rows scroll out of view.

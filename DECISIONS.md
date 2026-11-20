@@ -64,6 +64,9 @@ Goal: Linear-level polish for the Mac app without changing what the product does
   all, and the whole block is already the way in.
 - **Reactions only when they exist.** The always-on 👍 and + under every message moved into a small hover toolbar
   with the ••• menu. Pills have no outline; yours use the soft accent.
+- **Messages are bubbles in a centred column (Mac)**, as in Buzz: name and time above, bubble sized to its text,
+  your own on the right in soft violet, reactions inside. Full-width rows read as a log, not a conversation. Replaces
+  the flat rows and the hairline between channel conversations; iPhone/iPad unchanged for now.
 - **A thread opens in place of its channel's list** (Mac, Chat section), like opening an email: one composer at a
   time, ← back (or Esc) to the list. The channel's composer starts new threads ("Start a thread in #…"). A side
   panel was tried and dropped: two chats side by side, and it floated over other sections.

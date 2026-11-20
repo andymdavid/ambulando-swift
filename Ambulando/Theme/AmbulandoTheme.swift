@@ -65,6 +65,12 @@ enum Amb {
     static let brandOrange = Color(PlatformColor(hex: 0xBF4D0D))
     static let brandNavy = Color(PlatformColor(hex: 0x10162B))
 
+    /// UX lab chat bubbles (Mac): other people's messages on a neutral fill, yours on a soft accent, in a centred column.
+    static let bubble = dynamic(0xF0F0F2, 0x1C1D20)
+    static let bubbleMine = dynamic(0xEBE7FB, 0x27223F)
+    static let radiusBubble: CGFloat = 18
+    static let chatColumnWidth: CGFloat = 820
+
     static let radiusPanel: CGFloat = 10      // --radius-panel 0.625rem
     static let radiusControl: CGFloat = 6     // --radius-control 0.375rem
     static let touchTarget: CGFloat = 44      // --touch-target 2.75rem

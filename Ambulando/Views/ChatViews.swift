@@ -289,6 +289,7 @@ struct ChannelView: View {
                 }
             }
             .padding(.bottom, 8)
+            .chatColumn()   // UX lab: centred reading column
             NewestSentinel(visible: $atNewest)
         }
         .defaultScrollAnchor(.bottom, for: .initialOffset)
@@ -301,6 +302,7 @@ struct ChannelView: View {
             // message stays visible above the composer.
             Composer(target: target, workspace: workspace, store: store,
                      placeholder: "Start a thread in \(title.trimmingCharacters(in: .whitespaces).isEmpty ? "#channel" : title)", editing: $messageEdit)
+                .chatColumn()
         }
         .environment(\.editChatMessage, { message, body in
             if messageEdit == nil { messageEdit = ChatMessageEdit(message: message, body: body) }
@@ -380,7 +382,8 @@ struct ThreadView: View {
                         if let day = snapshot.value.dayStarts[message.id] { DaySeparator(day: day) }
                         // UX lab: replies read as chat (no rule between them; same-sender runs grouped).
                         MessageCell(message: message, people: snapshot.value.people, workspace: workspace, extras: snapshot.value.extras.forMessage(message.id), effectiveThreadId: target.threadId,
-                                    continued: continued.contains(message.id)).equatable()
+                                    continued: continued.contains(message.id),
+                                    lastInRun: !(index + 1 < snapshot.value.messages.count && continued.contains(snapshot.value.messages[index + 1].id))).equatable()
                             .padding(.horizontal, 8)   // UX lab: hover highlight inset from the pane edges
                         // The root, or the first message of a thread stored without its source id.
                         if (message.isThreadRoot || (index == 0 && snapshot.value.windowStart == 0)) && snapshot.value.order.count > 1 {
@@ -395,6 +398,7 @@ struct ThreadView: View {
                             DaySeparator(day: .today)
                         }
                         OutboxRow(item: item, people: snapshot.value.people)
+                            .padding(.horizontal, ChatBubbles.enabled ? 8 : 0)   // UX lab: lines up with the thread's bubbles
                     }
                 }
                 if snapshot.loaded && snapshot.value.messages.isEmpty {
@@ -407,6 +411,7 @@ struct ThreadView: View {
                 if snapshot.value.hasNewer { pageButton(earlier: false) }
             }
             .padding(.bottom, 8)
+            .chatColumn()   // UX lab: centred reading column
         }
         .defaultScrollAnchor(.bottom, for: .initialOffset)
         .defaultScrollAnchor(.bottom, for: .sizeChanges)
@@ -433,6 +438,7 @@ struct ThreadView: View {
             Composer(target: target, workspace: workspace, store: store, placeholder: "Reply", editing: $messageEdit, onEnqueued: { _ in
                 if windowAnchor != nil { windowAnchor = nil; pageIdentity += 1 }
             })
+            .chatColumn()
         }
         .environment(\.editChatMessage, { message, body in
             if messageEdit == nil { messageEdit = ChatMessageEdit(message: message, body: body) }
@@ -630,6 +636,7 @@ struct MessageBody: View {
     private let plain: String
     var muted = false
     var workspace: WorkspaceRecord?
+    @Environment(\.chatBubbleFit) private var bubbleFit
 
     init(text: String, muted: Bool = false, workspace: WorkspaceRecord? = nil) {
         blocks = MessageText.cachedBlocks(text); plain = text
@@ -646,8 +653,7 @@ struct MessageBody: View {
                 .textSelection(.enabled)
                 .lineSpacing(ChatTypography.lineSpacing)
                 .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: ChatTypography.readableWidth, alignment: .leading)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .chatTextWidth(fit: bubbleFit, readable: ChatTypography.readableWidth)   // UX lab: bubbles fit their text
         }
     }
 }
@@ -676,8 +682,54 @@ struct OutboxRow: View {
     }
 
     var body: some View {
+        if ChatBubbles.enabled { bubble } else { flat }
+    }
+
+    /// UX lab (Mac): your unsent message as your bubble on the right, its delivery state below it.
+    private var bubble: some View {
         let me = people.person(item.signerNpub)
-        HStack(alignment: .top, spacing: 10) {
+        return HStack(alignment: .bottom, spacing: Amb.Space.s) {
+            Spacer(minLength: 64)
+            VStack(alignment: .trailing, spacing: Amb.Space.xs) {
+                VStack(alignment: .leading, spacing: 6) {
+                    if !item.body.isEmpty { MessageBody(text: item.body, muted: true) }
+                    if !item.attachments.isEmpty {
+                        Label("\(item.attachments.count) \(item.attachments.count == 1 ? "photo" : "photos")" + (item.attachments.allSatisfy(\.complete) ? "" : " (uploading)"),
+                              systemImage: "photo").font(.amb(.caption)).foregroundStyle(Amb.mutedForeground)
+                    }
+                }
+                .environment(\.chatBubbleFit, true)
+                .padding(.horizontal, 14).padding(.vertical, 9)
+                .background(item.state == .failed ? Amb.destructiveBackground : Amb.bubbleMine, in: RoundedRectangle(cornerRadius: Amb.radiusBubble, style: .continuous))
+                HStack(spacing: 12) {
+                    Label(status.text, systemImage: status.icon).font(.amb(.caption)).foregroundStyle(status.tone)
+                        .accessibilityIdentifier("outbox.status")
+                    if item.state == .failed || item.state == .retrying {
+                        Button(item.state == .failed ? "Retry" : "Retry now") { retry() }.accessibilityIdentifier("outbox.retry")
+                        if item.state == .failed {
+                            Button("Edit") { Task { try? await model.outbox?.discard(item.id, restoreDraft: true) } }
+                                .accessibilityIdentifier("outbox.edit")
+                            Button("Discard", role: .destructive) { Task { try? await model.outbox?.discard(item.id, restoreDraft: false) } }
+                        }
+                    }
+                }
+                .font(.amb(.caption).weight(.semibold))
+                .buttonStyle(.borderless)
+                .padding(.horizontal, 10)
+            }
+            VStack(spacing: 4) {
+                SyncDot(state: item.state == .failed ? .failed : .pending)
+                PersonAvatar(person: me, size: 32)
+            }
+        }
+        .padding(.top, Amb.Space.m).padding(.bottom, 2)
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("outbox.row")
+    }
+
+    private var flat: some View {
+        let me = people.person(item.signerNpub)
+        return HStack(alignment: .top, spacing: 10) {
             PersonAvatar(person: me)
             VStack(alignment: .leading, spacing: 4) {
                 Text(me.nameSource == .npub ? "You" : me.name).font(.amb(.subheadline).weight(.semibold)).foregroundStyle(Amb.foreground)
@@ -1040,7 +1092,7 @@ struct Composer: View {
             if !suggestions.isEmpty {
                 MentionPicker(suggestions: suggestions, people: members.value, highlighted: min(highlighted, suggestions.count - 1)) { pick($0.mention) }
             }
-            Divider().overlay(Amb.border)
+            if !ChatBubbles.enabled { Divider().overlay(Amb.border) }   // UX lab: the composer sits in the reading column
             if let composer, editing == nil {
                 @Bindable var composer = composer
                 ComposerAttachmentStrip(mentions: composer.presentMentions, people: members.value, removeMention: { composer.removeMention($0) },
@@ -1153,7 +1205,7 @@ struct Composer: View {
             #endif
         }
         .disabled(savingRevision)
-        .background(Amb.card)
+        .background(ChatBubbles.enabled ? Amb.background : Amb.card)   // UX lab: no band behind the composer in the reading column
         // Reserve the compose controls and suggestion viewport before the history takes remaining space.
         .layoutPriority(1)
         .task(id: target) {

@@ -81,9 +81,14 @@ struct RepliesRule: View {
 /// Was the web's bordered `.channel-thread-card`.
 struct ConversationCard: ViewModifier {
     func body(content: Content) -> some View {
-        content
-            .padding(.horizontal, 8).padding(.vertical, 6)
-            .overlay(alignment: .bottom) { Rectangle().fill(Amb.border).frame(height: 1).padding(.horizontal, 20) }
+        if ChatBubbles.enabled {
+            // Bubbles keep conversations apart on their own; no hairline.
+            content.padding(.horizontal, 8).padding(.vertical, 4)
+        } else {
+            content
+                .padding(.horizontal, 8).padding(.vertical, 6)
+                .overlay(alignment: .bottom) { Rectangle().fill(Amb.border).frame(height: 1).padding(.horizontal, 20) }
+        }
     }
 }
 
