@@ -278,3 +278,10 @@ Review: https://claude.ai/artifact/S4HCkDSDtn2gJtky9eWTNH
   only (10pt inset on all four sides, `ambHoverTracking()` for hover without a row fill); the gap between senders is
   outside it; the hover toolbar hangs just left of the message instead of covering the name and time. Unsent messages
   use the same geometry. Other people's rows unchanged (their highlight still spans the row, 14pt top / 4pt bottom).
+- 3.12c (`style(chat): roomier sides on your messages' highlight`): 16pt sides, 12pt top and bottom.
+
+### 3.13 Reactions (`style(chat): compact reactions right under the text, with an add button`)
+- After Buzz (`Messages.module.css` `.reactions`): pills 24pt (was 28) with caption counts and tabular figures, 4pt
+  apart, 6pt under the text and aligned with it (yours were right-aligned ~40pt below, inflating the hover area), then
+  a small add-reaction button (same picker as the toolbar). Mac only; iPhone/iPad keep their bar. Picker content
+  shared by both buttons.
