@@ -398,7 +398,7 @@ struct ThreadView: View {
                             DaySeparator(day: .today)
                         }
                         OutboxRow(item: item, people: snapshot.value.people)
-                            .padding(.horizontal, ChatBubbles.enabled ? 8 : 0)   // UX lab: lines up with the thread's bubbles
+                            .padding(.horizontal, ChatBubbles.enabled ? 8 : 0)   // UX lab: lines up with the thread's messages
                     }
                 }
                 if snapshot.loaded && snapshot.value.messages.isEmpty {
@@ -412,6 +412,7 @@ struct ThreadView: View {
             }
             .padding(.bottom, 8)
             .chatColumn()   // UX lab: centred reading column
+            .environment(\.chatThreadLayout, true)
         }
         .defaultScrollAnchor(.bottom, for: .initialOffset)
         .defaultScrollAnchor(.bottom, for: .sizeChanges)
@@ -667,6 +668,7 @@ struct Avatar: View {
 /// An unsent message, shown where it will appear, with its delivery state and the actions that apply to it.
 struct OutboxRow: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.chatThreadLayout) private var threadLayout
     let item: OutboxItem
     let people: PeopleDirectory
 
@@ -682,7 +684,7 @@ struct OutboxRow: View {
     }
 
     var body: some View {
-        if ChatBubbles.enabled { bubble } else { flat }
+        if ChatBubbles.enabled && threadLayout { bubble } else { flat }
     }
 
     /// UX lab (Mac): your unsent message as your bubble on the right, its delivery state below it.

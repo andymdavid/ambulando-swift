@@ -33,6 +33,7 @@ struct MessageCell: View, Equatable {
     /// UX lab: collapse long bodies (channel conversation list).
     var collapsible = false
     @Environment(\.editChatMessage) private var editChatMessage
+    @Environment(\.chatThreadLayout) private var threadLayout
     @State private var confirmDelete = false
     @State private var gettingItDone = false
     @State private var autopilot: URL?
@@ -62,7 +63,8 @@ struct MessageCell: View, Equatable {
 
     var body: some View {
         Group {
-            if ChatBubbles.enabled { bubbleCell } else { flatCell }
+            // UX lab: in a thread on the Mac, your own messages sit on the right in a bubble; everything else is flat.
+            if ChatBubbles.enabled && threadLayout && mine { bubbleCell } else { flatCell }
         }
         .contextMenu { actions }
         .sheet(isPresented: $gettingItDone) { GetItDoneSheet(message: message, workspace: workspace) }

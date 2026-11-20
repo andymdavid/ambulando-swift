@@ -432,7 +432,7 @@ extension View {
 struct FixtureBanner: View {
     @Environment(AppModel.self) private var model
     var body: some View {
-        if let fixture = model.fixture {
+        if let fixture = model.fixture, !UXLabOptions.hideSampleBanner {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Sample data on this \(Device.name). Not connected to a Tower.").font(.amb(.caption).weight(.semibold))
                     .accessibilityIdentifier("fixture.banner")

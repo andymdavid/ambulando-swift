@@ -1,9 +1,10 @@
 import SwiftUI
 import AmbulandoCore
 
-/// UX lab (Mac): messages read as chat, as in Buzz. Each message is a bubble sized to its text, with the name and time
-/// above it and the avatar beside its last line; your own messages sit on the right on the soft accent. Channel and
-/// thread share a centred reading column with real side margins. iPhone and iPad keep the flat rows.
+/// UX lab (Mac): channel and thread share a centred reading column with real side margins. Inside a thread, your own
+/// messages sit on the right in a soft-accent bubble sized to its text (name and time above, avatar beside its last
+/// line); everyone else's stay flat rows, so long agent replies (lists, tables) keep the full width. The channel stays a
+/// list of conversations. iPhone and iPad keep the flat rows.
 enum ChatBubbles {
     static var enabled: Bool {
         #if os(macOS)
@@ -14,13 +15,27 @@ enum ChatBubbles {
     }
 }
 
+/// UX lab switches for the Test app.
+enum UXLabOptions {
+    /// Hides the sample-data banner, to judge layouts without it: launch with `-UXHideSampleBanner YES` (or set it
+    /// with `defaults write`). Ignored while the app's Mac checks run, which find their window by the banner.
+    static let hideSampleBanner = UserDefaults.standard.bool(forKey: "UXHideSampleBanner")
+        && !ProcessInfo.processInfo.arguments.contains { $0.hasPrefix("-AmbulandoMac") }
+}
+
 private struct ChatBubbleFitKey: EnvironmentKey { static let defaultValue = false }
+private struct ChatThreadLayoutKey: EnvironmentKey { static let defaultValue = false }
 
 extension EnvironmentValues {
     /// Inside a bubble, message text is only as wide as it needs to be (the bubble sets the maximum).
     var chatBubbleFit: Bool {
         get { self[ChatBubbleFitKey.self] }
         set { self[ChatBubbleFitKey.self] = newValue }
+    }
+    /// Messages inside a thread (chat), as opposed to a channel's list of conversations.
+    var chatThreadLayout: Bool {
+        get { self[ChatThreadLayoutKey.self] }
+        set { self[ChatThreadLayoutKey.self] = newValue }
     }
 }
 

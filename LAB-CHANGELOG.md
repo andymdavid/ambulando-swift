@@ -207,3 +207,12 @@ Review: https://claude.ai/artifact/S4HCkDSDtn2gJtky9eWTNH
   reply must render"). The Deck-composed quick-view scenario now fails later, at "native menu must open and perform
   FD Ref" after 12 synced replies. Likely cause, not verified: the harness clicks the first message's menu, which
   taller bubble rows scroll out of view.
+
+### 3.5b Bubbles only for your own thread messages (`style(chat): bubbles only for your own messages in a thread`)
+- User feedback: the channel list had become chat, and bubbles round everything (long agent replies, tables) don't
+  work. Kept: the centred column and your messages on the right.
+- New `chatThreadLayout` environment (set by `ThreadView`): `MessageCell` uses the bubble only for your own messages
+  in a thread; everything else is the flat row. `OutboxRow` likewise. Channel conversations are flat blocks with the
+  hairline again (`ConversationCard` restored), inside the column.
+- `UXLabOptions.hideSampleBanner`: launch the Test app with `-UXHideSampleBanner YES` (or `defaults write`) to hide the
+  sample-data banner. Ignored while `-AmbulandoMac*` checks run (they find the window by the banner).
