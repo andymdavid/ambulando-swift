@@ -90,7 +90,6 @@ struct OwnMessageRow: View {
     var reactions: AnyView?
     /// The hover toolbar, pinned to the message block's top-left corner.
     var controls: AnyView?
-    @Environment(\.ambRowHovered) private var hovered
 
     /// Padding around the message block, so its highlight hugs the message. The sides get more than the top and bottom,
     /// which already carry the text's line spacing; this reads as even.
@@ -144,8 +143,7 @@ struct OwnMessageRow: View {
                 PersonAvatar(person: sender)
             }
             }
-            .padding(.horizontal, Self.insetH).padding(.vertical, Self.insetV)
-            .background(hovered ? Amb.hoverFill : .clear, in: RoundedRectangle(cornerRadius: Amb.radiusPanel, style: .continuous))
+            .messageHighlight(continued: continued)
         }
         // The space between senders sits outside the highlight.
         .padding(.top, continued ? 0 : ChatLayout.senderGap - Self.insetV)
@@ -276,5 +274,22 @@ private struct HoverTracking: ViewModifier {
             .environment(\.ambRowHovered, hovered)
             .environment(\.ambInHoverRow, true)
             .onHover { hovered = $0 }
+    }
+}
+
+extension View {
+    /// UX lab: a thread message's block: even insets (more at the sides, which carry no line spacing), tighter for a
+    /// continued message in a same-sender run, and a hover highlight that hugs it. Needs `ambHoverTracking()` above.
+    func messageHighlight(continued: Bool) -> some View { modifier(MessageHighlight(continued: continued)) }
+}
+
+private struct MessageHighlight: ViewModifier {
+    let continued: Bool
+    @Environment(\.ambRowHovered) private var hovered
+    func body(content: Content) -> some View {
+        content
+            .environment(\.chatTextFits, true)
+            .padding(.horizontal, OwnMessageRow.insetH).padding(.vertical, continued ? 4 : OwnMessageRow.insetV)
+            .background(hovered ? Amb.hoverFill : .clear, in: RoundedRectangle(cornerRadius: Amb.radiusPanel, style: .continuous))
     }
 }

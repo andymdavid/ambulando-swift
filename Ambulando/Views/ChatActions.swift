@@ -61,8 +61,10 @@ struct MessageCell: View, Equatable {
 
     var body: some View {
         Group {
-            // UX lab: in a thread on the Mac, your own messages sit on the right.
-            if ChatLayout.mac && threadLayout && mine && !inherited { ownCell } else { flatCell }
+            // UX lab: in a thread on the Mac, your own messages sit on the right; others' get the same hugging highlight.
+            if ChatLayout.mac && threadLayout && mine && !inherited { ownCell }
+            else if ChatLayout.mac && threadLayout && route == nil { threadCell }
+            else { flatCell }
         }
         .contextMenu { actions }
         .sheet(isPresented: $gettingItDone) { GetItDoneSheet(message: message, workspace: workspace) }
@@ -87,6 +89,35 @@ struct MessageCell: View, Equatable {
             }
         }
         .ambHoverTracking()   // the message block draws its own highlight, sized to the message
+    }
+
+    /// UX lab (Mac): someone else's message in a thread. The highlight hugs the message with the same insets as yours;
+    /// the gap between senders sits outside it; the toolbar stays at the row's top right.
+    private var threadCell: some View {
+        let showsReactions = model.identity.npub != nil && !message.deleted && !inherited && !reactions.isEmpty
+        return VStack(alignment: .leading, spacing: 0) {
+            if inherited {
+                Text("Inherited context · read only").font(.amb(.caption2)).foregroundStyle(Amb.mutedForeground)
+                    .padding(.leading, 60).padding(.top, 6)
+            }
+            VStack(alignment: .leading, spacing: 6) {
+                MessageRow(message: message, people: people, bodyOverride: pendingEdit?.isPending == true ? pendingEdit?.string("body") : nil,
+                           workspace: workspace, continued: continued, bare: true)
+                    .opacity(pendingDelete?.isPending == true ? 0.45 : 1)
+                if showsReactions {
+                    ReactionBar(reactions: reactions, me: model.identity.npub, quickActions: false) { toggle($0) }
+                        .padding(.leading, 44)
+                }
+            }
+            .messageHighlight(continued: continued)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .overlay(alignment: .topTrailing) { messageControls }
+            ForEach(writes.filter { [.messageEdit, .messageDelete].contains($0.kind) }) { item in
+                WriteStatusLine(item: item, label: item.kind == .messageEdit ? "Edit" : "Delete").padding(.leading, 60).padding(.trailing, 16).padding(.bottom, 6)
+            }
+        }
+        .padding(.top, continued ? 0 : ChatLayout.senderGap - OwnMessageRow.insetV)
+        .ambHoverTracking()
     }
 
     private var flatCell: some View {

@@ -584,6 +584,8 @@ struct MessageRow: View {
     var continued = false
     /// UX lab: long bodies collapse to a few lines with "Show more" (channel conversation list).
     var collapsible = false
+    /// UX lab: no padding of its own (the caller's message highlight provides it).
+    var bare = false
     @Environment(\.chatThreadLayout) private var threadLayout
 
     /// Resolved from the store with the snapshot: workspace name, Tower's label, public profile, else the short npub.
@@ -635,11 +637,11 @@ struct MessageRow: View {
                     }
                 }
             }
-            Spacer(minLength: 0)
+            if !bare { Spacer(minLength: 0) }   // UX lab: a bare row hugs its text
         }
         #if os(macOS)
         // UX lab: flat rows with Linear-like density on the Mac (was 24/14 inside a card); continued lines sit tight.
-        .padding(.horizontal, 12).padding(.top, continued ? 0 : (threadLayout ? ChatLayout.senderGap : 8)).padding(.bottom, 4)   // UX lab: more air between senders in a thread
+        .padding(.horizontal, bare ? 0 : 12).padding(.top, bare || continued ? 0 : 8).padding(.bottom, bare ? 0 : 4)
         #else
         .padding(.horizontal, 16).padding(.vertical, 8)
         #endif
