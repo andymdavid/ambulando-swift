@@ -36,6 +36,16 @@ struct MessageCell: View, Equatable {
     @State private var autopilot: URL?
     @Environment(\.openURL) private var openURL
 
+    /// UX lab: this conversation is the one open in the Mac thread panel (shown selected in the channel).
+    private var isOpenInPanel: Bool {
+        #if os(macOS)
+        guard route != nil, let open = model.focusedThread?.threadId, let thread = message.threadId else { return false }
+        return open.lowercased() == thread.lowercased()
+        #else
+        false
+        #endif
+    }
+
     private var writes: [WriteItem] { extras.writes[message.id] ?? [] }
     private var distinctTitle: String? {
         guard let threadTitle else { return nil }
@@ -102,6 +112,7 @@ struct MessageCell: View, Equatable {
                 WriteStatusLine(item: item, label: item.kind == .messageEdit ? "Edit" : "Delete").padding(.leading, 60).padding(.trailing, 16).padding(.bottom, 6)
             }
         }
+        .background(isOpenInPanel ? Amb.selectedFill : Color.clear, in: RoundedRectangle(cornerRadius: Amb.radiusPanel, style: .continuous))
         .ambHoverRow(radius: Amb.radiusPanel)
         .contextMenu { actions }
         .sheet(isPresented: $gettingItDone) { GetItDoneSheet(message: message, workspace: workspace) }

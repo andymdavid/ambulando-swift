@@ -169,3 +169,13 @@ Review: https://claude.ai/artifact/S4HCkDSDtn2gJtky9eWTNH
   file and @ tools in a row inside the bottom edge (28pt, regular weight); 28pt send button (accent when sendable).
   iPhone/iPad layout unchanged (keyboard handling). Same component for channel and thread replies.
 - Verified with `-AmbulandoMacThreadRegression` (presses `composer.send`; fails only at the known later step).
+
+### 3.3 Thread side panel (`style(chat): threads in a side panel on the Mac`)
+- `ThreadFocusPresenter` (Mac): an open thread is a `MacThreadSidePanel` — a trailing safe-area inset (the shell
+  keeps its own layout and narrows) with a draggable hairline (340–760pt, stored as `ux.threadPanelWidth`, clamped to
+  45% of the window). Full screen overlays the shell. Composing a new thread is still modal. Panel isn't `.isModal`.
+- The conversation open in the panel is shown selected in the channel (`MessageCell.isOpenInPanel`).
+- Found by `-AmbulandoMacThreadRegression`: wrapping the shell in an HStack clipped the section bar; an unclamped
+  fixed-width panel caused an AppKit constraint loop when the window shrank. Both fixed; harness back to the known
+  environmental failure.
+- Known: the section tab bar clips ("To…") when the panel narrows the window — shell work (Phase 4).

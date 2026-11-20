@@ -161,6 +161,7 @@ private struct ThreadFocusPresenter: ViewModifier {
 
     func body(content: Content) -> some View {
         let focused = model.focusedThread != nil || model.composingThread
+        let composingOnly = model.composingThread && model.focusedThread == nil
         #if os(iOS)
         content
             .background(BackgroundAccessibility(hidden: focused))
@@ -185,16 +186,13 @@ private struct ThreadFocusPresenter: ViewModifier {
                     .overlay(alignment: .bottom) { Divider() }
                 }
             }
-            .environment(\.behindModal, focused)
-            // The app behind stays exactly as it is, only out of reach: no clicks, keyboard or VoiceOver.
-            .allowsHitTesting(!focused)
-            .accessibilityHidden(focused)
-            .overlay {
-                // `focused` also includes composingThread: use the actual thread to choose the panel.
-                // Otherwise + disables the shell but renders an empty ThreadFocusContainer, trapping input.
-                if model.focusedThread != nil { ThreadFocusContainer() }
-                else if model.composingThread { NewThreadContainer() }
-            }
+            // UX lab: an open thread is a side panel (below), so the app stays usable beside it. Only composing a new
+            // thread is still modal: the app behind stays as it is, out of reach (no clicks, keyboard or VoiceOver).
+            .environment(\.behindModal, composingOnly)
+            .allowsHitTesting(!composingOnly)
+            .accessibilityHidden(composingOnly)
+            .overlay { if composingOnly { NewThreadContainer() } }
+            .modifier(MacThreadSidePanel())
             .modifier(ThreadFocusLifecycle())
         #endif
     }
@@ -293,6 +291,61 @@ private struct ThreadFocusContainer: View {
     }
 }
 
+#if os(macOS)
+/// UX lab: on the Mac an open thread sits in a resizable panel on the right of the window, as in Slack and Linear, so
+/// the channel stays visible and usable beside it. "Full screen" in its header widens it to the whole window.
+private struct MacThreadSidePanel: ViewModifier {
+    @Environment(AppModel.self) private var model
+    @State private var expanded = false
+    @AppStorage("ux.threadPanelWidth") private var width = 460.0
+    @State private var dragStart: Double?
+
+    func body(content: Content) -> some View {
+        let open = model.focusedThread != nil
+        // The panel is an inset on the window's trailing edge: the shell keeps its own layout (title bar, section bar,
+        // sidebar) and simply gets narrower. Expanded, the panel covers the shell. Its width never exceeds 45% of the
+        // window, so a small window can't ask AppKit for more room than it has.
+        content
+            .onGeometryChange(for: CGFloat.self, of: { $0.size.width }) { windowWidth = $0 }
+            .safeAreaInset(edge: .trailing, spacing: 0) {
+                if let focus = model.focusedThread, !expanded {
+                    HStack(spacing: 0) {
+                        resizeEdge
+                        panel(focus).frame(width: panelWidth)
+                    }
+                }
+            }
+            .overlay {
+                if let focus = model.focusedThread, expanded { panel(focus) }
+            }
+            .onChange(of: open) { _, isOpen in if !isOpen { expanded = false } }
+    }
+
+    @State private var windowWidth: CGFloat = 1200
+    private var panelWidth: CGFloat { max(300, min(CGFloat(width), windowWidth * 0.45)) }
+
+    private func panel(_ focus: ThreadFocus) -> some View {
+        ThreadFocusPanel(focus: focus, expanded: $expanded, modal: false)
+            .id((model.selectedWorkspaceBoundary?.id ?? "unbound") + ":" + focus.id)
+            .environment(\.openURL, OpenURLAction { model.browser.handleLink($0) })
+    }
+
+    /// A hairline that can be dragged to resize the panel (340–760pt).
+    private var resizeEdge: some View {
+        Rectangle().fill(Amb.border).frame(width: 1)
+            .overlay { Color.clear.frame(width: 8).contentShape(Rectangle()).onHover { inside in
+                if inside { NSCursor.resizeLeftRight.push() } else { NSCursor.pop() }
+            }
+            .gesture(DragGesture(minimumDistance: 1).onChanged { value in
+                let start = dragStart ?? width
+                dragStart = start
+                width = min(max(start - value.translation.width, 340), 760)
+            }.onEnded { _ in dragStart = nil }) }
+            .accessibilityHidden(true)
+    }
+}
+#endif
+
 /// The card (or, expanded, the whole window) both desktop modals share: this thread view and the new thread composer.
 struct ModalCard<Content: View>: View {
     let expanded: Bool
@@ -357,6 +410,8 @@ private struct ThreadFocusPanel: View {
     @Environment(AppModel.self) private var model
     let focus: ThreadFocus
     @Binding var expanded: Bool
+    /// UX lab: false for the Mac side panel, which sits beside the app rather than over it.
+    var modal = true
     @State private var title = ""
     @State private var menu: ThreadMenuContext?
 
@@ -396,7 +451,7 @@ private struct ThreadFocusPanel: View {
         .onAppear { UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil) }
         #endif
         .accessibilityElement(children: .contain)
-        .accessibilityAddTraits(.isModal)
+        .accessibilityAddTraits(modal ? .isModal : [])
         .accessibilityIdentifier("thread.focus")
     }
 

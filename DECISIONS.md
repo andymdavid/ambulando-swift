@@ -64,6 +64,9 @@ Goal: Linear-level polish for the Mac app without changing what the product does
   all, and the whole block is already the way in.
 - **Reactions only when they exist.** The always-on 👍 and + under every message moved into a small hover toolbar
   with the ••• menu. Pills have no outline; yours use the soft accent.
+- **Threads open in a side panel on the Mac**, not a modal. The channel stays visible and usable beside it, the
+  open conversation is highlighted, the panel is resizable (and never wider than 45% of the window), and "full
+  screen" widens it. Starting a new thread stays modal. iPhone and iPad unchanged.
 - **One composer box.** Text on top, tools along the bottom edge inside it, send at the bottom right (Mac). The old
   layout had tools outside the box and a tall grey field. iPhone keeps its keyboard-aware layout.
 - **No Messages / Threads switch.** Upstream already dropped it; almost every post starts a thread. A light header
