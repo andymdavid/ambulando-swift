@@ -425,7 +425,7 @@ private struct ChannelRow: View {
 }
 
 /// Workspace switcher at the bottom of the sidebar (sol `.sidebar-workspace-footer`).
-private struct WorkspaceFooter: View {
+struct WorkspaceFooter: View {
     @Environment(AppModel.self) private var model
     @State private var showManagement = false
     @State private var showSelection = false
@@ -441,7 +441,11 @@ private struct WorkspaceFooter: View {
                     .id("\(connection.id):\(workspace.id)")
             }
         }
+        #if os(macOS)
+        .padding(Amb.SidebarLayout.gutter)   // UX lab: the sidebar row's gutter (MacSidebarContent)
+        #else
         .padding(12)
+        #endif
         .overlay(alignment: .top) { Rectangle().fill(Amb.border).frame(height: 0.5) }
     }
 
@@ -487,6 +491,19 @@ private struct WorkspaceFooter: View {
     #endif
 
     private var footerLabel: some View {
+        #if os(macOS)
+        // UX lab: a sidebar row (same height, inset and hover), not a filled card.
+        HStack(spacing: Amb.SidebarLayout.iconGap) {
+            WorkspaceAvatar(label: model.selectedWorkspace?.label ?? "A", size: 20)
+            Text(model.selectedWorkspace?.label ?? "Ambulando").font(.amb(.subheadline).weight(.medium)).foregroundStyle(Amb.foreground).lineLimit(1)
+            Spacer(minLength: 0)
+            Image(systemName: "chevron.up.chevron.down").font(.amb(.caption2).weight(.semibold)).foregroundStyle(Amb.mutedForeground)
+        }
+        .padding(.horizontal, Amb.SidebarLayout.inset - 2)
+        .frame(minHeight: Amb.SidebarLayout.rowHeight + 4)
+        .contentShape(Rectangle())
+        .ambHover()
+        #else
         HStack(spacing: 10) {
             WorkspaceAvatar(label: model.selectedWorkspace?.label ?? "A", size: 32)
             VStack(alignment: .leading, spacing: 1) {
@@ -498,6 +515,7 @@ private struct WorkspaceFooter: View {
         }
         .padding(10)
         .background(Amb.hoverFill, in: RoundedRectangle(cornerRadius: Amb.radiusControl))
+        #endif
     }
 }
 

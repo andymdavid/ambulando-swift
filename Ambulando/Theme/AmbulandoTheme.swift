@@ -85,6 +85,19 @@ enum Amb {
     }
     /// Row heights (Mac): compact list/sidebar row and standard control.
     static let rowHeight: CGFloat = 32
+    /// The Mac sidebar's one row (UX lab `SidebarRow`): every item shares these, so heights, insets and the width of
+    /// hover and selection never differ between Home, scopes, channels and conversations.
+    enum SidebarLayout {
+        static let rowHeight: CGFloat = 28
+        static let gutter: CGFloat = 8          // sidebar edge to row
+        static let inset: CGFloat = 8           // row edge to its mark
+        static let iconSlot: CGFloat = 16
+        static let iconGap: CGFloat = 8
+        static let indent: CGFloat = 24         // a nested row's mark lines up with its parent's label
+        static let trailingSlot: CGFloat = 20   // unread dot, working, or the hover action
+        static let rowSpacing: CGFloat = 1
+        static let sectionGap: CGFloat = 18
+    }
 
     // Computed so they follow the app text size (`TextScale`).
     @MainActor static var editorial: Font { .amb(.title2, design: .serif).weight(.semibold) }   // --font-editorial

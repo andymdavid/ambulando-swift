@@ -13,8 +13,8 @@ extension View {
     /// A hover fill behind this view, in a rounded rectangle.
     func ambHover(radius: CGFloat = Amb.radiusControl) -> some View { modifier(AmbHoverFill(radius: radius)) }
 
-    /// Tracks hover over a whole row (fill included) and tells `ambRevealOnHover` descendants.
-    func ambHoverRow(radius: CGFloat = Amb.radiusControl) -> some View { modifier(AmbHoverRow(radius: radius)) }
+    /// Tracks hover over a whole row (fill included, unless `fill` is false) and tells `ambRevealOnHover` descendants.
+    func ambHoverRow(radius: CGFloat = Amb.radiusControl, fill: Bool = true) -> some View { modifier(AmbHoverRow(radius: radius, fill: fill)) }
 
     /// Shows this view only while its `ambHoverRow` is hovered (Mac only). SwiftUI drops a fully transparent view from
     /// accessibility, so it stays visible whenever VoiceOver or Full Keyboard Access is on, and while the app's Mac
@@ -40,12 +40,13 @@ private struct AmbHoverFill: ViewModifier {
 
 private struct AmbHoverRow: ViewModifier {
     let radius: CGFloat
+    var fill = true
     @State private var hovered = false
     func body(content: Content) -> some View {
         content
             .environment(\.ambRowHovered, hovered)
             .environment(\.ambInHoverRow, true)
-            .background(hovered ? Amb.hoverFill : Color.clear, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
+            .background(hovered && fill ? Amb.hoverFill : Color.clear, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
             .onHover { hovered = $0 }
     }
 }
