@@ -125,12 +125,48 @@ struct AvatarShape: Shape {
     }
 }
 
-/// A message's time in its byline.
+/// A message's time in its byline. UX lab: relative while it's recent ("now", "12m ago", "3h ago"); older messages
+/// show the clock time in a thread (a day label sits above them) or the day elsewhere ("Yesterday", "Tue", "17 Nov").
+/// The exact date and time is in the tooltip. Today's labels refresh every minute.
 struct MessageTimeText: View {
     let iso: String
     /// In a thread, a day label sits above each day's messages.
     var thread = false
+
     var body: some View {
-        Text(ChatTime.label(iso)).font(.amb(.caption)).foregroundStyle(Amb.mutedForeground)
+        if let date = ChatTime.date(iso) {
+            Group {
+                if Calendar.current.isDateInToday(date) {
+                    TimelineView(.everyMinute) { context in label(RelativeTime.label(date, now: context.date, thread: thread)) }
+                } else {
+                    label(RelativeTime.label(date, now: Date(), thread: thread))
+                }
+            }
+            .ambTooltip(date.formatted(date: .complete, time: .shortened))
+        } else {
+            label(ChatTime.label(iso))
+        }
+    }
+
+    private func label(_ text: String) -> some View {
+        Text(text).font(.amb(.caption)).foregroundStyle(Amb.mutedForeground).monospacedDigit()
+    }
+}
+
+enum RelativeTime {
+    static func label(_ date: Date, now: Date, thread: Bool) -> String {
+        let calendar = Calendar.current
+        let seconds = now.timeIntervalSince(date)
+        if calendar.isDate(date, inSameDayAs: now) && seconds >= -60 {
+            if seconds < 60 { return "now" }
+            if seconds < 3600 { return "\(Int(seconds / 60))m ago" }
+            return "\(Int(seconds / 3600))h ago"
+        }
+        if thread { return date.formatted(date: .omitted, time: .shortened) }
+        if calendar.isDateInYesterday(date) { return "Yesterday" }
+        let days = calendar.dateComponents([.day], from: calendar.startOfDay(for: date), to: calendar.startOfDay(for: now)).day ?? 0
+        if days > 0 && days < 7 { return date.formatted(.dateTime.weekday(.abbreviated)) }
+        if calendar.component(.year, from: date) == calendar.component(.year, from: now) { return date.formatted(.dateTime.day().month(.abbreviated)) }
+        return date.formatted(.dateTime.day().month(.abbreviated).year())
     }
 }

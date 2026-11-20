@@ -595,7 +595,7 @@ struct MessageRow: View {
                     HStack(alignment: .firstTextBaseline, spacing: 6) {
                         Text(sender.name).font(.amb(.subheadline).weight(.semibold)).foregroundStyle(Amb.foreground).lineLimit(1)
                             .accessibilityIdentifier("message.author")
-                        Text(display.time).font(.amb(.caption)).foregroundStyle(Amb.mutedForeground)
+                        MessageTimeText(iso: message.createdAt, thread: threadLayout)   // UX lab: relative times
                     }
                     .richLayoutFrame("metadata")
                 }
