@@ -407,3 +407,11 @@ Proposal and agreed decisions: https://claude.ai/artifact/NbziWbiYt1WhQc56PqrXtt
 - The Chat tab at Home or a scope (upstream `ChannelDirectoryView`) listed every DM under one "DMs" scope. On the
   Mac its sections now follow the sidebar: Solo, the scopes, then Direct messages (`directorySections`). iPhone and
   iPad unchanged. The screen's design itself is untouched (still upstream's list).
+
+## Phase 5: Content screens (`ux/content`, off `lab` after Phase 4)
+
+Proposal and mockups: https://claude.ai/artifact/PFA62Dm9pTnTHMNrHH686J. Mac only unless noted.
+
+### 5.0 Start tab for captures (`test(fixture): -UXStartTab opens the sample app on a tab`)
+- `-UXStartTab deck|chat|tasks|docs|files` opens the Test app on that tab (sample data only; ignored outside the
+  fixture). For screen captures without clicking.
