@@ -402,3 +402,8 @@ Proposal and agreed decisions: https://claude.ai/artifact/NbziWbiYt1WhQc56PqrXtt
   "Solo / Rick" or "Direct messages / Ana Lima", with tabs.
 - Thread header back to the standard "← Rick" (the Solo-only header and Esc rule from 4.3 removed: there is a list
   to go back to now). + New chat unchanged.
+
+### 4.9 Chat channel list grouped like the sidebar (`style(chat): channel list as Solo, scopes, Direct messages`)
+- The Chat tab at Home or a scope (upstream `ChannelDirectoryView`) listed every DM under one "DMs" scope. On the
+  Mac its sections now follow the sidebar: Solo, the scopes, then Direct messages (`directorySections`). iPhone and
+  iPad unchanged. The screen's design itself is untouched (still upstream's list).

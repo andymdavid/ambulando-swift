@@ -538,7 +538,7 @@ struct ChannelDirectoryView: View {
     var body: some View {
         let nav = model.navigation.value
         let context = model.context
-        let groups = nav.groups.filter { context.scopeId == nil || $0.id == context.scopeId }
+        let groups = directorySections(nav.groups.filter { context.scopeId == nil || $0.id == context.scopeId })
         List {
             ForEach(groups) { group in
                 Section {
@@ -546,7 +546,7 @@ struct ChannelDirectoryView: View {
                         Text("No channels visible").font(.amb(.footnote)).foregroundStyle(Amb.faint)
                     }
                     ForEach(group.channels) { channel in
-                        Button { model.selectContext(WorkContext(scopeId: group.id, channelId: channel.id)) } label: {
+                        Button { model.selectContext(WorkContext(scopeId: channel.scopeId, channelId: channel.id)) } label: {
                             HStack(spacing: 8) {
                                 Image(systemName: SidebarNavigation.isDirectMessageChannel(channel) ? "person.2" : "number")
                                     .foregroundStyle(Amb.mutedForeground).frame(width: 20)
@@ -563,7 +563,7 @@ struct ChannelDirectoryView: View {
                         .accessibilityIdentifier("channel.\(nav.label(channel))")
                     }
                 } header: {
-                    Text(group.scope.name).font(.amb(.subheadline).weight(.semibold)).foregroundStyle(Amb.itemHeading).textCase(nil)
+                    Text(group.title).font(.amb(.subheadline).weight(.semibold)).foregroundStyle(Amb.itemHeading).textCase(nil)
                 }
             }
         }
@@ -585,6 +585,30 @@ struct ChannelDirectoryView: View {
             }
         }
         .refreshable { model.refresh(force: true) }
+    }
+}
+
+/// One heading and its channels in the Chat channel list.
+struct ChannelDirectorySection: Identifiable {
+    let id: String
+    let title: String
+    let channels: [ChannelRecord]
+}
+
+extension ChannelDirectoryView {
+    /// The sidebar's groups as the list's sections. UX lab (Mac): the same order and names as the Mac sidebar: Solo
+    /// (DMs with only agents), the scopes, then Direct messages (with people), instead of one "DMs" scope.
+    func directorySections(_ groups: [SidebarGroup]) -> [ChannelDirectorySection] {
+        #if os(macOS)
+        let direct = groups.filter(\.isDirectMessages).flatMap(\.channels)
+        let solo = direct.filter { SoloDirectory.shared.contains($0.id) }
+        let people = direct.filter { !SoloDirectory.shared.contains($0.id) }
+        return (solo.isEmpty ? [] : [ChannelDirectorySection(id: "solo", title: "Solo", channels: solo)])
+            + groups.filter { !$0.isDirectMessages }.map { ChannelDirectorySection(id: $0.id, title: $0.scope.name, channels: $0.channels) }
+            + (people.isEmpty ? [] : [ChannelDirectorySection(id: "direct", title: "Direct messages", channels: people)])
+        #else
+        return groups.map { ChannelDirectorySection(id: $0.id, title: $0.scope.name, channels: $0.channels) }
+        #endif
     }
 }
 
