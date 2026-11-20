@@ -369,12 +369,14 @@ struct ThreadFocusPanel: View {
     var inline = false
     @State private var title = ""
     @State private var menu: ThreadMenuContext?
+    @State private var participants = ThreadParticipants()
 
     var body: some View {
         VStack(spacing: 0) {
             header
             Divider()
             content.frame(maxWidth: .infinity, maxHeight: .infinity)
+                .environment(\.chatInModal, !inline)   // UX lab: narrower column with wider margins in the quick-view
         }
         .background(Amb.background)
         .onPreferenceChange(ThreadTitleKey.self) {
@@ -389,6 +391,7 @@ struct ThreadFocusPanel: View {
             #endif
             menu = $0
         }
+        .onPreferenceChange(ThreadParticipantsKey.self) { participants = $0 }
         // A mentioned conversation replaces this one; any other record closes the thread and opens in its section.
         .environment(\.openMention, OpenMentionAction { [model] kind, id in
             if kind.lowercased() == "thread" {
@@ -435,6 +438,10 @@ struct ThreadFocusPanel: View {
                 .accessibilityAddTraits(.isHeader)
                 .accessibilityIdentifier("thread.focus.title")
             Spacer(minLength: 8)
+            // UX lab: who's in this conversation (Buzz-style facepile).
+            if participants.threadId == focus.threadId && !participants.people.isEmpty {
+                ParticipantFacepile(participants: participants).padding(.trailing, 4)
+            }
             if let workspace = model.selectedWorkspace, workspace.id == focus.workspaceId {
                 PinToggleButton(type: .thread, id: focus.threadId, workspace: workspace)
                 // Only this thread's own targets: a context left by another thread is never acted on.

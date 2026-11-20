@@ -52,6 +52,8 @@ struct ThreadSnapshot: Sendable, Equatable {
     var lastDay: ChatDay?
     /// What the focused view's header menu acts on (the whole stored history, not just this page).
     var menu: ThreadMenuContext?
+    /// UX lab: who has written in the thread, for its header.
+    var participants = ThreadParticipants()
 }
 
 /// Reactions and unsent edits/deletes for the messages on screen.
@@ -466,6 +468,7 @@ struct ThreadView: View {
         .inlineTitle()
         .preference(key: ThreadTitleKey.self, value: snapshot.value.title)
         .preference(key: ThreadMenuKey.self, value: snapshot.value.menu)
+        .preference(key: ThreadParticipantsKey.self, value: snapshot.value.participants)
         .task(id: windowAnchor) { start() }
         .onAppear {
             if let thread = target.threadId {
@@ -535,7 +538,8 @@ struct ThreadView: View {
                                   people: try await directory, archived: record?.archived ?? false, extras: extras,
                                   dayStarts: days.starts, lastDay: days.last,
                                   menu: ThreadMenuContext(threadId: threadId, channelId: target.channelId, record: record, history: history,
-                                                          historyComplete: history.count < historyLimit))
+                                                          historyComplete: history.count < historyLimit),
+                                  participants: ThreadParticipants(threadId: threadId, messages: history, directory: try await directory))
         }
     }
 }

@@ -47,14 +47,33 @@ extension View {
         if fit { self } else { frame(maxWidth: readable, alignment: .leading).frame(maxWidth: .infinity, alignment: .leading) }
     }
 
-    /// The centred reading column for a channel or thread (and its composer). Mac only.
-    @ViewBuilder func chatColumn() -> some View {
+    /// The centred reading column for a channel or thread (and its composer). Mac only. In the quick-view modal the
+    /// column is narrower with wider margins, so a thread there doesn't run edge to edge.
+    func chatColumn() -> some View { modifier(ChatColumn()) }
+}
+
+private struct ChatColumnModalKey: EnvironmentKey { static let defaultValue = false }
+
+extension EnvironmentValues {
+    /// The chat is shown in the quick-view modal.
+    var chatInModal: Bool {
+        get { self[ChatColumnModalKey.self] }
+        set { self[ChatColumnModalKey.self] = newValue }
+    }
+}
+
+private struct ChatColumn: ViewModifier {
+    @Environment(\.chatInModal) private var modal
+    func body(content: Content) -> some View {
         #if os(macOS)
-        padding(.horizontal, Amb.Space.xl)
-            .frame(maxWidth: Amb.chatColumnWidth * TextScale.shared.factor + 2 * Amb.Space.xl)
+        let margin = modal ? 48 : Amb.Space.xl
+        let width = (modal ? 720 : Amb.chatColumnWidth) * TextScale.shared.factor
+        content
+            .padding(.horizontal, margin)
+            .frame(maxWidth: width + 2 * margin)
             .frame(maxWidth: .infinity)
         #else
-        self
+        content
         #endif
     }
 }
@@ -168,5 +187,61 @@ enum RelativeTime {
         if days > 0 && days < 7 { return date.formatted(.dateTime.weekday(.abbreviated)) }
         if calendar.component(.year, from: date) == calendar.component(.year, from: now) { return date.formatted(.dateTime.day().month(.abbreviated)) }
         return date.formatted(.dateTime.day().month(.abbreviated).year())
+    }
+}
+
+/// The people and agents who have written in a thread, most recent first, for its header.
+struct ThreadParticipants: Sendable, Equatable {
+    var threadId = ""
+    var people: [PersonDisplay] = []
+    var agents: Set<String> = []
+}
+
+struct ThreadParticipantsKey: PreferenceKey {
+    static let defaultValue = ThreadParticipants()
+    static func reduce(value: inout ThreadParticipants, nextValue: () -> ThreadParticipants) {
+        let next = nextValue()
+        if !next.people.isEmpty { value = next }
+    }
+}
+
+extension ThreadParticipants {
+    /// Distinct senders of the thread's messages, most recent first.
+    init(threadId: String, messages: [MessageRecord], directory: PeopleDirectory) {
+        var seen = Set<String>(), list: [PersonDisplay] = []
+        for message in messages.reversed() {
+            guard let npub = message.senderNpub, seen.insert(npub).inserted else { continue }
+            list.append(directory.person(npub, senderLabel: message.senderLabel))
+        }
+        self.init(threadId: threadId, people: list, agents: Set(list.map(\.npub).filter(directory.isAgent)))
+    }
+}
+
+/// Overlapping avatars of a thread's participants (up to three, the most recent on top) and "+N" for the rest.
+/// The names are in the tooltip and for VoiceOver.
+struct ParticipantFacepile: View {
+    let participants: ThreadParticipants
+    var size: CGFloat = 22
+
+    var body: some View {
+        let shown = Array(participants.people.prefix(3))
+        let more = participants.people.count - shown.count
+        HStack(spacing: 4) {
+            HStack(spacing: -6) {
+                ForEach(Array(shown.enumerated().reversed()), id: \.element.npub) { index, person in
+                    let agent = participants.agents.contains(person.npub)
+                    PersonAvatar(person: person, size: size, agent: agent)
+                        .overlay(AvatarShape(agent: agent, size: size).stroke(Amb.background, lineWidth: 2))
+                        .zIndex(Double(shown.count - index))
+                }
+            }
+            if more > 0 {
+                Text("+\(more)").font(.amb(.caption).weight(.medium)).foregroundStyle(Amb.mutedForeground).monospacedDigit()
+            }
+        }
+        .ambTooltip(participants.people.map(\.name).joined(separator: ", "))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Participants: " + participants.people.map(\.name).joined(separator: ", "))
+        .accessibilityIdentifier("thread.participants")
     }
 }
