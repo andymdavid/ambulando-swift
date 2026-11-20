@@ -270,3 +270,6 @@ Review: https://claude.ai/artifact/S4HCkDSDtn2gJtky9eWTNH
 ### 3.12 Own-message spacing (`style(chat): more room around your own messages' name and avatar`)
 - Your messages (sent and unsent): 14pt between text and avatar (was 10), 9pt between name line and text (was 6),
   8pt between time and name (was 6). Other people's rows unchanged.
+- 3.11b (`fix(deck): Channel menu is the only channel control on the Mac`): the plain rows kept for the check showed
+  under the menu as a second picker (user: "why do we have both"). Removed; the hint reads "Choose a channel to start
+  your thread." `MacDeckComposerCheck` now picks #general through the real menu (`menuAction`); passes.
