@@ -243,3 +243,18 @@ Review: https://claude.ai/artifact/S4HCkDSDtn2gJtky9eWTNH
 - iPhone/iPad keep the message feed. Channel refreshes on view-state and agent changes too. iOS builds; regression
   harness at the known failure.
 - Not carried over to the list: the per-message actions on a conversation's first message (they're in the thread).
+
+### 3.9 New thread in place; list alignment (`style(chat): new thread opens in place; list titles line up with filters`)
+- User: New thread opened a modal rather than a thread screen. `InlineNewThread` replaces the list like an open thread
+  (← #channel, "New thread", a hint, the composer; Esc goes back), shows your pending message, then opens the new
+  thread in place once Tower creates it (same sent-message watch as the Deck composer). Deck's modal is unchanged.
+- Row titles, briefs and hairlines start on the filter labels' line; the unread dot hangs in the margin.
+
+### 3.10 Thread participants; quick-view margins (`style(chat): thread participants in the header; roomier quick-view column`)
+- `ParticipantFacepile` on the thread row (inline and quick-view), before the pin: up to three avatars, most recent on
+  top, agents as rounded squares, "+N", names in the tooltip. From the thread's stored history (`ThreadParticipants`
+  in `ThreadSnapshot`, passed up by preference). Placed on the thread row, not the scope/channel row: they belong to
+  the conversation.
+- `chatColumn()` is now a modifier: in the quick-view modal (`chatInModal`) the column is 720pt with 48pt margins
+  (was the full 820pt + 24pt, which ran nearly edge to edge in a smaller window).
+- Harness at the known failure.

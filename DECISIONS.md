@@ -71,7 +71,10 @@ Goal: Linear-level polish for the Mac app without changing what the product does
 - **Relative times** ("12m ago") for today; older messages show the clock time under a day label.
 - **A channel is a list of conversations, newest activity first** (direction A of the mockups): title, brief, who's
   involved, latest reply or which agent is working, unread. Keeps the live app's Threads-view ordering, which upstream
-  dropped; deliberately not chat, so "New thread" is a button, not a composer under the list.
+  dropped; deliberately not chat, so "New thread" is a button, not a composer under the list. It opens in place like
+  a thread, not as a modal: a new conversation is a destination, the same as an existing one.
+- **Participants sit on the thread's header row** (facepile, Buzz-style); the row above names the place, this one
+  the conversation.
 - **A thread opens in place of its channel's list** (Mac, Chat section), like opening an email: one composer at a
   time, ← back (or Esc) to the list. The channel's composer starts new threads ("Start a thread in #…"). A side
   panel was tried and dropped: two chats side by side, and it floated over other sections.
