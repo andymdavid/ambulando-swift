@@ -2,8 +2,8 @@ import AmbulandoCore
 import SwiftUI
 
 /// UX lab (Phase 4): the Mac sidebar, laid out with the one `SidebarRow`. Same content and behaviour as the shared
-/// `SidebarContent` (which the iPhone drawer and iPad keep): Home, Unread & Active, each scope with its channels, Manage
-/// scopes and the workspace switcher. Several enabled workspaces still use the shared stacked navigation.
+/// `SidebarContent` (which the iPhone drawer and iPad keep): Home, then Scopes (each scope with its channels; Manage
+/// scopes on the heading) and the workspace switcher. Several enabled workspaces still use the shared stacked navigation.
 struct MacSidebarContent: View {
     @Environment(AppModel.self) private var model
     @State private var sheet: SidebarSheet?
@@ -63,16 +63,13 @@ struct MacSidebarContent: View {
 
         NavigationStatus(state: model.navigationState, compact: true).padding(.top, 6)
 
-        let unread = SidebarNavigation.unreadChannels(nav.groups, unreadChannelIds: nav.unread)
-        if !unread.isEmpty {
-            SidebarSectionHeading(text: "Unread & Active")
-            // Own identities: the same channel is also listed under its scope below.
-            ForEach(unread.map { ("unread:" + $0.id, $0) }, id: \.0) { _, channel in
-                channelRow(channel, nav: nav, unread: true, level: 0, identifierPrefix: "sidebar.unread")
+        // Lab decision: no "Unread & Active" on the Mac; unread channels show in place (bold and dot).
+        SidebarSectionHeading(text: "Scopes") {
+            if !nav.groups.isEmpty {
+                SidebarRowButton(systemImage: "slider.horizontal.3", accessibilityLabel: "Manage scopes",
+                                 identifier: "sidebar.manageScopes") { sheet = .manageScopes }
             }
         }
-
-        SidebarSectionHeading(text: "Scopes")
         ForEach(nav.groups) { group in
             let collapsed = nav.collapsed.contains(group.id)
             let selected = context.scopeId == group.id && context.channelId == nil
@@ -96,19 +93,17 @@ struct MacSidebarContent: View {
                         .padding(.leading, Amb.SidebarLayout.inset + Amb.SidebarLayout.indent).frame(minHeight: Amb.SidebarLayout.rowHeight)
                 }
                 ForEach(group.channels) { channel in
-                    channelRow(channel, nav: nav, unread: nav.unread.contains(channel.id), level: 1, identifierPrefix: "sidebar.channel")
+                    channelRow(channel, nav: nav, unread: nav.unread.contains(channel.id), level: 1)
                 }
             }
         }
-        if !nav.groups.isEmpty { manageScopesRow(label: "Manage scopes").padding(.top, Amb.SidebarLayout.sectionGap / 2) }
     }
 
     /// One channel (sol `.sidebar-scope-channel-row`), with Channel settings as its hover action.
-    private func channelRow(_ channel: ChannelRecord, nav: NavigationSnapshot, unread: Bool, level: Int, identifierPrefix: String) -> some View {
+    private func channelRow(_ channel: ChannelRecord, nav: NavigationSnapshot, unread: Bool, level: Int) -> some View {
         let label = nav.label(channel)
-        let settings = identifierPrefix == "sidebar.channel"
         return SidebarRow(label: label, selected: model.context.channelId == channel.id, unread: unread, level: level,
-                          hasRowAction: settings, identifier: "\(identifierPrefix).\(label)",
+                          identifier: "sidebar.channel.\(label)",
                           action: { model.chooseInSidebar(WorkContext(scopeId: channel.scopeId, channelId: channel.id)) }) {
             if SidebarNavigation.isDirectMessageChannel(channel) {
                 Image(systemName: "person.2").font(.amb(.caption)).foregroundStyle(Amb.mutedForeground)
@@ -118,11 +113,9 @@ struct MacSidebarContent: View {
         } status: {
             if unread { SidebarUnreadDot() }
         } rowAction: {
-            // sol `.sidebar-scope-channel-menu`: Channel settings on every channel (not repeated on Unread & Active).
-            if settings {
-                SidebarRowButton(systemImage: "ellipsis", accessibilityLabel: "Channel settings for \(label)",
-                                 identifier: "sidebar.channelSettings.\(label)") { sheet = .channelSettings(channel) }
-            }
+            // sol `.sidebar-scope-channel-menu`: Channel settings on every channel.
+            SidebarRowButton(systemImage: "ellipsis", accessibilityLabel: "Channel settings for \(label)",
+                             identifier: "sidebar.channelSettings.\(label)") { sheet = .channelSettings(channel) }
         }
     }
 

@@ -337,3 +337,8 @@ Proposal and agreed decisions: https://claude.ai/artifact/NbziWbiYt1WhQc56PqrXtt
 - Several enabled workspaces still use the shared stacked navigation; restyle later if needed.
 - Checks: thread harness at the known failure (one earlier run hit the known intermittent AppKit crash in the resize
   steps; the rerun passed them). `MacDeckComposerCheck` passes. iOS builds. No iPad check needed (Mac-only views).
+
+### 4.2 Sections (`style(sidebar): no Unread & Active; Manage scopes on the Scopes heading`)
+- "Unread & Active" removed from the Mac sidebar: unread channels already show bold with a dot in place.
+- "Manage scopes" is the Scopes heading's hover action (slider icon, tooltip, same identifier) instead of a row
+  under the last scope. Several workspaces keep the row.
