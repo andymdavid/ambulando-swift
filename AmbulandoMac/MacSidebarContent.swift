@@ -77,7 +77,8 @@ struct MacSidebarContent: View {
                                  identifier: "sidebar.manageScopes") { sheet = .manageScopes }
             }
         }
-        ForEach(nav.groups) { group in
+        // DM scopes aren't team spaces: their conversations are under Solo (agents) or Direct messages (people).
+        ForEach(nav.groups.filter { !$0.isDirectMessages }) { group in
             let collapsed = nav.collapsed.contains(group.id)
             let selected = context.scopeId == group.id && context.channelId == nil
             let canCreate = ManagementPermissions.canCreateChannel(in: group.scope, membership: model.membership)
@@ -103,6 +104,26 @@ struct MacSidebarContent: View {
                 ForEach(group.channels.filter { !solo.value.channelIds.contains($0.id) }) { channel in
                     channelRow(channel, nav: nav, unread: nav.unread.contains(channel.id), level: 1)
                 }
+            }
+        }
+
+        directMessages(nav)
+    }
+
+    /// Direct messages with people (DMs with only agents are under Solo), at the bottom of the sidebar.
+    @ViewBuilder private func directMessages(_ nav: NavigationSnapshot) -> some View {
+        let dmScope = nav.groups.first(where: \.isDirectMessages)?.scope
+        let channels = nav.groups.flatMap(\.channels)
+            .filter { SidebarNavigation.isDirectMessageChannel($0) && !solo.value.channelIds.contains($0.id) }
+        if dmScope != nil || !channels.isEmpty {
+            SidebarSectionHeading(text: "Direct messages") {
+                if let dmScope, ManagementPermissions.canCreateChannel(in: dmScope, membership: model.membership) {
+                    SidebarRowButton(systemImage: "plus", accessibilityLabel: "New direct message",
+                                     identifier: "sidebar.addChannel.\(dmScope.name)") { sheet = .newChannel(dmScope) }
+                }
+            }
+            ForEach(channels) { channel in
+                channelRow(channel, nav: nav, unread: nav.unread.contains(channel.id), level: 0)
             }
         }
     }
@@ -131,7 +152,10 @@ struct MacSidebarContent: View {
         return SidebarRow(label: label, selected: model.context.channelId == channel.id, unread: unread, level: level,
                           identifier: "sidebar.channel.\(label)",
                           action: { model.chooseInSidebar(WorkContext(scopeId: channel.scopeId, channelId: channel.id)) }) {
-            if SidebarNavigation.isDirectMessageChannel(channel) {
+            let others = SidebarNavigation.participants(channel).filter { $0 != model.connection?.signerNpub }
+            if SidebarNavigation.isDirectMessageChannel(channel), others.count == 1, let person = others.first {
+                PersonAvatar(person: solo.value.people.person(person), size: Amb.SidebarLayout.iconSlot, agent: solo.value.people.isAgent(person))
+            } else if SidebarNavigation.isDirectMessageChannel(channel) {
                 Image(systemName: "person.2").font(.amb(.caption)).foregroundStyle(Amb.mutedForeground)
             } else {
                 Text("#").font(.amb(.subheadline)).foregroundStyle(Amb.mutedForeground)

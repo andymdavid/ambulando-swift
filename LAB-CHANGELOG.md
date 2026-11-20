@@ -358,3 +358,8 @@ Proposal and agreed decisions: https://claude.ai/artifact/NbziWbiYt1WhQc56PqrXtt
   app's checks keep their layout.
 - Not yet: the DM's conversation list still shows if the thread is closed some other way; unread counts on Solo depend
   on view states, which the sample data doesn't set.
+
+### 4.4 Direct messages (`feat(sidebar): Direct messages section for DMs with people`)
+- DM scopes no longer appear under Scopes. DMs with people (and group DMs) are a "Direct messages" section at the
+  bottom: the person's avatar, unread dot, ••• Channel settings; + on the heading starts one (upstream's New message
+  sheet). DMs with only agents stay under Solo.
