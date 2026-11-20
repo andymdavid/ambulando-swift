@@ -243,14 +243,28 @@ struct ChannelView: View {
                     .environment(\.openURL, OpenURLAction { model.browser.handleLink($0) })
             }
         }
-        .onAppear { InlineThreadHosts.shared.add(target.channelId) }
+        .onAppear {
+            InlineThreadHosts.shared.add(target.channelId)
+            restoreInlineThread()
+        }
         .onDisappear {
             InlineThreadHosts.shared.remove(target.channelId)
             if model.focusedThread?.channelId?.lowercased() == target.channelId.lowercased() { model.focusedThread = nil }
         }
-        // The thread belongs to this channel: leaving Chat closes it rather than carrying it over other sections.
+        // The thread belongs to this channel: leaving Chat closes it rather than carrying it over other sections, and
+        // coming back reopens it.
         .onChange(of: model.mode) { _, mode in
             if mode != .chat, model.focusedThread?.channelId?.lowercased() == target.channelId.lowercased() { model.focusedThread = nil }
+            if mode == .chat { restoreInlineThread() }
+        }
+        // Remember the open thread (closing it yourself forgets it: `ThreadFocusPanel.close`). When another channel's
+        // thread closes as you switch here, reopen this channel's.
+        .onChange(of: model.focusedThread) { _, focus in
+            if let focus, focus.channelId?.lowercased() == target.channelId.lowercased() {
+                InlineThreadMemory.shared.remember(focus, channel: target.channelId)
+            } else if focus == nil {
+                restoreInlineThread()
+            }
         }
         #endif
         .modifier(PushedFixtureLabel(enabled: pushed))
@@ -259,6 +273,15 @@ struct ChannelView: View {
         .onAppear { model.openChannel(target.channelId, in: workspace) }
         .onChange(of: model.identity) { _, state in if case .unlocked = state { model.openChannel(target.channelId, in: workspace) } }
     }
+
+    #if os(macOS)
+    /// UX lab: reopen the thread this channel had open when you left it.
+    private func restoreInlineThread() {
+        guard model.mode == .chat, model.focusedThread == nil, let focus = InlineThreadMemory.shared.recall(channel: target.channelId),
+              focus.workspaceId == workspace.id else { return }
+        model.focusedThread = focus
+    }
+    #endif
 
     /// The channel label from the sidebar (direct messages are named after their participants).
     private var title: String {
@@ -358,6 +381,7 @@ struct ChannelView: View {
 
 struct ThreadView: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.threadInPanel) private var threadInPanel
     let target: ChatTarget
     let workspace: WorkspaceRecord
     let store: LocalStore
@@ -463,7 +487,7 @@ struct ThreadView: View {
         })
         .tabletReadingWidth()
         .background(Amb.background)
-        .fixtureLabel()
+        .modifier(PushedFixtureLabel(enabled: !threadInPanel))   // UX lab: no second banner inside the Mac thread panel
         .navigationTitle(snapshot.value.title.isEmpty ? "Thread" : snapshot.value.title)
         .inlineTitle()
         .preference(key: ThreadTitleKey.self, value: snapshot.value.title)

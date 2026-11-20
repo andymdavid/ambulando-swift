@@ -377,6 +377,7 @@ struct ThreadFocusPanel: View {
             Divider()
             content.frame(maxWidth: .infinity, maxHeight: .infinity)
                 .environment(\.chatInModal, !inline)   // UX lab: narrower column with wider margins in the quick-view
+                .environment(\.threadInPanel, true)    // UX lab: the window already shows the sample-data banner
         }
         .background(Amb.background)
         .onPreferenceChange(ThreadTitleKey.self) {
@@ -505,7 +506,13 @@ struct ThreadFocusPanel: View {
         }
     }
 
-    private func close() { model.focusedThread = nil }
+    private func close() {
+        // UX lab: closing a thread yourself means the channel shouldn't reopen it next time.
+        #if os(macOS)
+        if inline, let channel = focus.channelId { InlineThreadMemory.shared.remember(nil, channel: channel) }
+        #endif
+        model.focusedThread = nil
+    }
 
     /// "#general", or the direct message's name.
     private var channelLabel: String {

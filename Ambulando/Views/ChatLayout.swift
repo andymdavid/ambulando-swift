@@ -53,12 +53,19 @@ extension View {
 }
 
 private struct ChatColumnModalKey: EnvironmentKey { static let defaultValue = false }
+private struct ThreadInPanelKey: EnvironmentKey { static let defaultValue = false }
 
 extension EnvironmentValues {
     /// The chat is shown in the quick-view modal.
     var chatInModal: Bool {
         get { self[ChatColumnModalKey.self] }
         set { self[ChatColumnModalKey.self] = newValue }
+    }
+    /// The thread is shown in the Mac thread panel (inline or quick-view), over a shell that already shows the
+    /// sample-data banner.
+    var threadInPanel: Bool {
+        get { self[ThreadInPanelKey.self] }
+        set { self[ThreadInPanelKey.self] = newValue }
     }
 }
 
@@ -292,4 +299,14 @@ private struct MessageHighlight: ViewModifier {
             .padding(.horizontal, OwnMessageRow.insetH).padding(.vertical, continued ? 4 : OwnMessageRow.insetV)
             .background(hovered ? Amb.hoverFill : .clear, in: RoundedRectangle(cornerRadius: Amb.radiusPanel, style: .continuous))
     }
+}
+
+/// UX lab (Mac): the thread each channel had open in place when you left Chat or switched channel, so coming back
+/// reopens it. Closing a thread yourself (back, Esc) forgets it. In memory only (not across launches).
+@MainActor
+final class InlineThreadMemory {
+    static let shared = InlineThreadMemory()
+    private var open: [String: ThreadFocus] = [:]
+    func remember(_ focus: ThreadFocus?, channel: String) { open[channel.lowercased()] = focus }
+    func recall(channel: String) -> ThreadFocus? { open[channel.lowercased()] }
 }
