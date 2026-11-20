@@ -86,6 +86,9 @@ struct BrowserView: View {
                         .accessibilityLabel("Cancel download")
                 }
                 menu
+                #if os(macOS)
+                MacRefreshDataButton()
+                #endif
             }
         }
         .font(.amb(.body).weight(.medium))
@@ -159,7 +162,13 @@ struct BrowserView: View {
         if tab.loading {
             Button { tab.webView.stopLoading() } label: { Label("Stop loading", systemImage: "xmark") }
         } else if let url = tab.url, !tab.isBlank {
-            Button { browser.reload(url, in: tab) } label: { Label("Reload", systemImage: "arrow.clockwise") }
+            Button { browser.reload(url, in: tab) } label: {
+                #if os(macOS)
+                Label("Reload web page", systemImage: "arrow.clockwise")
+                #else
+                Label("Reload", systemImage: "arrow.clockwise")
+                #endif
+            }
         }
         if let url = tab.url, url.scheme == "https" {
             if browser.favourites.favourite(for: url) != nil {

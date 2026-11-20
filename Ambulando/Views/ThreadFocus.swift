@@ -457,6 +457,9 @@ struct ThreadFocusPanel: View {
             if participants.threadId == focus.threadId && !participants.people.isEmpty {
                 ParticipantFacepile(participants: participants).padding(.trailing, 4)
             }
+            #if os(macOS)
+            MacRefreshDataButton()
+            #endif
             if let workspace = model.selectedWorkspace, workspace.id == focus.workspaceId {
                 PinToggleButton(type: .thread, id: focus.threadId, workspace: workspace)
                 // Only this thread's own targets: a context left by another thread is never acted on.

@@ -74,6 +74,10 @@ enum MacThreadRegression {
         }
         defer { heartbeat.cancel() }
         do {
+            if ProcessInfo.processInfo.arguments.contains("-AmbulandoMacDataRefreshCheck") {
+                try await dataRefreshCheck(window, model: model)
+                fflush(stdout); exit(0)
+            }
             if ProcessInfo.processInfo.arguments.contains("-AmbulandoMacChatLinkCheck") {
                 try await chatLinkCheck(model: model)
                 print("PASS: Mac chat links and browser presentation"); fflush(stdout); exit(0)

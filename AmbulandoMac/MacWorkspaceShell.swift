@@ -34,6 +34,7 @@ struct MacWorkspaceShell: View {
                         .accessibilityLabel(ui.sidebarVisible ? "Hide Sidebar" : "Show Sidebar")
                         .accessibilityIdentifier("sidebar.toggle")
                     MacSectionBar(sections: AppMode.visible(agents: showAgents, context: showContext))
+                    MacRefreshDataButton()
                 }.background(Amb.background)
                 Divider()
                 sectionView(model.mode)

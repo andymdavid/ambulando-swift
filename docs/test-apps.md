@@ -44,3 +44,15 @@ and cancellation of a pending request on an actual WebKit document commit. Add
 its client-side Settings route (requires network). Approval answers are driven by the
 harness through the production broker. It never publishes to a relay and does not validate Pete's real lists,
 Keychain identity, a hosted GitWorkshop deployment, or installation on his MacBook.
+
+The Mac Refresh data regression uses the isolated Test executable (no installer):
+
+```sh
+'build/test-mac/Build/Products/Test/Ambulando Test.app/Contents/MacOS/Ambulando Test' \
+  -AmbulandoMacThreadRegression -AmbulandoMacDataRefreshCheck
+```
+
+It exercises native refresh in an open conversation, duplicate requests, retained typed text and pending attachments,
+remote replies and continuing live updates, error/retry, workspace selection and access-generation changes, minimum
+window widths, browser form/history preservation and unsaved document editing. It uses synthetic fixture data;
+it does not establish real-account acceptance on a user's Mac.
