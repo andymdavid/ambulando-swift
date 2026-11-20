@@ -15,6 +15,8 @@ struct ChannelConversationList: View {
     let threadTitles: [String: String]
     let loaded: Bool
     @State private var filter: Filter = .all
+    /// Writing a new thread, in place of the list.
+    @State private var composing = false
 
     enum Filter: String, CaseIterable { case all = "All", unread = "Unread", mine = "Mine" }
 
@@ -29,6 +31,14 @@ struct ChannelConversationList: View {
     }
 
     var body: some View {
+        if composing, let store = model.store {
+            InlineNewThread(target: target, workspace: workspace, store: store, people: people) { composing = false }
+        } else {
+            list
+        }
+    }
+
+    private var list: some View {
         VStack(spacing: 0) {
             header.chatColumn()
             ScrollView {
@@ -60,7 +70,7 @@ struct ChannelConversationList: View {
                 }
             }
             Spacer(minLength: 0)
-            Button { model.composingThread = true } label: { Label("New thread", systemImage: "square.and.pencil") }
+            Button { composing = true } label: { Label("New thread", systemImage: "square.and.pencil") }
                 .buttonStyle(.ambPrimary)
                 .accessibilityIdentifier("channel.newThread")
         }
@@ -104,14 +114,12 @@ private struct ConversationRow: View {
             }
         }
         .ambHoverRow(radius: Amb.radiusPanel)
-        .overlay(alignment: .top) { Rectangle().fill(Amb.border).frame(height: 1).padding(.leading, 34).padding(.trailing, 12) }
+        .overlay(alignment: .top) { Rectangle().fill(Amb.border).frame(height: 1).padding(.leading, 20).padding(.trailing, 12) }
         .accessibilityIdentifier("channel.conversation")
     }
 
     private var content: some View {
         HStack(alignment: .top, spacing: Amb.Space.m) {
-            Circle().fill(conversation.unread ? Amb.unread : .clear).frame(width: 7, height: 7).padding(.top, 7)
-                .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)
                     .font(.amb(.body).weight(conversation.unread ? .semibold : .medium)).foregroundStyle(Amb.foreground).lineLimit(1)
@@ -127,7 +135,12 @@ private struct ConversationRow: View {
                 }
             }
         }
-        .padding(.horizontal, 12).padding(.vertical, 14)
+        .padding(.leading, 20).padding(.trailing, 12).padding(.vertical, 14)
+        // Titles line up with the filters above; the unread dot sits in the margin.
+        .overlay(alignment: .topLeading) {
+            Circle().fill(conversation.unread ? Amb.unread : .clear).frame(width: 7, height: 7)
+                .padding(.leading, 7).padding(.top, 21).accessibilityHidden(true)
+        }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(accessibilityText)
     }
@@ -239,5 +252,87 @@ enum ConversationPreview {
             return l.trimmingCharacters(in: .whitespaces)
         }
         return lines.filter { !$0.isEmpty }.joined(separator: " ")
+    }
+}
+
+/// Starting a conversation, in place of the channel's list (like an open thread): back to the list, a title, a short
+/// hint and the composer. Once Tower has made the thread, it opens here.
+private struct InlineNewThread: View {
+    @Environment(AppModel.self) private var model
+    let target: ChatTarget
+    let workspace: WorkspaceRecord
+    let store: LocalStore
+    let people: PeopleDirectory
+    let close: () -> Void
+    @State private var requestId: String?
+    @State private var opened = false
+    @State private var sent = LiveQuery<MessageRecord?>(initial: nil)
+    @State private var pending = LiveQuery<OutboxItem?>(initial: nil)
+
+    private var channelLabel: String {
+        model.navigation.value.channel(target.channelId).map { "#" + model.navigation.value.label($0) } ?? "#channel"
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 12) {
+                Button(action: close) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left").font(.amb(.subheadline).weight(.semibold))
+                        Text(channelLabel).font(.amb(.subheadline))
+                    }
+                    .foregroundStyle(Amb.mutedForeground)
+                }
+                .buttonStyle(.ambGhost)
+                .keyboardShortcut(.cancelAction)
+                .ambTooltip("Back to the channel (Esc)")
+                .accessibilityLabel("Back to \(channelLabel)")
+                .accessibilityIdentifier("channel.newThread.close")
+                Rectangle().fill(Amb.border).frame(width: 1, height: 16).accessibilityHidden(true)
+                Text("New thread").font(.amb(.headline)).foregroundStyle(Amb.foreground).accessibilityAddTraits(.isHeader)
+                Spacer(minLength: 8)
+            }
+            .padding(.leading, 10).padding(.trailing, 6).padding(.vertical, 4)
+            .frame(minHeight: Amb.touchTarget + 8)
+            .background(Amb.card)
+            Divider()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 6) {
+                    if let item = pending.value, requestId != nil {
+                        OutboxRow(item: item, people: people).environment(\.chatThreadLayout, true)
+                    } else {
+                        Text("Start a conversation in \(channelLabel)").font(.amb(.headline)).foregroundStyle(Amb.foreground)
+                        Text("Its first line becomes the title. Mention an agent with @ to bring them in.")
+                            .font(.amb(.footnote)).foregroundStyle(Amb.mutedForeground)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 20).padding(.top, Amb.Space.xl)
+                .chatColumn()
+            }
+            if requestId == nil {
+                Composer(target: target, workspace: workspace, store: store, placeholder: "Write the first message…", onEnqueued: { requestId = $0 })
+                    .chatColumn()
+            }
+        }
+        .background(Amb.background)
+        .task(id: requestId) {
+            guard let requestId else { return }
+            let w = workspace.id, store = store
+            sent.start(store: store, matches: { $0.workspaceId == w && $0.table == .messages }) {
+                try await store.reader.sentMessage(workspaceId: w, clientRequestId: requestId)
+            }
+            pending.start(store: store, matches: { $0.workspaceId == w && $0.table == .outbox }) {
+                try await store.reader.outboxItem(id: requestId)
+            }
+        }
+        .onChange(of: sent.value) { _, message in
+            guard let message, let threadId = message.threadId, !opened else { return }
+            opened = true
+            model.focusThread(ThreadFocus(workspaceId: workspace.id, channelId: message.channelId, threadId: threadId))
+            close()
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("channel.newThread.screen")
     }
 }
