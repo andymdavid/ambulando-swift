@@ -161,7 +161,12 @@ private struct ThreadFocusPresenter: ViewModifier {
 
     func body(content: Content) -> some View {
         let focused = model.focusedThread != nil || model.composingThread
-        let composingOnly = model.composingThread && model.focusedThread == nil
+        #if os(macOS)
+        // UX lab: a thread opened inside its own channel (Chat section) replaces the channel's list there; from anywhere
+        // else it opens as the quick-view modal below.
+        let inline = model.focusedThread.map { InlineThreadHosts.shared.hosts($0, mode: model.mode) } ?? false
+        let modal = (model.focusedThread != nil && !inline) || model.composingThread
+        #endif
         #if os(iOS)
         content
             .background(BackgroundAccessibility(hidden: focused))
@@ -186,13 +191,16 @@ private struct ThreadFocusPresenter: ViewModifier {
                     .overlay(alignment: .bottom) { Divider() }
                 }
             }
-            // UX lab: an open thread is a side panel (below), so the app stays usable beside it. Only composing a new
-            // thread is still modal: the app behind stays as it is, out of reach (no clicks, keyboard or VoiceOver).
-            .environment(\.behindModal, composingOnly)
-            .allowsHitTesting(!composingOnly)
-            .accessibilityHidden(composingOnly)
-            .overlay { if composingOnly { NewThreadContainer() } }
-            .modifier(MacThreadSidePanel())
+            .environment(\.behindModal, modal)
+            // The app behind stays exactly as it is, only out of reach: no clicks, keyboard or VoiceOver.
+            .allowsHitTesting(!modal)
+            .accessibilityHidden(modal)
+            .overlay {
+                // `focused` also includes composingThread: use the actual thread to choose the panel.
+                // Otherwise + disables the shell but renders an empty ThreadFocusContainer, trapping input.
+                if model.focusedThread != nil && !inline { ThreadFocusContainer() }
+                else if model.composingThread { NewThreadContainer() }
+            }
             .modifier(ThreadFocusLifecycle())
         #endif
     }
@@ -291,61 +299,6 @@ private struct ThreadFocusContainer: View {
     }
 }
 
-#if os(macOS)
-/// UX lab: on the Mac an open thread sits in a resizable panel on the right of the window, as in Slack and Linear, so
-/// the channel stays visible and usable beside it. "Full screen" in its header widens it to the whole window.
-private struct MacThreadSidePanel: ViewModifier {
-    @Environment(AppModel.self) private var model
-    @State private var expanded = false
-    @AppStorage("ux.threadPanelWidth") private var width = 460.0
-    @State private var dragStart: Double?
-
-    func body(content: Content) -> some View {
-        let open = model.focusedThread != nil
-        // The panel is an inset on the window's trailing edge: the shell keeps its own layout (title bar, section bar,
-        // sidebar) and simply gets narrower. Expanded, the panel covers the shell. Its width never exceeds 45% of the
-        // window, so a small window can't ask AppKit for more room than it has.
-        content
-            .onGeometryChange(for: CGFloat.self, of: { $0.size.width }) { windowWidth = $0 }
-            .safeAreaInset(edge: .trailing, spacing: 0) {
-                if let focus = model.focusedThread, !expanded {
-                    HStack(spacing: 0) {
-                        resizeEdge
-                        panel(focus).frame(width: panelWidth)
-                    }
-                }
-            }
-            .overlay {
-                if let focus = model.focusedThread, expanded { panel(focus) }
-            }
-            .onChange(of: open) { _, isOpen in if !isOpen { expanded = false } }
-    }
-
-    @State private var windowWidth: CGFloat = 1200
-    private var panelWidth: CGFloat { max(300, min(CGFloat(width), windowWidth * 0.45)) }
-
-    private func panel(_ focus: ThreadFocus) -> some View {
-        ThreadFocusPanel(focus: focus, expanded: $expanded, modal: false)
-            .id((model.selectedWorkspaceBoundary?.id ?? "unbound") + ":" + focus.id)
-            .environment(\.openURL, OpenURLAction { model.browser.handleLink($0) })
-    }
-
-    /// A hairline that can be dragged to resize the panel (340–760pt).
-    private var resizeEdge: some View {
-        Rectangle().fill(Amb.border).frame(width: 1)
-            .overlay { Color.clear.frame(width: 8).contentShape(Rectangle()).onHover { inside in
-                if inside { NSCursor.resizeLeftRight.push() } else { NSCursor.pop() }
-            }
-            .gesture(DragGesture(minimumDistance: 1).onChanged { value in
-                let start = dragStart ?? width
-                dragStart = start
-                width = min(max(start - value.translation.width, 340), 760)
-            }.onEnded { _ in dragStart = nil }) }
-            .accessibilityHidden(true)
-    }
-}
-#endif
-
 /// The card (or, expanded, the whole window) both desktop modals share: this thread view and the new thread composer.
 struct ModalCard<Content: View>: View {
     let expanded: Bool
@@ -406,12 +359,14 @@ private struct ThreadFocusBackdrop: View {
 
 /// Header (title, pin, thread menu, full screen, close) above the shared `ThreadView`, whose composer keeps mentions,
 /// paste, uploads, the outbox and the stored draft exactly as in a pushed thread.
-private struct ThreadFocusPanel: View {
+struct ThreadFocusPanel: View {
     @Environment(AppModel.self) private var model
     let focus: ThreadFocus
     @Binding var expanded: Bool
-    /// UX lab: false for the Mac side panel, which sits beside the app rather than over it.
+    /// UX lab: false when shown inline in its channel (it replaces the channel's list there).
     var modal = true
+    /// UX lab: shown in place of its channel's thread list: a back arrow instead of close, no full-screen toggle.
+    var inline = false
     @State private var title = ""
     @State private var menu: ThreadMenuContext?
 
@@ -457,7 +412,24 @@ private struct ThreadFocusPanel: View {
 
     private var header: some View {
         HStack(spacing: 12) {
-            Image(systemName: "bubble.left.and.bubble.right").foregroundStyle(Amb.mutedForeground).accessibilityHidden(true)
+            if inline {
+                // UX lab: back to the channel's thread list (Esc too).
+                Button(action: close) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left").font(.amb(.subheadline).weight(.semibold))
+                        Text(channelLabel).font(.amb(.subheadline))
+                    }
+                    .foregroundStyle(Amb.mutedForeground)
+                }
+                .buttonStyle(.ambGhost)
+                .keyboardShortcut(.cancelAction)
+                .ambTooltip("Back to the channel (Esc)")
+                .accessibilityLabel("Back to \(channelLabel)")
+                .accessibilityIdentifier("thread.focus.close")
+                Rectangle().fill(Amb.border).frame(width: 1, height: 16).accessibilityHidden(true)
+            } else {
+                Image(systemName: "bubble.left.and.bubble.right").foregroundStyle(Amb.mutedForeground).accessibilityHidden(true)
+            }
             Text(title.isEmpty ? "Thread" : title)
                 .font(.amb(.headline)).foregroundStyle(Amb.foreground).lineLimit(1)
                 .accessibilityAddTraits(.isHeader)
@@ -469,6 +441,19 @@ private struct ThreadFocusPanel: View {
                 ThreadHeaderMenu(context: menu?.threadId == focus.threadId ? menu : nil, workspace: workspace, title: title)
             }
             #if os(macOS)
+            if !inline, let channelId = focus.channelId, let channel = model.navigation.value.channel(channelId) {
+                // UX lab: from outside Chat, open the thread in place in its channel.
+                Button("Open in \(channelLabel)") {
+                    // Choosing the channel goes to Deck and closes the thread, so pick it, switch to Chat, then reopen.
+                    let thread = focus
+                    model.chooseInSidebar(WorkContext(scopeId: channel.scopeId, channelId: channel.id))
+                    model.show(.chat)
+                    model.focusThread(thread)
+                }
+                .buttonStyle(.ambGhost)
+                .accessibilityIdentifier("thread.focus.openInChannel")
+            }
+            if !inline {
             Button { expanded.toggle() } label: {
                 Image(systemName: expanded ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right").font(.amb(.body).weight(.semibold))
                     .frame(width: Amb.touchTarget, height: Amb.touchTarget)
@@ -479,7 +464,9 @@ private struct ThreadFocusPanel: View {
             .ambTooltip(expanded ? "Restore size" : "Full screen")
             .accessibilityLabel(expanded ? "Restore size" : "Expand to full screen")
             .accessibilityIdentifier("thread.focus.expand")
+            }
             #endif
+            if !inline {
             Button(action: close) {
                 Image(systemName: "xmark").font(.amb(.body).weight(.semibold))
                     .frame(width: Amb.touchTarget, height: Amb.touchTarget)
@@ -491,8 +478,9 @@ private struct ThreadFocusPanel: View {
             .ambTooltip("Close (Esc)")
             .accessibilityLabel("Close")
             .accessibilityIdentifier("thread.focus.close")
+            }
         }
-        .padding(.leading, 18).padding(.trailing, 6).padding(.vertical, 4)
+        .padding(.leading, inline ? 10 : 18).padding(.trailing, 6).padding(.vertical, 4)
         .background(Amb.card)
     }
 
@@ -511,6 +499,13 @@ private struct ThreadFocusPanel: View {
     }
 
     private func close() { model.focusedThread = nil }
+
+    /// "#general", or the direct message's name.
+    private var channelLabel: String {
+        guard let id = focus.channelId, let channel = model.navigation.value.channel(id) else { return "channel" }
+        let label = model.navigation.value.label(channel)
+        return SidebarNavigation.isDirectMessageChannel(channel) ? label : "#" + label
+    }
 }
 
 /// The web's thread menu (sol `.thread-title-menu`) beside pin, full screen and close: Get it done and Copy message for
@@ -688,3 +683,19 @@ struct RenameThreadSheet: View {
         }
     }
 }
+
+#if os(macOS)
+/// UX lab: the channels currently showing their own threads inline (Mac Chat section). A thread whose channel is
+/// listed here opens in place of that channel's list; anywhere else it opens as the quick-view modal.
+@MainActor
+@Observable
+final class InlineThreadHosts {
+    static let shared = InlineThreadHosts()
+    private(set) var channels: Set<String> = []
+    func add(_ id: String) { channels.insert(id.lowercased()) }
+    func remove(_ id: String) { channels.remove(id.lowercased()) }
+    func hosts(_ focus: ThreadFocus, mode: AppMode) -> Bool {
+        mode == .chat && focus.channelId.map { channels.contains($0.lowercased()) } == true
+    }
+}
+#endif

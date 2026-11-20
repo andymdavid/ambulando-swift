@@ -179,3 +179,14 @@ Review: https://claude.ai/artifact/S4HCkDSDtn2gJtky9eWTNH
   fixed-width panel caused an AppKit constraint loop when the window shrank. Both fixed; harness back to the known
   environmental failure.
 - Known: the section tab bar clips ("To…") when the panel narrows the window — shell work (Phase 4).
+
+### 3.4 Threads in place of the list (`style(chat): threads open in place in their channel`)
+- Replaces 3.3's side panel (user: two chats side by side; panel floated over other sections).
+- Mac: `ChannelView` overlays `ThreadFocusPanel(inline: true)` when the focused thread belongs to it (back chevron
+  with the channel name, Esc, no full-screen toggle); registers itself in `InlineThreadHosts`. `ThreadFocusPresenter`
+  shows the modal only when no channel hosts the thread. Leaving Chat or the channel closes an inline thread.
+- Modal header gains "Open in #channel" (choose channel → Chat → refocus, since choosing a channel goes to Deck and
+  clears the thread).
+- Channel composer placeholder: "Start a thread in #…". Thread replies inset 8pt so hover doesn't touch the edges.
+- Removed `MacThreadSidePanel`. Harness back at the known failure; iOS builds.
+- Next: optional side-by-side (list + thread) toggle; Solo section with the Phase 4 sidebar.

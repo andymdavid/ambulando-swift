@@ -220,6 +220,26 @@ struct ChannelView: View {
         messages
         .tabletReadingWidth()
         .background(Amb.background)
+        #if os(macOS)
+        // UX lab: a thread opened here replaces the list (and its composer) until you go back.
+        .overlay {
+            if let focus = model.focusedThread, InlineThreadHosts.shared.hosts(focus, mode: model.mode),
+               focus.channelId?.lowercased() == target.channelId.lowercased() {
+                ThreadFocusPanel(focus: focus, expanded: .constant(false), modal: false, inline: true)
+                    .id(focus.id)
+                    .environment(\.openURL, OpenURLAction { model.browser.handleLink($0) })
+            }
+        }
+        .onAppear { InlineThreadHosts.shared.add(target.channelId) }
+        .onDisappear {
+            InlineThreadHosts.shared.remove(target.channelId)
+            if model.focusedThread?.channelId?.lowercased() == target.channelId.lowercased() { model.focusedThread = nil }
+        }
+        // The thread belongs to this channel: leaving Chat closes it rather than carrying it over other sections.
+        .onChange(of: model.mode) { _, mode in
+            if mode != .chat, model.focusedThread?.channelId?.lowercased() == target.channelId.lowercased() { model.focusedThread = nil }
+        }
+        #endif
         .modifier(PushedFixtureLabel(enabled: pushed))
         .navigationTitle(title)
         .inlineTitle()
@@ -280,7 +300,7 @@ struct ChannelView: View {
             // A stacked composer (not an inset) so keyboard avoidance shrinks the list itself and the newest
             // message stays visible above the composer.
             Composer(target: target, workspace: workspace, store: store,
-                     placeholder: "Message \(title.trimmingCharacters(in: .whitespaces).isEmpty ? "#channel" : title)", editing: $messageEdit)
+                     placeholder: "Start a thread in \(title.trimmingCharacters(in: .whitespaces).isEmpty ? "#channel" : title)", editing: $messageEdit)
         }
         .environment(\.editChatMessage, { message, body in
             if messageEdit == nil { messageEdit = ChatMessageEdit(message: message, body: body) }
@@ -361,6 +381,7 @@ struct ThreadView: View {
                         // UX lab: replies read as chat (no rule between them; same-sender runs grouped).
                         MessageCell(message: message, people: snapshot.value.people, workspace: workspace, extras: snapshot.value.extras.forMessage(message.id), effectiveThreadId: target.threadId,
                                     continued: continued.contains(message.id)).equatable()
+                            .padding(.horizontal, 8)   // UX lab: hover highlight inset from the pane edges
                         // The root, or the first message of a thread stored without its source id.
                         if (message.isThreadRoot || (index == 0 && snapshot.value.windowStart == 0)) && snapshot.value.order.count > 1 {
                             RepliesRule(count: snapshot.value.order.count - 1)

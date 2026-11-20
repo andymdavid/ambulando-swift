@@ -64,9 +64,14 @@ Goal: Linear-level polish for the Mac app without changing what the product does
   all, and the whole block is already the way in.
 - **Reactions only when they exist.** The always-on 👍 and + under every message moved into a small hover toolbar
   with the ••• menu. Pills have no outline; yours use the soft accent.
-- **Threads open in a side panel on the Mac**, not a modal. The channel stays visible and usable beside it, the
-  open conversation is highlighted, the panel is resizable (and never wider than 45% of the window), and "full
-  screen" widens it. Starting a new thread stays modal. iPhone and iPad unchanged.
+- **A thread opens in place of its channel's list** (Mac, Chat section), like opening an email: one composer at a
+  time, ← back (or Esc) to the list. The channel's composer starts new threads ("Start a thread in #…"). A side
+  panel was tried and dropped: two chats side by side, and it floated over other sections.
+- **From anywhere else, a quick-view modal** with Reply, Full screen and "Open in #channel". Threads belong to their
+  channel: leaving Chat closes an inline thread instead of carrying it over Tasks or Docs.
+- **Structure ahead (Phase 4): Solo, scopes, channels.** A "Solo" space for your private conversations with agents
+  (each conversation its own sidebar item, opening full width), then scopes as groups of team channels, then DMs.
+  Modelled on Buzz's solo vs team channels; "Solo" because it says single player plainly.
 - **One composer box.** Text on top, tools along the bottom edge inside it, send at the bottom right (Mac). The old
   layout had tools outside the box and a tall grey field. iPhone keeps its keyboard-aware layout.
 - **No Messages / Threads switch.** Upstream already dropped it; almost every post starts a thread. A light header
