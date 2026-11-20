@@ -373,3 +373,9 @@ Proposal and agreed decisions: https://claude.ai/artifact/NbziWbiYt1WhQc56PqrXtt
   Deck and the lock; from Toolbox it opens Deck. A direct message opens in Chat (`openConversation`).
 - Toolbox is a sidebar row under Home, since it ignores the place. `ContextBar` draws nothing on the Mac (iPhone and
   iPad unchanged).
+
+### 4.6 Polish to the mockup (`style(sidebar): heading actions shown, one-letter small avatars, scope chevron after the name`)
+- Section heading actions (+, Manage scopes) always shown, quiet, instead of on hover.
+- Avatars at sidebar size (≤18pt) show one letter, larger: "R" not "RI" (`InitialsAvatar`, `WorkspaceAvatar`).
+- Scope rows: a scope mark in front and the fold chevron right after the name (`SidebarRow` group layout); the rest
+  of the row still opens the scope.

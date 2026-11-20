@@ -92,7 +92,8 @@ struct MacSidebarContent: View {
                        hasRowAction: canCreate,
                        accessibilityLabel: "Open \(group.scope.name) home", identifier: "sidebar.scope.\(group.scope.name)",
                        action: { model.choosePlace(WorkContext(scopeId: group.id)) },
-                       leading: { EmptyView() }, status: { EmptyView() }) {
+                       leading: { Image(systemName: "square.stack").font(.amb(.caption)).foregroundStyle(Amb.mutedForeground) },
+                       status: { EmptyView() }) {
                 // sol `.sidebar-scope-add-channel`: shown where the member may create channels in the scope.
                 if canCreate {
                     SidebarRowButton(systemImage: "plus", accessibilityLabel: "Create channel in \(group.scope.name)",

@@ -155,7 +155,9 @@ struct WorkspaceAvatar: View {
     var size: CGFloat = 28
     var body: some View {
         // Neutral monogram (lab palette): avatars are identity, not actions.
-        Text(initials).font(.system(size: size * 0.42, weight: .semibold)).foregroundStyle(Amb.monogramForeground)
+        // UX lab: one letter at sidebar size.
+        Text(size <= 18 ? String(initials.prefix(1)) : initials)
+            .font(.system(size: size * (size <= 18 ? 0.5 : 0.42), weight: .semibold)).foregroundStyle(Amb.monogramForeground)
             .frame(width: size, height: size)
             .background(Amb.monogram, in: RoundedRectangle(cornerRadius: Amb.radiusControl))
             .accessibilityHidden(true)

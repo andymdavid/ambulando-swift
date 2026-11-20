@@ -31,39 +31,42 @@ struct SidebarRow<Leading: View, Status: View, Action: View>: View {
     @ViewBuilder var status: () -> Status
     @ViewBuilder var rowAction: () -> Action
 
+    private func mainLabel(fills: Bool) -> some View {
+        HStack(spacing: L.iconGap) {
+            leading().frame(width: L.iconSlot, height: L.iconSlot)
+            Text(label)
+                .font(.amb(.subheadline).weight(selected ? .medium : unread ? .semibold : weight ?? .regular))
+                .foregroundStyle(selected || unread ? Amb.foreground : Amb.secondaryForeground)
+                .lineLimit(1)
+            if fills { Spacer(minLength: 0) }
+        }
+        .padding(.leading, L.inset + CGFloat(level) * L.indent)
+        .frame(minHeight: L.rowHeight)
+        .contentShape(Rectangle())
+    }
+
     var body: some View {
         HStack(spacing: 0) {
+            Button(action: action) { mainLabel(fills: disclosure == nil) }
+                .buttonStyle(.plain)
+                .accessibilityLabel((accessibilityLabel ?? label) + (unread ? ", unread" : ""))
+                .accessibilityAddTraits(selected ? .isSelected : [])
+                .accessibilityIdentifier(identifier)
             if let disclosure {
+                // A group's chevron sits right after its name; the rest of the row still opens the group.
                 Button(action: disclosure.toggle) {
                     Image(systemName: disclosure.collapsed ? "chevron.right" : "chevron.down")
                         .font(.amb(.caption2).weight(.semibold)).foregroundStyle(Amb.faint)
-                        .frame(width: L.iconSlot, height: L.rowHeight)
-                        .padding(.leading, L.inset + CGFloat(level) * L.indent).padding(.trailing, L.iconGap)
+                        .frame(width: 16, height: L.rowHeight).padding(.leading, 2)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(disclosure.accessibilityLabel)
                 .accessibilityIdentifier(disclosure.identifier)
+                Button(action: action) { Color.clear.frame(maxWidth: .infinity, minHeight: L.rowHeight).contentShape(Rectangle()) }
+                    .buttonStyle(.plain)
+                    .accessibilityHidden(true)
             }
-            Button(action: action) {
-                HStack(spacing: L.iconGap) {
-                    if disclosure == nil {
-                        leading().frame(width: L.iconSlot, height: L.iconSlot)
-                    }
-                    Text(label)
-                        .font(.amb(.subheadline).weight(selected ? .medium : unread ? .semibold : weight ?? .regular))
-                        .foregroundStyle(selected || unread ? Amb.foreground : Amb.secondaryForeground)
-                        .lineLimit(1)
-                    Spacer(minLength: 0)
-                }
-                .padding(.leading, disclosure == nil ? L.inset + CGFloat(level) * L.indent : 0)
-                .frame(minHeight: L.rowHeight)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel((accessibilityLabel ?? label) + (unread ? ", unread" : ""))
-            .accessibilityAddTraits(selected ? .isSelected : [])
-            .accessibilityIdentifier(identifier)
             SidebarRowTrailing(status: status, action: rowAction, hasAction: hasRowAction && Action.self != EmptyView.self)
                 .padding(.trailing, L.inset / 2)
         }
@@ -126,7 +129,7 @@ struct SidebarRowButton: View {
     }
 }
 
-/// A section heading in the sidebar ("Solo", "Scopes"): quiet text, with an optional action shown on hover.
+/// A section heading in the sidebar ("Solo", "Scopes"): quiet text, with an optional action (+) always shown.
 struct SidebarSectionHeading<Action: View>: View {
     let text: String
     @ViewBuilder var action: () -> Action
@@ -136,7 +139,7 @@ struct SidebarSectionHeading<Action: View>: View {
             Text(text).font(.amb(.footnote).weight(.medium)).foregroundStyle(Amb.mutedForeground)
                 .accessibilityAddTraits(.isHeader)
             Spacer(minLength: 0)
-            action().ambRevealOnHover().padding(.trailing, Amb.SidebarLayout.inset / 2)
+            action().padding(.trailing, Amb.SidebarLayout.inset / 2)
         }
         .padding(.leading, Amb.SidebarLayout.inset)
         .frame(minHeight: Amb.SidebarLayout.rowHeight)

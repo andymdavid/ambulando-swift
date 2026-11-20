@@ -178,8 +178,9 @@ struct InitialsAvatar: View {
     var size: CGFloat = 34
     var agent = false
     var body: some View {
-        Text(initials)
-            .font(.system(size: size * 0.38, weight: .semibold))
+        // UX lab: one letter at sidebar size (two are unreadable at 16pt).
+        Text(size <= 18 ? String(initials.prefix(1)) : initials)
+            .font(.system(size: size * (size <= 18 ? 0.5 : 0.38), weight: .semibold))
             .foregroundStyle(Amb.monogramForeground)
             .frame(width: size, height: size)
             .background(Amb.monogram, in: AvatarShape(agent: agent, size: size))
