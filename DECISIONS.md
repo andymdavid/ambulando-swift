@@ -138,6 +138,9 @@ Goal: Linear-level polish for the Mac app without changing what the product does
 
 ## Deferred
 
+- **Chat channel list (Phase 5).** The Chat tab at Home or a scope is still upstream's plain list (full-width rules,
+  chevrons, no activity). Redesign it as an activity-led list like a channel's conversations: latest conversation,
+  who's active, unread, in the reading column. Replaces the list, and with it the doubled line under its first heading.
 - **Flatten the Deck (Phase 5).** Four stacked layers (page, section panel, row card, tiles). Two is enough.
 - **Product direction.** Agents-first onboarding and scopes as business domains (Finance, Sales, Clients…). Out of
   scope for a polish pass.
