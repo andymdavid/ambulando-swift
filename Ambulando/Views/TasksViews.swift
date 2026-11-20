@@ -94,13 +94,29 @@ struct TasksView: View {
                 }
                 .pickerStyle(.segmented).frame(width: 110)
                 .labelsHidden()
+                #if os(macOS)
+                .tint(Amb.selectedFill)   // UX lab: a quiet switch, not the accent
+                #endif
                 .ambTooltip("Show as list or board")
                 .accessibilityIdentifier("tasks.layout")
+                #if os(macOS)
+                Button { creating = true } label: { Label("New task", systemImage: "plus") }
+                    .buttonStyle(.ambPrimary)
+                    .accessibilityIdentifier("tasks.new")
+                #else
                 Button { creating = true } label: { Image(systemName: "plus") }
                     .buttonStyle(.ambIcon)
                     .ambTooltip("New task").accessibilityLabel("New task").accessibilityIdentifier("tasks.new")
+                #endif
             }
-            Group { if board { boardView } else { listView } }
+            Group {
+                #if os(macOS)
+                // UX lab: one-line rows grouped by status (MacTaskList).
+                if board { boardView } else { MacTaskList(workspace: workspace, snapshot: snapshot.value, columns: columns, me: model.identity.npub, setState: setState).overlay { listEmpty } }
+                #else
+                if board { boardView } else { listView }
+                #endif
+            }
             boardFeedback
         }
         .navigationTitle("Tasks")
@@ -178,10 +194,12 @@ struct TasksView: View {
         }
         .groupedList()
         .scrollContentBackground(.hidden)
-        .overlay {
-            if snapshot.loaded && snapshot.value.rows.isEmpty && snapshot.value.creating.isEmpty {
-                EmptyNote(title: "No tasks", systemImage: "checklist", detail: model.isUnlocked ? "Tasks in this scope appear here. Tap + to add one." : "Unlock to load tasks.")
-            }
+        .overlay { listEmpty }
+    }
+
+    @ViewBuilder private var listEmpty: some View {
+        if snapshot.loaded && snapshot.value.rows.isEmpty && snapshot.value.creating.isEmpty {
+            EmptyNote(title: "No tasks", systemImage: "checklist", detail: model.isUnlocked ? "Tasks in this scope appear here. Tap + to add one." : "Unlock to load tasks.")
         }
     }
 

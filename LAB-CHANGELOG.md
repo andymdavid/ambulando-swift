@@ -415,3 +415,19 @@ Proposal and mockups: https://claude.ai/artifact/PFA62Dm9pTnTHMNrHH686J. Mac onl
 ### 5.0 Start tab for captures (`test(fixture): -UXStartTab opens the sample app on a tab`)
 - `-UXStartTab deck|chat|tasks|docs|files` opens the Test app on that tab (sample data only; ignored outside the
   fixture). For screen captures without clicking.
+
+### 5.1 Shared list pieces (`style(theme): content list header, section label and row`)
+- `Amb.ListLayout` tokens (20pt leading margin for the unread dot, 16pt trailing, 38pt one-line rows, 10pt column
+  gap, 18/6pt section spacing, fixed size/place/person column widths) and new `AmbContentList.swift`:
+  `ContentListHeader`, `ContentListSectionLabel` (mark, name, count; space above, never a rule) and
+  `.contentListRow(first:)` (hover fill, inset hairline above all but a section's first row). Used by Tasks first.
+
+### 5.4 Tasks list (`style(tasks): one-line task rows grouped by status`)
+- Mac list is new `MacTaskList`: groups labelled by a status ring, name and count; rows are one line: status ring,
+  title (muted when done), then size, channel and assignee in fixed columns. Rows no longer repeat the status chip.
+- Status ring (`TaskStatusRing`): open for not started, half for in progress and review, full for done.
+- Size (`TaskSizeLabel`): a dot scaled to the size and the word (Rock, Pebble, Sand), Rock in the urgency orange;
+  Phase 2 tooltip kept. Replaces the all-caps pill on the Mac list.
+- Start and Mark done in each row's context menu (the iPhone list has them as swipes).
+- "New task" is a labelled primary button; the List/Board switch uses the selected grey, not the accent.
+- iPhone and iPad unchanged (`listView`); no iPad check needed.
