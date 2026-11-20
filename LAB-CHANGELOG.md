@@ -314,3 +314,26 @@ Review: https://claude.ai/artifact/S4HCkDSDtn2gJtky9eWTNH
 - Checks: thread harness at the known failure. Pete's new `-AmbulandoMacDataRefreshCheck` fails at "Timed out: same
   open thread receives remote reply", and fails the same way on upstream itself (`main` + the Xcode 27 fix), so it's
   the same environmental synced-reply issue, not the lab.
+
+## Phase 4: Sidebar (`ux/sidebar`, off `lab` after Phase 3 and the upstream merge)
+
+Proposal and agreed decisions: https://claude.ai/artifact/NbziWbiYt1WhQc56PqrXtt. Mac only throughout: the shared
+`SidebarContent` stays as it is for the iPhone drawer and iPad.
+
+### 4.1 One sidebar row (`style(sidebar): one row component for the Mac sidebar`)
+- `Amb.SidebarLayout` tokens (row 28pt, 8pt gutter and inset, 16pt mark slot, 8pt gap, 24pt indent, 20pt trailing
+  slot, 18pt section gap) and `SidebarRow` (new `AmbSidebarRow.swift`), with `SidebarSectionHeading`,
+  `SidebarRowButton` and `SidebarUnreadDot`.
+- New `MacSidebarContent` (AmbulandoMac) lays out today's content with it; `MacSidebar` uses it. Same content,
+  behaviour and accessibility identifiers. Home, Unread & Active, a new "Scopes" heading, scopes, channels and
+  Manage scopes are all the same row: same height, radius, type and full-width hover/selection. Indent is inside the
+  row; a nested row's mark lines up with its parent's label.
+- Scope rows: the chevron sits in the mark slot and folds the channels; the rest of the row opens the scope. Its +
+  (New channel) and a channel's ••• (Channel settings) now live in the row's trailing slot and appear on hover,
+  replacing the unread dot while hovered. Previously the ••• was a 44pt button outside the row, which made channel
+  rows narrower than Home.
+- Workspace switcher (shared `WorkspaceFooter`, now internal) is a row on the Mac rather than a filled card.
+- `ambHoverRow(fill:)` can track hover without drawing a fill (used by section headings).
+- Several enabled workspaces still use the shared stacked navigation; restyle later if needed.
+- Checks: thread harness at the known failure (one earlier run hit the known intermittent AppKit crash in the resize
+  steps; the rerun passed them). `MacDeckComposerCheck` passes. iOS builds. No iPad check needed (Mac-only views).

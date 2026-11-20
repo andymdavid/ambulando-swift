@@ -113,10 +113,23 @@ Goal: Linear-level polish for the Mac app without changing what the product does
 - **Kept for now: Autopilot, scopes, Deck/Canvas/Toolbox.** These are product vocabulary;
   they belong to the "who is this for / domains" conversation, not a polish pass.
 
+## Sidebar (Phase 4, Mac)
+
+- **One row for everything in the sidebar.** Home, scopes, channels, conversations and the workspace switcher share
+  height, type, radius and full-width hover/selection; indent and the hover action (•••, +) sit inside the row. The
+  four row types before differed in all of these (Buzz and Linear use one).
+- **Order: Home, Solo, Scopes, Direct messages.** Your own agent work first, team spaces next, people last.
+- **Solo = DMs where everyone else is an agent, plus Note to self.** Works on today's data and upstream's DM flow; no
+  server change. Buzz labels a private channel instead; Ambulando's threads already give one conversation per item.
+- **One Solo item per conversation** (a thread in those DMs), newest activity first, opening full width as a chat.
+- **No "Unread & Active" on the Mac.** It repeated channels that already show unread in place and pushed Solo down.
+- **Scopes are rows, not headings** (Linear's team rows): the row opens the scope, the chevron folds its channels.
+- **The sidebar says where, the tabs say what.** Section tabs move into the content header beside the place's name;
+  changing place keeps your tab. Replaces the web's rule that a sidebar choice opens Deck (and the lock to stay),
+  which surprised anyone clicking a channel. Toolbox, which ignores the place, becomes a sidebar row.
+
 ## Deferred
 
-- **Sidebar rebuild (Phase 4).** Scope and channel rows differ in height, type, radius and hover/selection width.
-  Fix with one row component rather than patches.
 - **Flatten the Deck (Phase 5).** Four stacked layers (page, section panel, row card, tiles). Two is enough.
 - **Product direction.** Agents-first onboarding and scopes as business domains (Finance, Sales, Clients…). Out of
   scope for a polish pass.
