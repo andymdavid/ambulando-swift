@@ -354,7 +354,7 @@ Proposal and agreed decisions: https://claude.ai/artifact/NbziWbiYt1WhQc56PqrXtt
 - + on the Solo heading: a menu of the workspace's agents and Note to self. Opens the New chat composer in your DM
   with them; with no DM yet, upstream's New message sheet for the DM scope.
 - New thread composer in a DM: "New chat", "Start a conversation with Rick", and the DM's name without a "#".
-- Test app: `-UXSampleDMs YES` adds sample DMs (Rick: four conversations; Note to self; Ana). Off by default so the
+- Test app: `-UXSampleDMs YES` adds sample DMs (Rick: four conversations; Note to self; Ana; Bea). Off by default so the
   app's checks keep their layout.
 - Not yet: the DM's conversation list still shows if the thread is closed some other way; unread counts on Solo depend
   on view states, which the sample data doesn't set.
