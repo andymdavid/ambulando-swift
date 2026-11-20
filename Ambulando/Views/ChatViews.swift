@@ -1045,6 +1045,45 @@ struct Composer: View {
                     ComposerPastedUploads(uploads: uploads, target: target, text: composer.text)
                 }
             }
+            #if os(macOS)
+            // UX lab: one box. Text on top; tools along the bottom edge inside it; send at the bottom right.
+            VStack(alignment: .leading, spacing: 2) {
+                ComposerTextView(text: Binding(get: { composer?.visibleText ?? "" }, set: { composer?.visibleText = $0; fixtureTyping() }),
+                                 focused: $focused, placeholder: placeholder, plainKeyboard: model.fixture?.plainKeyboard == true,
+                                 onPasteItems: pasteItems, onSubmit: send, onPickerKey: mentionKey, pickerOpen: !suggestions.isEmpty,
+                                 mentionTokens: composer?.presentMentions.map(\.visible) ?? [], onPasteText: pasteText, limitsInline: true,
+                                 insertion: $insertion, selection: editing == nil ? nil : $selection)
+                    .id(editing?.id) // A revision has its own undo history; Undo cannot pull in an unsent reply.
+                    .padding(.horizontal, 12).padding(.top, 10)
+                HStack(spacing: 2) {
+                    composerTools
+                    Spacer(minLength: 8)
+                    Button { send() } label: {
+                        Image(systemName: "arrow.up").font(.amb(.subheadline).weight(.semibold))
+                            .foregroundStyle(canSend ? Amb.primaryForeground : Amb.faint)
+                            .frame(width: 28, height: 28)
+                            .background(canSend ? Amb.primary : Amb.muted, in: RoundedRectangle(cornerRadius: Amb.radiusControl, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(!canSend)
+                    .ambTooltip(editing == nil ? "Send" : "Save edit")
+                    .accessibilityLabel(editing == nil ? "Send" : "Save edit")
+                    .accessibilityIdentifier(editing == nil ? "composer.send" : "editmessage.submit")
+                }
+                .padding(.horizontal, 6).padding(.bottom, 6)
+            }
+            .background {
+                RoundedRectangle(cornerRadius: Amb.radiusPanel, style: .continuous)
+                    .fill(Amb.raised)
+                    .contentShape(RoundedRectangle(cornerRadius: Amb.radiusPanel, style: .continuous))
+                    .onTapGesture { focused = true }
+                ComposerBlankFocusTarget { focused = true }
+            }
+            .overlay(RoundedRectangle(cornerRadius: Amb.radiusPanel, style: .continuous)
+                .stroke(focused ? Amb.primary.opacity(0.6) : Amb.borderStrong, lineWidth: focused ? 1 : 0.5))
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, 16).padding(.top, 6).padding(.bottom, 12)
+            #else
             HStack(alignment: .bottom, spacing: 6) {
                 // The tools stack in a column on the left so the text box gets the row's width; the box is at least as
                 // tall as the column, so a long draft shows more lines rather than the column wasting the height.
@@ -1090,6 +1129,7 @@ struct Composer: View {
             }
             .fixedSize(horizontal: false, vertical: true)
             .padding(.horizontal, 10).padding(.vertical, 8)
+            #endif
         }
         .disabled(savingRevision)
         .background(Amb.card)
@@ -1180,10 +1220,26 @@ struct Composer: View {
     }
 
     /// Photos, files (Mac) and mention, one above the other.
+    /// UX lab: tools sit inside the box on the Mac (smaller, regular weight); the iPhone keeps its touch-sized column.
+    @MainActor private static var toolFont: Font {
+        #if os(macOS)
+        .amb(.subheadline)
+        #else
+        .body.weight(.semibold)
+        #endif
+    }
+    private static var toolSize: CGSize {
+        #if os(macOS)
+        CGSize(width: 28, height: 28)
+        #else
+        CGSize(width: 34, height: 32)
+        #endif
+    }
+
     @ViewBuilder private var composerTools: some View {
         if editing == nil {
         PhotosPicker(selection: $photos, maxSelectionCount: 4, matching: .images) {
-            Image(systemName: "photo").font(.body.weight(.semibold)).frame(width: 34, height: 32)
+            Image(systemName: "photo").font(Self.toolFont).frame(width: Self.toolSize.width, height: Self.toolSize.height)
         }
         .accessibilityLabel("Attach photos")
         .ambTooltip("Add a photo")
@@ -1191,7 +1247,7 @@ struct Composer: View {
         .iconButton()
         #if os(macOS)
         Button { attachingFiles = true } label: {
-            Image(systemName: "paperclip").font(.amb(.body).weight(.semibold)).frame(width: 34, height: 32)
+            Image(systemName: "paperclip").font(Self.toolFont).frame(width: Self.toolSize.width, height: Self.toolSize.height)
         }
         .accessibilityLabel("Attach files")
         .ambTooltip("Attach a file")
@@ -1218,7 +1274,7 @@ struct Composer: View {
             }
             focused = true
             model.refreshDirectory(workspace)
-        } label: { Image(systemName: "at").font(.amb(.body).weight(.semibold)).frame(width: 34, height: 32) }
+        } label: { Image(systemName: "at").font(Self.toolFont).frame(width: Self.toolSize.width, height: Self.toolSize.height) }
             .accessibilityLabel("Mention someone")
             .ambTooltip("Mention someone")
             .accessibilityIdentifier("composer.mention")

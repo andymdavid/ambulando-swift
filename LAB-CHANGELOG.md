@@ -163,3 +163,9 @@ Review: https://claude.ai/artifact/S4HCkDSDtn2gJtky9eWTNH
   "Build checklist"). Pre-existing bug.
 - Known: hover toolbars on channel rows can stay visible behind the thread overlay (hover-ended not delivered);
   to fix with the thread side panel (3.3). Reply participants aren't in the feed data, so the footer has no avatars.
+
+### 3.2 Composer (`style(chat): single-box composer on the Mac`)
+- Mac `Composer` layout: one rounded box on `Amb.raised` with a hairline (accent when focused); text on top; photo,
+  file and @ tools in a row inside the bottom edge (28pt, regular weight); 28pt send button (accent when sendable).
+  iPhone/iPad layout unchanged (keyboard handling). Same component for channel and thread replies.
+- Verified with `-AmbulandoMacThreadRegression` (presses `composer.send`; fails only at the known later step).

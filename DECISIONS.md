@@ -64,6 +64,10 @@ Goal: Linear-level polish for the Mac app without changing what the product does
   all, and the whole block is already the way in.
 - **Reactions only when they exist.** The always-on 👍 and + under every message moved into a small hover toolbar
   with the ••• menu. Pills have no outline; yours use the soft accent.
+- **One composer box.** Text on top, tools along the bottom edge inside it, send at the bottom right (Mac). The old
+  layout had tools outside the box and a tall grey field. iPhone keeps its keyboard-aware layout.
+- **No Messages / Threads switch.** Upstream already dropped it; almost every post starts a thread. A light header
+  filter (has replies, unread, mine) can come back if the full layout shows a need.
 - **Status dot only when something's wrong** (waiting or refused); "synced" is the normal state.
 - **Hover-revealed controls stay visible for VoiceOver and Full Keyboard Access** (and the app's Mac checks).
   Hidden controls would otherwise be unreachable.
