@@ -156,6 +156,13 @@ extension View {
     func threadFocusPresenter() -> some View { modifier(ThreadFocusPresenter()) }
 }
 
+/// UX lab: what the modal presenter watches when the section changes.
+private struct ModalSectionState: Equatable {
+    let mode: AppMode
+    let focus: ThreadFocus?
+    let composing: Bool
+}
+
 private struct ThreadFocusPresenter: ViewModifier {
     @Environment(AppModel.self) private var model
 
@@ -200,6 +207,13 @@ private struct ThreadFocusPresenter: ViewModifier {
                 // Otherwise + disables the shell but renders an empty ThreadFocusContainer, trapping input.
                 if model.focusedThread != nil && !inline { ThreadFocusContainer() }
                 else if model.composingThread { NewThreadContainer() }
+            }
+            // UX lab: switching section (⌘-number, the section bar) closes the quick-view and New thread modals, unless
+            // the same change opened the thread ("Open in #channel" switches to Chat and opens it together).
+            .onChange(of: ModalSectionState(mode: model.mode, focus: model.focusedThread, composing: model.composingThread)) { old, new in
+                guard old.mode != new.mode else { return }
+                if let focus = new.focus, focus == old.focus, !InlineThreadHosts.shared.hosts(focus, mode: new.mode) { model.focusedThread = nil }
+                if new.composing && old.composing { model.composingThread = false }
             }
             .modifier(ThreadFocusLifecycle())
         #endif
