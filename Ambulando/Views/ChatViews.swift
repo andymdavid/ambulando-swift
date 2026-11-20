@@ -32,6 +32,8 @@ struct ChannelSnapshot: Sendable, Equatable {
     /// Posts that begin a new day (date separator above them), and the day of the newest post.
     var dayStarts: [String: ChatDay] = [:]
     var lastDay: ChatDay?
+    /// UX lab (Mac): the channel's conversations, newest activity first.
+    var conversations: [ChannelConversation] = []
 }
 
 struct ThreadSnapshot: Sendable, Equatable {
@@ -217,7 +219,16 @@ struct ChannelView: View {
     // One Messages view: every conversation is a card here, and one with replies opens its real thread (the web's
     // separate Threads list showed the same conversations again).
     var body: some View {
-        messages
+        Group {
+            // UX lab: on the Mac a channel is its list of conversations (newest activity first), not a chat feed.
+            if ChatLayout.mac {
+                ChannelConversationList(target: target, workspace: workspace, conversations: snapshot.value.conversations, people: snapshot.value.people,
+                                        threadTitles: snapshot.value.threadTitles, loaded: snapshot.loaded)
+                    .task(id: limit) { start() }
+            } else {
+                messages
+            }
+        }
         .tabletReadingWidth()
         .background(Amb.background)
         #if os(macOS)
@@ -316,13 +327,17 @@ struct ChannelView: View {
 
     private func start() {
         let target = target, limit = limit, store = store, viewer = model.connection?.signerNpub
-        snapshot.start(store: store, matches: chatMatches(target.workspaceId)) {
+        let chat = chatMatches(target.workspaceId), w = target.workspaceId
+        snapshot.start(store: store, matches: { key in
+            chat(key) || (ChatLayout.mac && [.viewStates, .agents].contains(key.table) && (key.workspaceId == w || key.workspaceId == nil))
+        }) {
             async let channel = store.reader.channel(workspaceId: target.workspaceId, id: target.channelId)
             async let posts = store.reader.channelFeed(workspaceId: target.workspaceId, channelId: target.channelId, limit: limit)
             async let pending = store.reader.outbox(target: target)
             async let sync = store.reader.channelSync(workspaceId: target.workspaceId, channelId: target.channelId)
             async let directory = people(store, target)
             async let titles = store.reader.threadTitles(workspaceId: target.workspaceId, channelId: target.channelId)
+            async let conversations = ChatLayout.mac ? store.reader.channelConversations(workspaceId: target.workspaceId, channelId: target.channelId, limit: limit) : []
             let rows = try await posts
             MessageDisplayCache.shared.prepare(rows.map(\.message))
             let extras = try await messageExtras(store, target.workspaceId, connectionId: target.connectionId, ids: rows.map(\.id))
@@ -332,7 +347,7 @@ struct ChannelView: View {
             let label = resolvedChannel.map { SidebarNavigation.label($0, viewerNpub: viewer, names: resolvedPeople.names) } ?? "Conversation"
             return ChannelSnapshot(title: label, posts: rows, pending: try await pending,
                                    people: resolvedPeople, historyComplete: try await sync?.complete ?? false, extras: extras,
-                                   threadTitles: try await titles, dayStarts: days.starts, lastDay: days.last)
+                                   threadTitles: try await titles, dayStarts: days.starts, lastDay: days.last, conversations: try await conversations)
         }
     }
 }
