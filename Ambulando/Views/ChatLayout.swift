@@ -92,8 +92,10 @@ struct OwnMessageRow: View {
     var controls: AnyView?
     @Environment(\.ambRowHovered) private var hovered
 
-    /// Same padding on all four sides of the message block, so its highlight hugs the message.
-    private static let inset: CGFloat = 10
+    /// Padding around the message block, so its highlight hugs the message. The sides get more than the top and bottom,
+    /// which already carry the text's line spacing; this reads as even.
+    static let insetH: CGFloat = 16
+    static let insetV: CGFloat = 12
 
     var body: some View {
         let display = MessageDisplayCache.shared.display(message)
@@ -141,11 +143,11 @@ struct OwnMessageRow: View {
                 PersonAvatar(person: sender)
             }
             }
-            .padding(Self.inset)
+            .padding(.horizontal, Self.insetH).padding(.vertical, Self.insetV)
             .background(hovered ? Amb.hoverFill : .clear, in: RoundedRectangle(cornerRadius: Amb.radiusPanel, style: .continuous))
         }
         // The space between senders sits outside the highlight.
-        .padding(.horizontal, 2).padding(.top, continued ? 0 : ChatLayout.senderGap - Self.inset)
+        .padding(.top, continued ? 0 : ChatLayout.senderGap - Self.insetV)
     }
 }
 

@@ -740,7 +740,7 @@ struct OutboxRow: View {
             PersonAvatar(person: me)
         }
         // Same block geometry as a sent message of yours (even inset, sender gap outside it).
-        .padding(10).padding(.horizontal, 2).padding(.top, ChatLayout.senderGap - 10)
+        .padding(.horizontal, OwnMessageRow.insetH).padding(.vertical, OwnMessageRow.insetV).padding(.top, ChatLayout.senderGap - OwnMessageRow.insetV)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("outbox.row")
     }
