@@ -363,3 +363,13 @@ Proposal and agreed decisions: https://claude.ai/artifact/NbziWbiYt1WhQc56PqrXtt
 - DM scopes no longer appear under Scopes. DMs with people (and group DMs) are a "Direct messages" section at the
   bottom: the person's avatar, unread dot, ••• Channel settings; + on the heading starts one (upstream's New message
   sheet). DMs with only agents stay under Solo.
+
+### 4.5 Section tabs in the content header (`feat(mac): place header with section tabs; sidebar choices keep the tab`)
+- New `MacPlaceHeader` replaces the section bar and the context strip ("All scopes | Everything"): sidebar toggle,
+  the place's name ("Home Studio", "Ambulando", "Ambulando / # general", "Solo / Rick", "Ana Lima", "Toolbox"),
+  refresh, and under it the tabs Deck · Chat · Tasks · Docs · Files (underlined when selected; same `section.*`
+  identifiers). No tabs for a direct message (Solo or with people) or for Toolbox.
+- Choosing Home, a scope or a channel keeps the current tab (`AppModel.choosePlace`), replacing the web's jump to
+  Deck and the lock; from Toolbox it opens Deck. A direct message opens in Chat (`openConversation`).
+- Toolbox is a sidebar row under Home, since it ignores the place. `ContextBar` draws nothing on the Mac (iPhone and
+  iPad unchanged).

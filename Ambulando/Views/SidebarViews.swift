@@ -38,6 +38,15 @@ struct ContextBar: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
+        // UX lab: on the Mac the content header names the place (MacPlaceHeader).
+        #if os(macOS)
+        EmptyView()
+        #else
+        bar
+        #endif
+    }
+
+    @ViewBuilder private var bar: some View {
         let nav = model.navigation.value
         let context = model.context
         VStack(spacing: 0) {

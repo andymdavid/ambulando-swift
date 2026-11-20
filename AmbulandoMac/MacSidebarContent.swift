@@ -59,9 +59,13 @@ struct MacSidebarContent: View {
     @ViewBuilder private var workspaceNavigation: some View {
         let nav = model.navigation.value
         let context = model.context
-        SidebarRow(label: "Home", selected: context.isHome, identifier: "sidebar.home", accessibilityLabel: "All workspace activity",
-                   action: { model.chooseInSidebar(.home) }) {
+        SidebarRow(label: "Home", selected: inPlace && context.isHome, identifier: "sidebar.home", accessibilityLabel: "All workspace activity",
+                   action: { model.choosePlace(.home) }) {
             WorkspaceAvatar(label: model.selectedWorkspace?.label ?? "A", size: Amb.SidebarLayout.iconSlot)
+        }
+        // Toolbox works across the workspace, not in a place, so it's a destination of its own rather than a tab.
+        SidebarRow(label: "Toolbox", selected: model.mode == .toolbox, identifier: "sidebar.toolbox", action: { model.show(.toolbox) }) {
+            Image(systemName: AppMode.toolbox.systemImage).font(.amb(.caption)).foregroundStyle(Amb.mutedForeground)
         }
 
         NavigationStatus(state: model.navigationState, compact: true).padding(.top, 6)
@@ -80,14 +84,14 @@ struct MacSidebarContent: View {
         // DM scopes aren't team spaces: their conversations are under Solo (agents) or Direct messages (people).
         ForEach(nav.groups.filter { !$0.isDirectMessages }) { group in
             let collapsed = nav.collapsed.contains(group.id)
-            let selected = context.scopeId == group.id && context.channelId == nil
+            let selected = inPlace && context.scopeId == group.id && context.channelId == nil
             let canCreate = ManagementPermissions.canCreateChannel(in: group.scope, membership: model.membership)
             SidebarRow(label: group.scope.name, selected: selected, weight: .medium,
                        disclosure: .init(collapsed: collapsed, accessibilityLabel: "\(collapsed ? "Expand" : "Collapse") \(group.scope.name) channels",
                                          identifier: "sidebar.collapse.\(group.scope.name)") { model.toggleScopeCollapsed(group.id) },
                        hasRowAction: canCreate,
                        accessibilityLabel: "Open \(group.scope.name) home", identifier: "sidebar.scope.\(group.scope.name)",
-                       action: { model.chooseInSidebar(WorkContext(scopeId: group.id)) },
+                       action: { model.choosePlace(WorkContext(scopeId: group.id)) },
                        leading: { EmptyView() }, status: { EmptyView() }) {
                 // sol `.sidebar-scope-add-channel`: shown where the member may create channels in the scope.
                 if canCreate {
@@ -109,6 +113,9 @@ struct MacSidebarContent: View {
 
         directMessages(nav)
     }
+
+    /// A place row shows as selected unless Toolbox (which has no place) is open.
+    private var inPlace: Bool { model.mode != .toolbox }
 
     /// Direct messages with people (DMs with only agents are under Solo), at the bottom of the sidebar.
     @ViewBuilder private func directMessages(_ nav: NavigationSnapshot) -> some View {
@@ -149,9 +156,13 @@ struct MacSidebarContent: View {
     /// One channel (sol `.sidebar-scope-channel-row`), with Channel settings as its hover action.
     private func channelRow(_ channel: ChannelRecord, nav: NavigationSnapshot, unread: Bool, level: Int) -> some View {
         let label = nav.label(channel)
-        return SidebarRow(label: label, selected: model.context.channelId == channel.id, unread: unread, level: level,
+        let direct = SidebarNavigation.isDirectMessageChannel(channel)
+        return SidebarRow(label: label, selected: inPlace && model.context.channelId == channel.id, unread: unread, level: level,
                           identifier: "sidebar.channel.\(label)",
-                          action: { model.chooseInSidebar(WorkContext(scopeId: channel.scopeId, channelId: channel.id)) }) {
+                          action: {
+                              let place = WorkContext(scopeId: channel.scopeId, channelId: channel.id)
+                              if direct { model.openConversation(place) } else { model.choosePlace(place) }
+                          }) {
             let others = SidebarNavigation.participants(channel).filter { $0 != model.connection?.signerNpub }
             if SidebarNavigation.isDirectMessageChannel(channel), others.count == 1, let person = others.first {
                 PersonAvatar(person: solo.value.people.person(person), size: Amb.SidebarLayout.iconSlot, agent: solo.value.people.isAgent(person))

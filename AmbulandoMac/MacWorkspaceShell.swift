@@ -28,15 +28,8 @@ struct MacWorkspaceShell: View {
                 .allowsHitTesting(ui.sidebarVisible)
                 .accessibilityHidden(!ui.sidebarVisible)
             VStack(spacing: 0) {
-                HStack(spacing: 0) {
-                    Button { ui.sidebarVisible.toggle() } label: { Image(systemName: "sidebar.left") }
-                        .buttonStyle(.plain).padding(10)
-                        .accessibilityLabel(ui.sidebarVisible ? "Hide Sidebar" : "Show Sidebar")
-                        .accessibilityIdentifier("sidebar.toggle")
-                    MacSectionBar(sections: AppMode.visible(agents: showAgents, context: showContext))
-                    MacRefreshDataButton()
-                }.background(Amb.background)
-                Divider()
+                // UX lab: the place's name and its tabs (MacPlaceHeader) instead of a section bar and context strip.
+                MacPlaceHeader(sections: AppMode.visible(agents: showAgents, context: showContext))
                 sectionView(model.mode)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
