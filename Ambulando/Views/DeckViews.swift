@@ -1387,6 +1387,26 @@ struct DeckThreadComposer: View {
         VStack(alignment: .leading, spacing: 16) {
             let nav = model.navigation.value
             let channels = nav.channels(in: model.context)
+            #if os(macOS)
+            // UX lab: a "Channel" menu, as in the earlier Mac app (an inline list read as a broken grey box).
+            HStack(spacing: Amb.Space.s) {
+                Text("Channel").font(.amb(.subheadline)).foregroundStyle(Amb.mutedForeground)
+                Menu {
+                    ForEach(channels) { channel in
+                        Button { channelId = channel.id } label: {
+                            if channel.id == channelId { Label("#\(nav.label(channel))", systemImage: "checkmark") } else { Text("#\(nav.label(channel))") }
+                        }
+                    }
+                } label: {
+                    Text(channels.first { $0.id == channelId }.map { "#\(nav.label($0))" } ?? "Choose channel")
+                }
+                .menuStyle(.button)
+                .fixedSize()
+                .disabled(requestId != nil)
+                .accessibilityLabel("Channel")
+                .accessibilityIdentifier("deck.compose.channel")
+            }
+            #else
             Button { choosingChannel = true } label: {
                 let selected = channels.first { $0.id == channelId }
                 Label(selected.map { "#\(nav.label($0))" } ?? "Choose channel", systemImage: "chevron.up.chevron.down")
@@ -1396,6 +1416,7 @@ struct DeckThreadComposer: View {
             .disabled(requestId != nil)
             .accessibilityLabel("Channel")
             .accessibilityIdentifier("deck.compose.channel")
+            #endif
             if let channelId, !choosingChannel, let connection = model.connection {
                 Text("New conversation").font(.amb(.headline))
                 Text("Write the first message to start a thread.").foregroundStyle(Amb.faint)
@@ -1410,6 +1431,25 @@ struct DeckThreadComposer: View {
                 }
             } else {
                 Text(channels.isEmpty ? "No channels in this context." : "Choose a channel here to start your thread.")
+                #if os(macOS)
+                // UX lab: plain rows rather than a grey list box.
+                VStack(alignment: .leading, spacing: 2) {
+                    ForEach(channels) { channel in
+                        Button {
+                            channelId = channel.id
+                            choosingChannel = false
+                        } label: {
+                            Text("#\(nav.label(channel))").font(.amb(.body)).foregroundStyle(Amb.foreground)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.horizontal, 10).frame(height: Amb.rowHeight)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .ambHoverRow()
+                        .accessibilityIdentifier("deck.compose.option.\(channel.id)")
+                    }
+                }
+                #else
                 List(channels) { channel in
                     Button("#\(nav.label(channel))") {
                         channelId = channel.id
@@ -1418,6 +1458,7 @@ struct DeckThreadComposer: View {
                     .accessibilityIdentifier("deck.compose.option.\(channel.id)")
                 }
                 .listStyle(.plain)
+                #endif
             }
         }
         .padding()
