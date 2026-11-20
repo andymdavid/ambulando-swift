@@ -132,7 +132,7 @@ struct MessageCell: View, Equatable {
                 // UX lab: reaction pills only when someone has reacted; quick reactions live in the hover toolbar.
                 if !reactions.isEmpty {
                     ReactionBar(reactions: reactions, me: model.identity.npub, quickActions: false) { toggle($0) }
-                        .padding(.leading, 56).padding(.trailing, 16).padding(.bottom, 6)
+                        .padding(.leading, 56).padding(.trailing, 16).padding(.top, 2).padding(.bottom, 8)   // UX lab: right under the text
                 }
                 #else
                 ReactionBar(reactions: reactions, me: model.identity.npub) { toggle($0) }
@@ -349,9 +349,19 @@ struct ReactionBar: View {
     @ScaledMetric(relativeTo: .footnote) private var scaledSide: CGFloat = 32
     private var side: CGFloat {
         #if os(macOS)
-        (compact ? 26 : 28) * TextScale.shared.factor
+        // UX lab: pills under a message are small capsules (Buzz: ~24px), the toolbar's buttons 26.
+        (compact ? 26 : quickActions ? 28 : 24) * TextScale.shared.factor
         #else
         scaledSide
+        #endif
+    }
+
+    /// UX lab (Mac): pills under a message use a caption-size count and leave room for an add button after them.
+    private var pillsOnly: Bool {
+        #if os(macOS)
+        !quickActions && !compact
+        #else
+        false
         #endif
     }
 
@@ -364,7 +374,8 @@ struct ReactionBar: View {
                 let mine = list.contains { $0.reactorNpub == me }
                 Button { toggle(emoji.rawValue) } label: {
                     HStack(spacing: 4) { Image(systemName: emoji.symbol).foregroundStyle(emoji == .heart ? Amb.destructive : (mine ? Amb.primary : Amb.foreground)); Text("\(list.count)") }
-                        .font(.amb(.footnote).weight(.semibold)).foregroundStyle(mine ? Amb.primary : Amb.foreground)
+                        .font(pillsOnly ? .amb(.caption).weight(.medium) : .amb(.footnote).weight(.semibold)).monospacedDigit()
+                        .foregroundStyle(mine ? Amb.primary : Amb.foreground)
                         .padding(.horizontal, 8).frame(minWidth: side, minHeight: side)
                         .background(mine ? Amb.accent : Amb.muted, in: Capsule())
                         .contentShape(Capsule())
@@ -401,28 +412,41 @@ struct ReactionBar: View {
             .ambTooltip(compact ? "Add reaction" : "")
             .accessibilityLabel("Add reaction")
             .accessibilityIdentifier("reaction.add")
-            .popover(isPresented: $picking, arrowEdge: .bottom) {
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 40))], spacing: 4) {
-                    ForEach(ReactionEmoji.allCases, id: \.self) { emoji in
-                        Button { picking = false; toggle(emoji.rawValue) } label: {
-                            Image(systemName: emoji.symbol).font(.system(size: 20)).foregroundStyle(emoji == .heart ? Amb.destructive : Amb.primary).frame(width: 40, height: 40).contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel(emoji.name)
-                        .accessibilityIdentifier("react.\(emoji.rawValue)")
-                    }
+            .popover(isPresented: $picking, arrowEdge: .bottom) { picker }
+            } else if pillsOnly {
+                // UX lab (Buzz): a small add-reaction button after the pills.
+                Button { picking = true } label: {
+                    Image(systemName: "face.smiling").font(.amb(.caption)).foregroundStyle(Amb.mutedForeground)
+                        .frame(width: side, height: side).background(Amb.muted, in: Capsule()).contentShape(Capsule())
                 }
-                .padding(8)
-                .frame(width: 220)
-                .presentationCompactAdaptation(.popover)
-                .accessibilityElement(children: .contain)
-                .accessibilityIdentifier("reaction.picker")
-            }
+                .buttonStyle(.plain)
+                .ambTooltip("Add reaction")
+                .accessibilityLabel("Add reaction")
+                .accessibilityIdentifier("reaction.add")
+                .popover(isPresented: $picking, arrowEdge: .bottom) { picker }
             }
         }
-        .padding(.top, compact ? 0 : quickActions ? 6 : 2).padding(.bottom, compact ? 0 : quickActions ? 8 : 0)
+        .padding(.top, compact || pillsOnly ? 0 : quickActions ? 6 : 2).padding(.bottom, compact || pillsOnly ? 0 : quickActions ? 8 : 0)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("reaction.bar")
+    }
+
+    private var picker: some View {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 40))], spacing: 4) {
+            ForEach(ReactionEmoji.allCases, id: \.self) { emoji in
+                Button { picking = false; toggle(emoji.rawValue) } label: {
+                    Image(systemName: emoji.symbol).font(.system(size: 20)).foregroundStyle(emoji == .heart ? Amb.destructive : Amb.primary).frame(width: 40, height: 40).contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(emoji.name)
+                .accessibilityIdentifier("react.\(emoji.rawValue)")
+            }
+        }
+        .padding(8)
+        .frame(width: 220)
+        .presentationCompactAdaptation(.popover)
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("reaction.picker")
     }
 }
 

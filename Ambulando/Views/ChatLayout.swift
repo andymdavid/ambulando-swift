@@ -115,6 +115,7 @@ struct OwnMessageRow: View {
                             .accessibilityIdentifier("message.author")
                     }
                 }
+                // Reactions sit right under the text, 6pt below it (Buzz), aligned with its first character.
                 VStack(alignment: .leading, spacing: 6) {
                     if let bodyOverride {
                         if !bodyOverride.isEmpty { MessageBody(text: bodyOverride, muted: true) }
@@ -130,9 +131,9 @@ struct OwnMessageRow: View {
                             }
                         }
                     }
+                    if let reactions { reactions }
                 }
                 .environment(\.chatTextFits, true)
-                if let reactions { reactions }
             }
             .accessibilityElement(children: interactive ? .contain : .combine)
             .continuedMessageLabel(continued ? "\(sender.name), \(display.time)" : nil)
