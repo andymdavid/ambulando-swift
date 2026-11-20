@@ -260,3 +260,13 @@ Review: https://claude.ai/artifact/S4HCkDSDtn2gJtky9eWTNH
 - Harness at the known failure.
 - 3.10b (`style(chat): reading column in the New thread modal`): the Deck's New thread modal (`DeckThreadComposer`,
   Mac) uses the same 720pt quick-view column; it ran edge to edge. One call-site line in `DeckViews.swift`.
+
+### 3.11 Channel menu in New thread (`fix(deck): channel menu in the Mac New thread composer`)
+- Upstream (Mac build 23, `f4bdd65`) replaced the Mac channel picker with a button that opens an inline `List`; in the
+  modal it read as a broken grey box. Mac now has a "Channel  #general ⌄" menu (as in Mac build 19). With no channel
+  chosen (Home), plain hover rows keep `deck.compose.option.*` for `MacDeckComposerCheck` (passes). iPhone/iPad
+  unchanged.
+
+### 3.12 Own-message spacing (`style(chat): more room around your own messages' name and avatar`)
+- Your messages (sent and unsent): 14pt between text and avatar (was 10), 9pt between name line and text (was 6),
+  8pt between time and name (was 6). Other people's rows unchanged.
