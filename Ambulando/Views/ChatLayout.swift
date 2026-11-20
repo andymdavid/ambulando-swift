@@ -93,11 +93,11 @@ struct OwnMessageRow: View {
         let display = MessageDisplayCache.shared.display(message)
         let sender = people.person(message.senderNpub, senderLabel: message.senderLabel)
         let interactive = !display.attachments.isEmpty || (bodyOverride == nil && (display.blocks.map(RichBlocksInfo.hasControls) ?? false))
-        HStack(alignment: .top, spacing: 10) {
+        HStack(alignment: .top, spacing: 14) {
             Spacer(minLength: 96)
-            VStack(alignment: .trailing, spacing: 6 * ChatTypography.scale) {
+            VStack(alignment: .trailing, spacing: 9 * ChatTypography.scale) {
                 if !continued {
-                    HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
                         MessageTimeText(iso: message.createdAt, thread: true)
                         Text(sender.name).font(.amb(.subheadline).weight(.semibold)).foregroundStyle(Amb.foreground).lineLimit(1)
                             .accessibilityIdentifier("message.author")

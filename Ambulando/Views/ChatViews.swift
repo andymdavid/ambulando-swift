@@ -709,9 +709,9 @@ struct OutboxRow: View {
     /// UX lab (Mac): your unsent message on the right, as your sent ones are in a thread, with its delivery state.
     private var own: some View {
         let me = people.person(item.signerNpub)
-        return HStack(alignment: .top, spacing: 10) {
+        return HStack(alignment: .top, spacing: 14) {
             Spacer(minLength: 96)
-            VStack(alignment: .trailing, spacing: 6 * ChatTypography.scale) {
+            VStack(alignment: .trailing, spacing: 9 * ChatTypography.scale) {
                 Text(me.nameSource == .npub ? "You" : me.name).font(.amb(.subheadline).weight(.semibold)).foregroundStyle(Amb.foreground)
                 VStack(alignment: .leading, spacing: 4) {
                     if !item.body.isEmpty { MessageBody(text: item.body, muted: true) }
