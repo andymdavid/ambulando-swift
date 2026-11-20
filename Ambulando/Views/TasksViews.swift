@@ -134,6 +134,8 @@ struct TasksView: View {
         }
         .refreshable { model.openTasks(workspace, scopeId: scopeId, force: true) }
         .task(id: model.context) { start(); model.openTasks(workspace, scopeId: scopeId) }
+        // UX lab: `-UXStartTab board` (sample app only) opens the board, for screen captures.
+        .onAppear { if FixtureEnvironment.requested && UserDefaults.standard.string(forKey: "UXStartTab") == "board" { board = true } }
         .onChange(of: model.identity) { _, state in if case .unlocked = state { model.openTasks(workspace, scopeId: scopeId) } }
     }
 
@@ -253,7 +255,14 @@ struct TasksView: View {
             } else {
                 HStack {
                     collapseButton(state, closed: false)
+                    #if os(macOS)
+                    // UX lab: the list's group label (ring and name), not a chip.
+                    HStack(spacing: Amb.Space.s) { TaskStatusRing(state: state); Text(state.label) }
+                        .font(.amb(.footnote).weight(.medium)).foregroundStyle(Amb.secondaryForeground)
+                        .accessibilityElement(children: .combine)
+                    #else
                     TaskStatusBadge(state: state.rawValue)
+                    #endif
                     Spacer(minLength: 0)
                     columnSelection(state, rows: rows)
                 }
@@ -268,7 +277,7 @@ struct TasksView: View {
         .padding(closed ? 4 : 10)
         .frame(width: closed ? 44 : 280)
         .frame(maxHeight: .infinity, alignment: .top)
-        .background(Amb.muted.opacity(0.6), in: RoundedRectangle(cornerRadius: Amb.radiusPanel))
+        .background(boardColumnFill(closed: closed), in: RoundedRectangle(cornerRadius: Amb.radiusPanel))
         .overlay(RoundedRectangle(cornerRadius: Amb.radiusPanel).stroke(targeted == state ? Amb.accentForeground : .clear, lineWidth: 2))
         .contentShape(Rectangle())
         .dropDestination(for: String.self) { values, _ in
@@ -280,6 +289,23 @@ struct TasksView: View {
         } isTargeted: { value in targeted = value ? state : nil }
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("board.\(state.rawValue)")
+    }
+
+    /// UX lab (Mac): open columns sit on the page, so cards are the only layer; a collapsed column keeps its strip.
+    private func boardColumnFill(closed: Bool) -> Color {
+        #if os(macOS)
+        closed ? Amb.muted.opacity(0.6) : .clear
+        #else
+        Amb.muted.opacity(0.6)
+        #endif
+    }
+
+    private var boardCardEdge: Color {
+        #if os(macOS)
+        Amb.border
+        #else
+        .clear
+        #endif
     }
 
     private func collapseButton(_ state: TaskState, closed: Bool) -> some View {
@@ -323,7 +349,7 @@ struct TasksView: View {
         .padding(8).frame(maxWidth: .infinity, alignment: .leading)
         .ambHover(radius: Amb.radiusPanel)
         .background(selected.contains(row.id) ? Amb.accent : Amb.card, in: RoundedRectangle(cornerRadius: Amb.radiusPanel))
-        .overlay(RoundedRectangle(cornerRadius: Amb.radiusPanel).stroke(selected.contains(row.id) ? Amb.accentForeground : .clear))
+        .overlay(RoundedRectangle(cornerRadius: Amb.radiusPanel).stroke(selected.contains(row.id) ? Amb.accentForeground : boardCardEdge))
         .contextMenu {
             Button(selected.contains(row.id) ? "Deselect" : "Select") { toggle(row) }.disabled(!canChange(row))
             ForEach(TaskState.board.filter { $0.rawValue != row.state }, id: \.self) { target in
@@ -422,7 +448,11 @@ struct TaskRowView: View {
             Text(row.title).font(.amb(.subheadline).weight(.semibold)).foregroundStyle(Amb.foreground).lineLimit(3)
             HStack(spacing: 8) {
                 if showsStatus { TaskStatusBadge(state: row.state) }
+                #if os(macOS)
+                TaskSizeLabel(priority: row.priority)
+                #else
                 PriorityBadge(priority: row.priority)
+                #endif
                 if let channel = snapshot.choice.channelName(row.task.channelId) { Text("#\(channel)").lineLimit(1) }
                 if let assignee = row.assignee { Label(displayName(assignee, snapshot.names, me: me), systemImage: "person").lineLimit(1) }
                 if row.pending.contains(where: \.isPending) { Image(systemName: "arrow.up.circle").accessibilityLabel("Change not sent yet") }

@@ -136,6 +136,18 @@ Goal: Linear-level polish for the Mac app without changing what the product does
   changing place keeps your tab. Replaces the web's rule that a sidebar choice opens Deck (and the lock to stay),
   which surprised anyone clicking a channel. Toolbox, which ignores the place, becomes a sidebar row.
 
+## Content screens (Phase 5, Mac)
+
+- **Lists share one pattern** (`Amb.ListLayout`, `AmbContentList.swift`): filters left and the main action right; section
+  labels separated by space, never a rule; a hairline between rows; unread as a dot in the margin. Round 1 mixed rules
+  and boxes per screen.
+- **Tasks as one-line rows grouped by status.** Status ring, title, then size, channel and assignee in fixed columns.
+  Rows don't repeat their group's status. Size is a dot scaled to Rock/Pebble/Sand plus the word (Rock orange), not
+  capitals in a pill.
+- **Board: cards are the only layer.** Columns sit on the page with the list's ring heading.
+- **"New task" and "New document" are labelled primary buttons**, like "New thread" in a channel. What they open is
+  still being designed (a compact composer is proposed).
+
 ## Deferred
 
 - **Chat channel list (Phase 5).** The Chat tab at Home or a scope is still upstream's plain list (full-width rules,

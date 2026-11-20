@@ -54,9 +54,9 @@ struct MacWorkspaceShell: View {
             model.sidebarOpen = false
         }
         .onAppear {
-            // UX lab: `-UXStartTab deck` opens the sample app on a given tab, for screen captures.
+            // UX lab: `-UXStartTab deck` opens the sample app on a given tab (`board`: Tasks as a board), for screen captures.
             let lab = FixtureEnvironment.requested ? UserDefaults.standard.string(forKey: "UXStartTab") : nil
-            let stored = AppMode(stored: lab ?? storedMode)
+            let stored = AppMode(stored: lab == "board" ? "tasks" : lab ?? storedMode)
             if model.mode != stored { model.mode = stored }
         }
         .onChange(of: model.mode) { _, mode in storedMode = mode.rawValue }

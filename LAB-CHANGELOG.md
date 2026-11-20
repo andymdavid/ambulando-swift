@@ -431,3 +431,9 @@ Proposal and mockups: https://claude.ai/artifact/PFA62Dm9pTnTHMNrHH686J. Mac onl
 - Start and Mark done in each row's context menu (the iPhone list has them as swipes).
 - "New task" is a labelled primary button; the List/Board switch uses the selected grey, not the accent.
 - iPhone and iPad unchanged (`listView`); no iPad check needed.
+
+### 5.4b Flatter board (`style(tasks): board columns on the page, cards the only layer`)
+- Mac board: open columns lose their grey fill (a collapsed column keeps its strip); cards get a hairline edge;
+  column headings use the list's status ring and name instead of a chip; card size shows as `TaskSizeLabel`.
+- `-UXStartTab board` opens Tasks as a board in the sample app, for captures.
+- iPhone and iPad unchanged; no iPad check needed.
