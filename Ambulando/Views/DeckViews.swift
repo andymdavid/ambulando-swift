@@ -1360,7 +1360,7 @@ struct DeckThreadComposer: View {
             .padding(.leading, 18).padding(.trailing, 6).padding(.vertical, 4)
             .background(Amb.card)
             Divider()
-            form
+            form.chatColumn().environment(\.chatInModal, true)   // UX lab: same reading column as a thread in the quick-view
         }
         .background(Amb.background)
         .accessibilityElement(children: .contain)
