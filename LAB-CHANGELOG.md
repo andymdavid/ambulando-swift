@@ -386,3 +386,9 @@ Proposal and agreed decisions: https://claude.ai/artifact/NbziWbiYt1WhQc56PqrXtt
   no iPad size in use.
 - Differs from upstream (for Pete): a sidebar choice keeps the tab instead of opening Deck (no lock); DM scopes are
   split into Solo (agents only) and Direct messages (people); channels list conversations by newest activity.
+
+### 4.7 Sidebar width (`fix(mac): sidebar opens at 248pt, resizable 200–380 and remembered`)
+- The shell's `HSplitView` ignored the sidebar's ideal width and always opened it at its widest (380pt). Now a plain
+  row with a stored width (`ux.sidebarWidth`, default 248pt, Ari 232 / Linear ~240) and `MacSidebarResizer`: a
+  hairline edge with an 8pt grab area that drags between 200 and 380pt. Membership stays stable while hidden.
+- `SidebarRow` group rows: the name takes room before the space after its chevron (no "Operatio…" at 248pt).

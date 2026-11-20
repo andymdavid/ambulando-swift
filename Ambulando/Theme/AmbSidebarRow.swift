@@ -49,6 +49,7 @@ struct SidebarRow<Leading: View, Status: View, Action: View>: View {
         HStack(spacing: 0) {
             Button(action: action) { mainLabel(fills: disclosure == nil) }
                 .buttonStyle(.plain)
+                .layoutPriority(1)   // a group's name takes the room before the space after its chevron
                 .accessibilityLabel((accessibilityLabel ?? label) + (unread ? ", unread" : ""))
                 .accessibilityAddTraits(selected ? .isSelected : [])
                 .accessibilityIdentifier(identifier)

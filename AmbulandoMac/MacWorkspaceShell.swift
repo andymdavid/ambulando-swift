@@ -12,21 +12,23 @@ struct MacWorkspaceShell: View {
     @SceneStorage("shell.tab") private var storedMode = AppMode.chat.rawValue
     @AppStorage(AppMode.agentsPreference) private var showAgents = false
     @AppStorage(AppMode.contextPreference) private var showContext = false
+    @AppStorage("ux.sidebarWidth") private var sidebarWidth = MacSidebarResizer.defaultWidth
 
     var body: some View {
         let _ = MacHangDiagnostics.shared.mark("shell.body")
         @Bindable var ui = ui
-        // Keep split-view membership and the detail hosting view stable while the sidebar is hidden.
+        // Keep membership and the detail hosting view stable while the sidebar is hidden.
         // Removing/reinserting a child during a resize churns AppKit's constraint hierarchy and the live naplets.
-        HSplitView {
+        // UX lab: a row with a stored sidebar width, not `HSplitView`, which ignored the ideal width and always opened
+        // the sidebar at its widest. Drag the edge to resize (MacSidebarResizer); the width is remembered.
+        HStack(spacing: 0) {
             MacSidebar()
-                .frame(minWidth: ui.sidebarVisible ? 240 : 0,
-                       idealWidth: ui.sidebarVisible ? 280 : 0,
-                       maxWidth: ui.sidebarVisible ? 380 : 0)
+                .frame(width: ui.sidebarVisible ? MacSidebarResizer.clamp(sidebarWidth) : 0)
                 .clipped()
                 .opacity(ui.sidebarVisible ? 1 : 0)
                 .allowsHitTesting(ui.sidebarVisible)
                 .accessibilityHidden(!ui.sidebarVisible)
+            MacSidebarResizer(width: $sidebarWidth, visible: ui.sidebarVisible)
             VStack(spacing: 0) {
                 // UX lab: the place's name and its tabs (MacPlaceHeader) instead of a section bar and context strip.
                 MacPlaceHeader(sections: AppMode.visible(agents: showAgents, context: showContext))
@@ -186,5 +188,37 @@ struct MacSectionBar: View {
         }
         .fixedSize(horizontal: true, vertical: false)
         .padding(8)
+    }
+}
+
+/// UX lab: the sidebar's right edge, a hairline with a wider grab area. Dragging sets the sidebar's width between
+/// `minWidth` and `maxWidth`; it opens at `defaultWidth`.
+struct MacSidebarResizer: View {
+    static let defaultWidth: Double = 248
+    static let minWidth: Double = 200
+    static let maxWidth: Double = 380
+    static func clamp(_ width: Double) -> CGFloat { CGFloat(min(max(width, minWidth), maxWidth)) }
+
+    @Binding var width: Double
+    let visible: Bool
+    @State private var start: Double?
+
+    var body: some View {
+        Rectangle().fill(Amb.border).frame(width: visible ? 0.5 : 0)
+            .overlay {
+                if visible {
+                    Color.clear.frame(width: 8).contentShape(Rectangle())
+                        .onHover { inside in if inside { NSCursor.resizeLeftRight.push() } else { NSCursor.pop() } }
+                        .gesture(DragGesture(minimumDistance: 1, coordinateSpace: .global)
+                            .onChanged { value in
+                                let base = start ?? Double(Self.clamp(width))
+                                start = base
+                                width = Double(Self.clamp(base + value.translation.width))
+                            }
+                            .onEnded { _ in start = nil })
+                        .accessibilityHidden(true)
+                }
+            }
+            .zIndex(1)
     }
 }
