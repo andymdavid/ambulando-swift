@@ -278,7 +278,7 @@ struct TasksView: View {
         .frame(width: closed ? 44 : 280)
         .frame(maxHeight: .infinity, alignment: .top)
         .background(boardColumnFill(closed: closed), in: RoundedRectangle(cornerRadius: Amb.radiusPanel))
-        .overlay(RoundedRectangle(cornerRadius: Amb.radiusPanel).stroke(targeted == state ? Amb.accentForeground : .clear, lineWidth: 2))
+        .overlay(RoundedRectangle(cornerRadius: Amb.radiusPanel).stroke(targeted == state ? Amb.accentForeground : boardLaneEdge, lineWidth: targeted == state ? 2 : 1))
         .contentShape(Rectangle())
         .dropDestination(for: String.self) { values, _ in
             guard values.count == 1, let text = values.first,
@@ -291,12 +291,21 @@ struct TasksView: View {
         .accessibilityIdentifier("board.\(state.rawValue)")
     }
 
-    /// UX lab (Mac): open columns sit on the page, so cards are the only layer; a collapsed column keeps its strip.
+    /// UX lab (Mac): each status is a lane, recessed below the page with a hairline edge (as in gr8r-studio); cards sit
+    /// on it.
     private func boardColumnFill(closed: Bool) -> Color {
         #if os(macOS)
-        closed ? Amb.muted.opacity(0.6) : .clear
+        Amb.canvas
         #else
         Amb.muted.opacity(0.6)
+        #endif
+    }
+
+    private var boardLaneEdge: Color {
+        #if os(macOS)
+        Amb.border
+        #else
+        .clear
         #endif
     }
 

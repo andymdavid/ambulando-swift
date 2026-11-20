@@ -448,3 +448,7 @@ Proposal and mockups: https://claude.ai/artifact/PFA62Dm9pTnTHMNrHH686J. Mac onl
   self. A DM shows its face once: no facepile, and the other person's own messages don't repeat their name.
 - Supersedes 4.9's grouped directory on the Mac. Rounds 1–3: https://claude.ai/artifact/PFA62Dm9pTnTHMNrHH686J.
 - No iPad check needed (Mac paths only).
+
+### 5.4c Board lanes (`style(tasks): each board status is a lane`)
+- Mac board: each column is a lane again, recessed (`Amb.canvas`) with a hairline edge, as gr8r-studio's board (B2 of
+  round 3); bordered cards from 5.4b sit on it. No "Add task" at the foot. Columns keep their 280pt width and scroll.

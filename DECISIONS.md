@@ -144,7 +144,8 @@ Goal: Linear-level polish for the Mac app without changing what the product does
 - **Tasks as one-line rows grouped by status.** Status ring, title, then size, channel and assignee in fixed columns.
   Rows don't repeat their group's status. Size is a dot scaled to Rock/Pebble/Sand plus the word (Rock orange), not
   capitals in a pill.
-- **Board: cards are the only layer.** Columns sit on the page with the list's ring heading.
+- **Board: each status is a lane** (recessed, hairline edge, as gr8r-studio), with bordered cards and the list's ring
+  heading. Open columns on the page were tried first; lanes read better as separate statuses.
 - **The Chat tab at Home or a scope lists the place's conversations, newest first** (one list across its channels and
   DMs, each row tagged with where it lives), not its channels again. The sidebar already lists channels by type, so
   filters are about state (All, Unread, Mine), not type. A DM shows its face once. A refined channel overview (C1) was
