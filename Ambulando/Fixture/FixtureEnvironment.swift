@@ -348,6 +348,12 @@ final class FixtureTower: HTTPTransport, @unchecked Sendable {
     static let designChannel = "f1c70000-0000-4000-8000-0000000000c2"
     static let deploysChannel = "f1c70000-0000-4000-8000-0000000000c3"
     static let notesChannel = "f1c70000-0000-4000-8000-0000000000c4"
+    /// UX lab: sample direct messages for the Solo and Direct messages sidebar sections (`-UXSampleDMs YES`): your DM
+    /// with the agent Rick, Note to self, and a DM with Ana. Off by default so the app's checks keep their layout.
+    static var sampleDMs: Bool { UserDefaults.standard.bool(forKey: "UXSampleDMs") }
+    static let dmRickChannel = "f1c70000-0000-4000-8000-0000000000c5"
+    static let dmSelfChannel = "f1c70000-0000-4000-8000-0000000000c6"
+    static let dmAnaChannel = "f1c70000-0000-4000-8000-0000000000c7"
     static let ana = Bech32.encode(hrp: "npub", data: Data(repeating: 0xA1, count: 32))
     static let rick = Bech32.encode(hrp: "npub", data: Data(repeating: 0xB2, count: 32))
     static let brick = Bech32.encode(hrp: "npub", data: Data(repeating: 0xB5, count: 32))
@@ -486,6 +492,28 @@ final class FixtureTower: HTTPTransport, @unchecked Sendable {
                 thread: Self.uuid(210, "f1c7bbbb"))
         }
         add(300, Self.lab, Self.notesChannel, "Lab workspace notes live here", sender: Self.ana, label: "Ana")
+        if Self.sampleDMs {
+            // UX lab: Solo conversations with Rick (an agent), Note to self, and a DM with Ana. Caller holds `lock`.
+            let me = _actor
+            func chat(_ n: Int, _ channel: String, _ root: String, _ replies: [(Bool, String)]) {
+                add(n, Self.studio, channel, root, sender: me, label: nil)
+                for (i, (mine, text)) in replies.enumerated() {
+                    add(n + 1 + i, Self.studio, channel, text, sender: mine ? me : Self.rick, label: mine ? nil : "Rick", thread: Self.uuid(n, "f1c7bbbb"))
+                }
+            }
+            chat(500, Self.dmRickChannel, "Draft the Q1 hiring brief for the two engineering roles", [
+                (false, "Here's a first pass. I kept each role to what the person will own in their first 90 days, and left salary out until you confirm the band."),
+                (true, "Good. Make the platform role more about reliability than features."),
+                (false, "Done: reliability first, with on-call and the deploy rota as the first two outcomes.")])
+            chat(510, Self.dmRickChannel, "Why do retries in the sync queue sometimes double-send?", [
+                (false, "Every retry now reuses the same request id, so the Tower drops the duplicate. The double sends came from a retry that minted a new id.")])
+            chat(490, Self.dmRickChannel, "Compare three CRM options for the sales pilot", [
+                (false, "I compared HubSpot, Pipedrive and Attio on price per seat, API limits and how they handle custom objects. Attio fits the pilot best.")])
+            chat(480, Self.dmRickChannel, "Summarise last week's pricing calls", [
+                (false, "Four calls. Two asked for annual billing, three pushed back on the per-agent price, one wants an on-premise Tower.")])
+            chat(470, Self.dmSelfChannel, "Ideas for the offsite: a demo hour, fewer slides, one long walk", [])
+            add(520, Self.studio, Self.dmAnaChannel, "Are you free for lunch on Thursday?", sender: Self.ana, label: "Ana")
+        }
         return rows
     }
 
@@ -660,7 +688,7 @@ final class FixtureTower: HTTPTransport, @unchecked Sendable {
         var base = w == Self.studio ? [scope(Self.scopeAmbulando, w, "Ambulando"), scope(Self.scopeOps, w, "Operations")]
                                     : [scope(Self.scopeResearch, w, "Research")]
         // Direct messages live in their own scope (kind dm) on a Tower that provisions one; opt-in so other checks keep their layout.
-        if w == Self.studio, ProcessInfo.processInfo.arguments.contains("-AmbulandoFixtureDMs") {
+        if w == Self.studio, ProcessInfo.processInfo.arguments.contains("-AmbulandoFixtureDMs") || Self.sampleDMs {
             var dm = scope(Self.scopeDMs, w, "DMs"); dm["kind"] = "dm"; base.append(dm)
         }
         let edits = manageMap("scopeEdits")
@@ -676,11 +704,17 @@ final class FixtureTower: HTTPTransport, @unchecked Sendable {
     }
 
     private func channelRows(_ w: String, scope s: String) -> [[String: Any]] {
-        let base: [[String: Any]] = w == Self.studio
+        let shared: [[String: Any]] = w == Self.studio
             ? [channel(Self.generalChannel, w, Self.scopeAmbulando, "general", 1),
                channel(Self.designChannel, w, Self.scopeAmbulando, "design", 2),
                channel(Self.deploysChannel, w, Self.scopeOps, "deploys", 1)]
             : [channel(Self.notesChannel, w, Self.scopeResearch, "notes", 1)]
+        // UX lab sample DMs (`-UXSampleDMs YES`); named after their participants, as Tower leaves DM titles empty.
+        func dm(_ id: String, _ participants: [String], _ position: Double) -> [String: Any] {
+            var row = channel(id, w, Self.scopeDMs, "", position); row["kind"] = "dm"; row["participant_npubs"] = participants; return row
+        }
+        let base = shared + (w == Self.studio && Self.sampleDMs
+            ? [dm(Self.dmRickChannel, [_actor, Self.rick], 1), dm(Self.dmSelfChannel, [_actor], 2), dm(Self.dmAnaChannel, [_actor, Self.ana], 3)] : [])
         let edits = manageMap("channelEdits"), gone = archived
         let created: [[String: Any]] = manageList("channels").filter { $0["workspace_id"] as? String == w }
         var rows: [[String: Any]] = []

@@ -342,3 +342,19 @@ Proposal and agreed decisions: https://claude.ai/artifact/NbziWbiYt1WhQc56PqrXtt
 - "Unread & Active" removed from the Mac sidebar: unread channels already show bold with a dot in place.
 - "Manage scopes" is the Scopes heading's hover action (slider icon, tooltip, same identifier) instead of a row
   under the last scope. Several workspaces keep the row.
+
+### 4.3 Solo (`feat(sidebar): Solo section for your conversations with agents`)
+- New shared `SoloConversations` (which DMs are Solo: you plus only agents, or Note to self; their conversations newest
+  activity first) and `SoloDirectory` (the Solo channel ids, and a pending New chat). Mac view `MacSoloSection`.
+- Sidebar: a "Solo" section under Home, one row per conversation (title, the agent's rounded-square avatar or a note
+  icon, unread dot or a spinner while an agent works), 8 shown then "Show all". Solo DMs no longer repeat under the
+  DMs scope. Reads the local store only (background sync already catches up every channel).
+- Opening one selects its DM in Chat and opens the thread in place (the 3.4 inline thread). In a Solo DM the header
+  reads "Solo · Rick" instead of "← Rick", and Esc doesn't close it: there's no list to go back to.
+- + on the Solo heading: a menu of the workspace's agents and Note to self. Opens the New chat composer in your DM
+  with them; with no DM yet, upstream's New message sheet for the DM scope.
+- New thread composer in a DM: "New chat", "Start a conversation with Rick", and the DM's name without a "#".
+- Test app: `-UXSampleDMs YES` adds sample DMs (Rick: four conversations; Note to self; Ana). Off by default so the
+  app's checks keep their layout.
+- Not yet: the DM's conversation list still shows if the thread is closed some other way; unread counts on Solo depend
+  on view states, which the sample data doesn't set.

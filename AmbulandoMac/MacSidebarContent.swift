@@ -9,6 +9,7 @@ struct MacSidebarContent: View {
     @State private var sheet: SidebarSheet?
     /// A channel created in the New channel sheet, opened in Chat once the sheet has gone (as the web selects it).
     @State private var created: ChannelRecord?
+    @State private var solo = LiveQuery<SoloSnapshot>(initial: SoloSnapshot())
 
     private func openCreated() {
         guard let channel = created else { return }
@@ -44,6 +45,8 @@ struct MacSidebarContent: View {
             WorkspaceFooter()
         }
         .onAppear { model.loadMembership() }
+        .task(id: soloKey) { startSolo() }
+        .onChange(of: solo.value.channelIds, initial: true) { _, ids in SoloDirectory.shared.channelIds = ids }
         .sheet(item: $sheet, onDismiss: openCreated) { sheet in
             switch sheet {
             case .newChannel(let scope): NewChannelSheet(scope: scope) { created = $0 }
@@ -62,6 +65,10 @@ struct MacSidebarContent: View {
         }
 
         NavigationStatus(state: model.navigationState, compact: true).padding(.top, 6)
+
+        MacSoloSection(solo: solo.value, loaded: solo.loaded) {
+            if let scope = nav.groups.first(where: \.isDirectMessages)?.scope { sheet = .newChannel(scope) }
+        }
 
         // Lab decision: no "Unread & Active" on the Mac; unread channels show in place (bold and dot).
         SidebarSectionHeading(text: "Scopes") {
@@ -92,10 +99,29 @@ struct MacSidebarContent: View {
                     Text("No channels visible").font(.amb(.caption)).foregroundStyle(Amb.faint)
                         .padding(.leading, Amb.SidebarLayout.inset + Amb.SidebarLayout.indent).frame(minHeight: Amb.SidebarLayout.rowHeight)
                 }
-                ForEach(group.channels) { channel in
+                // Solo DMs are listed under Solo, not again here.
+                ForEach(group.channels.filter { !solo.value.channelIds.contains($0.id) }) { channel in
                     channelRow(channel, nav: nav, unread: nav.unread.contains(channel.id), level: 1)
                 }
             }
+        }
+    }
+
+    /// Re-run the Solo query when the workspace, the viewer or the DM channels change.
+    private var soloKey: String {
+        let candidates = model.navigation.value.groups.flatMap(\.channels).filter(SidebarNavigation.isDirectMessageChannel)
+        return ([model.selectedWorkspace?.id ?? "", model.connection?.signerNpub ?? ""] + candidates.map(\.id)).joined(separator: ":")
+    }
+
+    private func startSolo() {
+        guard let workspace = model.selectedWorkspace, let store = model.store, let connection = model.connection else { return }
+        let candidates = model.navigation.value.groups.flatMap(\.channels).filter(SidebarNavigation.isDirectMessageChannel)
+        let viewer = connection.signerNpub, w = workspace.id, c = connection.id
+        solo.start(store: store, matches: { key in
+            (key.workspaceId == w || key.workspaceId == nil)
+                && [.messages, .threads, .members, .agents, .profiles, .viewStates].contains(key.table)
+        }) {
+            try await SoloConversations.load(store: store, connectionId: c, workspaceId: w, candidates: candidates, viewer: viewer, limit: 50)
         }
     }
 

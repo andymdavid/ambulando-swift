@@ -418,7 +418,7 @@ struct ThreadFocusPanel: View {
         })
         // Typing must go to this thread, not to a composer left focused behind it.
         #if os(macOS)
-        .onExitCommand { close() }
+        .onExitCommand { if !soloInline { close() } }   // UX lab: a Solo conversation has no list to go back to
         .onAppear { NSApp.keyWindow?.makeFirstResponder(nil) }
         #else
         .onAppear { UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil) }
@@ -430,7 +430,13 @@ struct ThreadFocusPanel: View {
 
     private var header: some View {
         HStack(spacing: 12) {
-            if inline {
+            if soloInline {
+                // UX lab: a Solo conversation fills the window; name who it's with instead of going back to a list.
+                Text("Solo · \(channelLabel)").font(.amb(.subheadline)).foregroundStyle(Amb.mutedForeground)
+                    .padding(.leading, 8)
+                    .accessibilityIdentifier("thread.focus.solo")
+                Rectangle().fill(Amb.border).frame(width: 1, height: 16).accessibilityHidden(true)
+            } else if inline {
                 // UX lab: back to the channel's thread list (Esc too).
                 Button(action: close) {
                     HStack(spacing: 4) {
@@ -522,6 +528,9 @@ struct ThreadFocusPanel: View {
                                    description: Text("This conversation belongs to another workspace."))
         }
     }
+
+    /// UX lab: shown in place as a Solo conversation (Mac).
+    private var soloInline: Bool { inline && SoloDirectory.shared.contains(focus.channelId) }
 
     private func close() {
         // UX lab: closing a thread yourself means the channel shouldn't reopen it next time.

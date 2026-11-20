@@ -35,6 +35,12 @@ struct ChannelConversationList: View {
             InlineNewThread(target: target, workspace: workspace, store: store, people: people) { composing = false }
         } else {
             list
+                // UX lab: New chat from the sidebar's Solo section opens the composer here.
+                .onChange(of: SoloDirectory.shared.composeRequest, initial: true) { _, request in
+                    guard request == target.channelId else { return }
+                    SoloDirectory.shared.composeRequest = nil
+                    composing = true
+                }
         }
     }
 
@@ -278,8 +284,13 @@ private struct InlineNewThread: View {
     @State private var pending = LiveQuery<OutboxItem?>(initial: nil)
 
     private var channelLabel: String {
-        model.navigation.value.channel(target.channelId).map { "#" + model.navigation.value.label($0) } ?? "#channel"
+        guard let channel = model.navigation.value.channel(target.channelId) else { return "#channel" }
+        let label = model.navigation.value.label(channel)
+        return SidebarNavigation.isDirectMessageChannel(channel) ? label : "#" + label
     }
+
+    /// UX lab: a new Solo conversation (your DM with an agent, or Note to self).
+    private var solo: Bool { SoloDirectory.shared.contains(target.channelId) }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -297,7 +308,7 @@ private struct InlineNewThread: View {
                 .accessibilityLabel("Back to \(channelLabel)")
                 .accessibilityIdentifier("channel.newThread.close")
                 Rectangle().fill(Amb.border).frame(width: 1, height: 16).accessibilityHidden(true)
-                Text("New thread").font(.amb(.headline)).foregroundStyle(Amb.foreground).accessibilityAddTraits(.isHeader)
+                Text(solo ? "New chat" : "New thread").font(.amb(.headline)).foregroundStyle(Amb.foreground).accessibilityAddTraits(.isHeader)
                 Spacer(minLength: 8)
             }
             .padding(.leading, 10).padding(.trailing, 6).padding(.vertical, 4)
@@ -309,7 +320,8 @@ private struct InlineNewThread: View {
                     if let item = pending.value, requestId != nil {
                         OutboxRow(item: item, people: people).environment(\.chatThreadLayout, true)
                     } else {
-                        Text("Start a conversation in \(channelLabel)").font(.amb(.headline)).foregroundStyle(Amb.foreground)
+                        Text(solo ? (channelLabel == "Note to self" ? "Write a note to yourself" : "Start a conversation with \(channelLabel)")
+                             : "Start a conversation in \(channelLabel)").font(.amb(.headline)).foregroundStyle(Amb.foreground)
                         Text("Its first line becomes the title. Mention an agent with @ to bring them in.")
                             .font(.amb(.footnote)).foregroundStyle(Amb.mutedForeground)
                     }
