@@ -258,3 +258,5 @@ Review: https://claude.ai/artifact/S4HCkDSDtn2gJtky9eWTNH
 - `chatColumn()` is now a modifier: in the quick-view modal (`chatInModal`) the column is 720pt with 48pt margins
   (was the full 820pt + 24pt, which ran nearly edge to edge in a smaller window).
 - Harness at the known failure.
+- 3.10b (`style(chat): reading column in the New thread modal`): the Deck's New thread modal (`DeckThreadComposer`,
+  Mac) uses the same 720pt quick-view column; it ran edge to edge. One call-site line in `DeckViews.swift`.
