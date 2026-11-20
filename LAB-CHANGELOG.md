@@ -452,3 +452,9 @@ Proposal and mockups: https://claude.ai/artifact/PFA62Dm9pTnTHMNrHH686J. Mac onl
 ### 5.4c Board lanes (`style(tasks): each board status is a lane`)
 - Mac board: each column is a lane again, recessed (`Amb.canvas`) with a hairline edge, as gr8r-studio's board (B2 of
   round 3); bordered cards from 5.4b sit on it. No "Add task" at the foot. Columns keep their 280pt width and scroll.
+
+### 5.4d Board moves animate (`style(tasks): cards slide between lanes`)
+- Moving a card to another status made it vanish from one lane and reappear in the other. Cards now keep their
+  identity across lanes (`matchedGeometryEffect`), and the board springs to the new placement (0.38s), so the card
+  slides over and both lanes close and open the gap; the drop highlight fades in and out. Same for bulk moves.
+- Not watched in motion here (no mouse in the lab session); needs a hand check.

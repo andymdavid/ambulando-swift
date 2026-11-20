@@ -62,6 +62,8 @@ struct TasksView: View {
     @State private var feedback: String?
     @State private var archiveConfirmation = false
     @State private var targeted: TaskState?
+    /// UX lab (Mac): a card keeps its identity across lanes, so a move slides it to its new lane.
+    @Namespace private var boardSpace
     @AppStorage("tasks.collapsed.v1") private var collapseJSON = "{}"
     @AppStorage("tasks.defaultAgent.v1") private var agentJSON = "{}"
 
@@ -236,9 +238,17 @@ struct TasksView: View {
                 ForEach(columns, id: \.0) { state, rows in boardColumn(state, rows: rows) }
             }
             .scrollTargetLayout().padding(12)
+            #if os(macOS)
+            // UX lab: a card that changes status moves to its lane, and the lanes close and open the gap, instead of
+            // vanishing and reappearing.
+            .animation(.spring(response: 0.38, dampingFraction: 0.86), value: boardPlacement)
+            #endif
         }
         .scrollTargetBehavior(.viewAligned)
     }
+
+    /// Where every card sits (task and status), for animating moves between lanes.
+    private var boardPlacement: [String] { snapshot.value.rows.map { "\($0.id):\($0.state)" } }
 
     private func boardColumn(_ state: TaskState, rows: [TaskRow]) -> some View {
         let closed = collapsed.contains(state.rawValue)
@@ -286,7 +296,13 @@ struct TasksView: View {
                   let row = snapshot.value.rows.first(where: { $0.id == id }), canChange(row) else { return false }
             if row.state != state.rawValue { setState(row, state) }
             return true
-        } isTargeted: { value in targeted = value ? state : nil }
+        } isTargeted: { value in
+            #if os(macOS)
+            withAnimation(.easeOut(duration: 0.15)) { targeted = value ? state : nil }
+            #else
+            targeted = value ? state : nil
+            #endif
+        }
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("board.\(state.rawValue)")
     }
@@ -366,6 +382,9 @@ struct TasksView: View {
             }
         }
         .accessibilityElement(children: .contain)
+        #if os(macOS)
+        .matchedGeometryEffect(id: row.id, in: boardSpace)
+        #endif
         .accessibilityIdentifier("board.card.\(row.title)")
         .modifier(TaskCardDrag(text: TaskBoardDrag(signer: model.identity.npub ?? "", connection: model.connection?.id ?? "", workspace: workspace.id, app: workspace.appNpub, task: row.id).text, enabled: canChange(row)))
     }
