@@ -382,8 +382,7 @@ struct ThreadView: View {
                         if let day = snapshot.value.dayStarts[message.id] { DaySeparator(day: day) }
                         // UX lab: replies read as chat (no rule between them; same-sender runs grouped).
                         MessageCell(message: message, people: snapshot.value.people, workspace: workspace, extras: snapshot.value.extras.forMessage(message.id), effectiveThreadId: target.threadId,
-                                    continued: continued.contains(message.id),
-                                    lastInRun: !(index + 1 < snapshot.value.messages.count && continued.contains(snapshot.value.messages[index + 1].id))).equatable()
+                                    continued: continued.contains(message.id)).equatable()
                             .padding(.horizontal, 8)   // UX lab: hover highlight inset from the pane edges
                         // The root, or the first message of a thread stored without its source id.
                         if (message.isThreadRoot || (index == 0 && snapshot.value.windowStart == 0)) && snapshot.value.order.count > 1 {
@@ -398,7 +397,7 @@ struct ThreadView: View {
                             DaySeparator(day: .today)
                         }
                         OutboxRow(item: item, people: snapshot.value.people)
-                            .padding(.horizontal, ChatBubbles.enabled ? 8 : 0)   // UX lab: lines up with the thread's messages
+                            .padding(.horizontal, ChatLayout.mac ? 8 : 0)   // UX lab: lines up with the thread's messages
                     }
                 }
                 if snapshot.loaded && snapshot.value.messages.isEmpty {
@@ -566,6 +565,7 @@ struct MessageRow: View {
     var continued = false
     /// UX lab: long bodies collapse to a few lines with "Show more" (channel conversation list).
     var collapsible = false
+    @Environment(\.chatThreadLayout) private var threadLayout
 
     /// Resolved from the store with the snapshot: workspace name, Tower's label, public profile, else the short npub.
     private var sender: PersonDisplay { people.person(message.senderNpub, senderLabel: message.senderLabel) }
@@ -588,7 +588,7 @@ struct MessageRow: View {
             if continued {
                 Color.clear.frame(width: 34, height: 1).accessibilityHidden(true)
             } else {
-                PersonAvatar(person: sender)
+                PersonAvatar(person: sender, agent: message.senderNpub.map(people.isAgent) ?? false)   // UX lab: agents are rounded squares
             }
             VStack(alignment: .leading, spacing: messageHeaderSpacing) {
                 if !continued {
@@ -620,7 +620,7 @@ struct MessageRow: View {
         }
         #if os(macOS)
         // UX lab: flat rows with Linear-like density on the Mac (was 24/14 inside a card); continued lines sit tight.
-        .padding(.horizontal, 12).padding(.top, continued ? 0 : 8).padding(.bottom, 4)
+        .padding(.horizontal, 12).padding(.top, continued ? 0 : (threadLayout ? ChatLayout.senderGap : 8)).padding(.bottom, 4)   // UX lab: more air between senders in a thread
         #else
         .padding(.horizontal, 16).padding(.vertical, 8)
         #endif
@@ -637,7 +637,7 @@ struct MessageBody: View {
     private let plain: String
     var muted = false
     var workspace: WorkspaceRecord?
-    @Environment(\.chatBubbleFit) private var bubbleFit
+    @Environment(\.chatTextFits) private var textFits
 
     init(text: String, muted: Bool = false, workspace: WorkspaceRecord? = nil) {
         blocks = MessageText.cachedBlocks(text); plain = text
@@ -654,7 +654,7 @@ struct MessageBody: View {
                 .textSelection(.enabled)
                 .lineSpacing(ChatTypography.lineSpacing)
                 .fixedSize(horizontal: false, vertical: true)
-                .chatTextWidth(fit: bubbleFit, readable: ChatTypography.readableWidth)   // UX lab: bubbles fit their text
+                .chatTextWidth(fit: textFits, readable: ChatTypography.readableWidth)   // UX lab: your messages fit their text
         }
     }
 }
@@ -684,26 +684,26 @@ struct OutboxRow: View {
     }
 
     var body: some View {
-        if ChatBubbles.enabled && threadLayout { bubble } else { flat }
+        if ChatLayout.mac && threadLayout { own } else { flat }
     }
 
-    /// UX lab (Mac): your unsent message as your bubble on the right, its delivery state below it.
-    private var bubble: some View {
+    /// UX lab (Mac): your unsent message on the right, as your sent ones are in a thread, with its delivery state.
+    private var own: some View {
         let me = people.person(item.signerNpub)
-        return HStack(alignment: .bottom, spacing: Amb.Space.s) {
-            Spacer(minLength: 64)
-            VStack(alignment: .trailing, spacing: Amb.Space.xs) {
-                VStack(alignment: .leading, spacing: 6) {
+        return HStack(alignment: .top, spacing: 10) {
+            Spacer(minLength: 96)
+            VStack(alignment: .trailing, spacing: 6 * ChatTypography.scale) {
+                Text(me.nameSource == .npub ? "You" : me.name).font(.amb(.subheadline).weight(.semibold)).foregroundStyle(Amb.foreground)
+                VStack(alignment: .leading, spacing: 4) {
                     if !item.body.isEmpty { MessageBody(text: item.body, muted: true) }
                     if !item.attachments.isEmpty {
                         Label("\(item.attachments.count) \(item.attachments.count == 1 ? "photo" : "photos")" + (item.attachments.allSatisfy(\.complete) ? "" : " (uploading)"),
                               systemImage: "photo").font(.amb(.caption)).foregroundStyle(Amb.mutedForeground)
                     }
                 }
-                .environment(\.chatBubbleFit, true)
-                .padding(.horizontal, 14).padding(.vertical, 9)
-                .background(item.state == .failed ? Amb.destructiveBackground : Amb.bubbleMine, in: RoundedRectangle(cornerRadius: Amb.radiusBubble, style: .continuous))
+                .environment(\.chatTextFits, true)
                 HStack(spacing: 12) {
+                    SyncDot(state: item.state == .failed ? .failed : .pending)
                     Label(status.text, systemImage: status.icon).font(.amb(.caption)).foregroundStyle(status.tone)
                         .accessibilityIdentifier("outbox.status")
                     if item.state == .failed || item.state == .retrying {
@@ -717,14 +717,10 @@ struct OutboxRow: View {
                 }
                 .font(.amb(.caption).weight(.semibold))
                 .buttonStyle(.borderless)
-                .padding(.horizontal, 10)
             }
-            VStack(spacing: 4) {
-                SyncDot(state: item.state == .failed ? .failed : .pending)
-                PersonAvatar(person: me, size: 32)
-            }
+            PersonAvatar(person: me)
         }
-        .padding(.top, Amb.Space.m).padding(.bottom, 2)
+        .padding(.horizontal, 12).padding(.top, ChatLayout.senderGap).padding(.bottom, 4)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("outbox.row")
     }
@@ -1094,7 +1090,7 @@ struct Composer: View {
             if !suggestions.isEmpty {
                 MentionPicker(suggestions: suggestions, people: members.value, highlighted: min(highlighted, suggestions.count - 1)) { pick($0.mention) }
             }
-            if !ChatBubbles.enabled { Divider().overlay(Amb.border) }   // UX lab: the composer sits in the reading column
+            if !ChatLayout.mac { Divider().overlay(Amb.border) }   // UX lab: the composer sits in the reading column
             if let composer, editing == nil {
                 @Bindable var composer = composer
                 ComposerAttachmentStrip(mentions: composer.presentMentions, people: members.value, removeMention: { composer.removeMention($0) },
@@ -1207,7 +1203,7 @@ struct Composer: View {
             #endif
         }
         .disabled(savingRevision)
-        .background(ChatBubbles.enabled ? Amb.background : Amb.card)   // UX lab: no band behind the composer in the reading column
+        .background(ChatLayout.mac ? Amb.background : Amb.card)   // UX lab: no band behind the composer in the reading column
         // Reserve the compose controls and suggestion viewport before the history takes remaining space.
         .layoutPriority(1)
         .task(id: target) {

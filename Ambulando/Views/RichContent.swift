@@ -90,7 +90,7 @@ struct RichBlocksView: View {
     @Environment(\.openWiki) private var openWiki
     @Environment(\.openURL) private var parentOpenURL
     @State private var actorReference: ActorMentionReference?
-    @Environment(\.chatBubbleFit) private var bubbleFit
+    @Environment(\.chatTextFits) private var textFits
 
     var body: some View {
         VStack(alignment: .leading, spacing: RichContext(style: style, muted: muted, workspace: workspace).blockSpacing) {
@@ -101,7 +101,7 @@ struct RichBlocksView: View {
         // A horizontal table scroller can otherwise make the stack accept a compressed height,
         // while intrinsic-height paragraphs draw above its allocation and over the sender row.
         .fixedSize(horizontal: false, vertical: true)
-        .chatTextWidth(fit: bubbleFit && style == .chat, readable: style == .chat ? ChatTypography.readableWidth : .infinity)   // UX lab: bubbles fit their text
+        .chatTextWidth(fit: textFits && style == .chat, readable: style == .chat ? ChatTypography.readableWidth : .infinity)   // UX lab: your messages fit their text
         .environment(\.openURL, OpenURLAction { url in
             if let target = RichLinks.mentionTarget(url) {
                 if ["agent", "person"].contains(target.kind), let workspace {

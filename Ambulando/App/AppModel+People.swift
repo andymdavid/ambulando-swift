@@ -132,6 +132,8 @@ struct PersonAvatar: View {
     @Environment(\.displayScale) private var scale
     let person: PersonDisplay
     var size: CGFloat = 34
+    /// UX lab: agents get a rounded square, people a circle.
+    var agent = false
     @State private var loaded: PlatformImage?
     @State private var loadedURL: URL?
 
@@ -150,11 +152,11 @@ struct PersonAvatar: View {
                 Image(platformImage: image).resizable().scaledToFill()
                     .accessibilityIdentifier("avatar.image")
             } else {
-                InitialsAvatar(initials: person.initials, size: size)
+                InitialsAvatar(initials: person.initials, size: size, agent: agent)
             }
         }
         .frame(width: size, height: size)
-        .clipShape(Circle())
+        .clipShape(AvatarShape(agent: agent, size: size))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(exposesFixtureState ? person.name + (image == nil ? " • Initials" : " • Profile photo") : person.name)
         .accessibilityValue(image == nil ? "Initials" : "Profile photo")
@@ -174,12 +176,13 @@ struct PersonAvatar: View {
 struct InitialsAvatar: View {
     let initials: String
     var size: CGFloat = 34
+    var agent = false
     var body: some View {
         Text(initials)
             .font(.system(size: size * 0.38, weight: .semibold))
             .foregroundStyle(Amb.monogramForeground)
             .frame(width: size, height: size)
-            .background(Amb.monogram, in: Circle())
+            .background(Amb.monogram, in: AvatarShape(agent: agent, size: size))
             .accessibilityHidden(true)
     }
 }

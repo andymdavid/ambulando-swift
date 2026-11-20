@@ -11,7 +11,7 @@ import AppKit
 struct MessageCell: View, Equatable {
     nonisolated static func == (lhs: Self, rhs: Self) -> Bool {
         lhs.message == rhs.message && lhs.people == rhs.people && lhs.workspace == rhs.workspace && lhs.extras == rhs.extras
-            && lhs.effectiveThreadId == rhs.effectiveThreadId && lhs.route == rhs.route && lhs.replyCount == rhs.replyCount && lhs.lastReplyAt == rhs.lastReplyAt && lhs.threadTitle == rhs.threadTitle && lhs.continued == rhs.continued && lhs.collapsible == rhs.collapsible && lhs.lastInRun == rhs.lastInRun
+            && lhs.effectiveThreadId == rhs.effectiveThreadId && lhs.route == rhs.route && lhs.replyCount == rhs.replyCount && lhs.lastReplyAt == rhs.lastReplyAt && lhs.threadTitle == rhs.threadTitle && lhs.continued == rhs.continued && lhs.collapsible == rhs.collapsible
     }
 
     @Environment(AppModel.self) private var model
@@ -28,8 +28,6 @@ struct MessageCell: View, Equatable {
     var threadTitle: String? = nil
     /// UX lab: continues the previous message's block (no avatar or name line). Thread replies only.
     var continued = false
-    /// UX lab: last message of a same-sender run (carries the avatar in bubble layout).
-    var lastInRun = true
     /// UX lab: collapse long bodies (channel conversation list).
     var collapsible = false
     @Environment(\.editChatMessage) private var editChatMessage
@@ -63,8 +61,8 @@ struct MessageCell: View, Equatable {
 
     var body: some View {
         Group {
-            // UX lab: in a thread on the Mac, your own messages sit on the right in a bubble; everything else is flat.
-            if ChatBubbles.enabled && threadLayout && mine { bubbleCell } else { flatCell }
+            // UX lab: in a thread on the Mac, your own messages sit on the right.
+            if ChatLayout.mac && threadLayout && mine && !inherited { ownCell } else { flatCell }
         }
         .contextMenu { actions }
         .sheet(isPresented: $gettingItDone) { GetItDoneSheet(message: message, workspace: workspace) }
@@ -75,49 +73,20 @@ struct MessageCell: View, Equatable {
         }
     }
 
-    /// UX lab (Mac): the message as a bubble; yours on the right. Reactions sit inside the bubble, the reply summary below.
-    private var bubbleCell: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            if inherited {
-                Text("Inherited context · read only").font(.amb(.caption2)).foregroundStyle(Amb.mutedForeground)
-                    .padding(.leading, 54).padding(.top, 6)
-            }
-            Group {
-                if let route {
-                    ThreadRouteLink(route: route) { bubbleRow.contentShape(Rectangle()) }
-                        .buttonStyle(.plain)
-                        .accessibilityHint(replyCount > 0 ? "Opens the thread" : "")
-                        .accessibilityIdentifier("thread.\(replyCount)")
-                } else {
-                    bubbleRow
-                }
-            }
-            .overlay(alignment: mine ? .topLeading : .topTrailing) { messageControls }
-            ForEach(writes.filter { [.messageEdit, .messageDelete].contains($0.kind) }) { item in
-                WriteStatusLine(item: item, label: item.kind == .messageEdit ? "Edit" : "Delete").padding(.leading, 54).padding(.trailing, 16).padding(.bottom, 6)
-            }
-        }
-        .bubbleHoverArea()
-    }
-
-    private var bubbleRow: some View {
+    /// UX lab (Mac): your own message in a thread, mirrored to the right; the hover toolbar moves to the left.
+    private var ownCell: some View {
         let showsReactions = model.identity.npub != nil && !message.deleted && !inherited && !reactions.isEmpty
-        return BubbleMessageRow(message: message, people: people, bodyOverride: pendingEdit?.isPending == true ? pendingEdit?.string("body") : nil,
-                                workspace: workspace, mine: mine, continued: continued, showsAvatar: lastInRun, title: distinctTitle,
-                                collapsible: collapsible,
-                                reactions: showsReactions ? AnyView(ReactionBar(reactions: reactions, me: model.identity.npub, quickActions: false) { toggle($0) }) : nil,
-                                below: replyCount > 0 ? AnyView(replyFooter) : nil)
-            .opacity(pendingDelete?.isPending == true ? 0.45 : 1)
-    }
-
-    /// A conversation's reply count and last reply time.
-    private var replyFooter: some View {
-        HStack(spacing: 6) {
-            Image(systemName: "bubble.left.and.bubble.right").foregroundStyle(Amb.mutedForeground)
-            Text("\(replyCount) \(replyCount == 1 ? "reply" : "replies")").fontWeight(.medium).foregroundStyle(Amb.primary)
-            if let lastReplyAt { Text("Last reply \(ChatTime.label(lastReplyAt))").foregroundStyle(Amb.mutedForeground) }
+        return VStack(alignment: .trailing, spacing: 0) {
+            OwnMessageRow(message: message, people: people, bodyOverride: pendingEdit?.isPending == true ? pendingEdit?.string("body") : nil,
+                          workspace: workspace, continued: continued,
+                          reactions: showsReactions ? AnyView(ReactionBar(reactions: reactions, me: model.identity.npub, quickActions: false) { toggle($0) }) : nil)
+                .opacity(pendingDelete?.isPending == true ? 0.45 : 1)
+                .overlay(alignment: .topLeading) { messageControls }
+            ForEach(writes.filter { [.messageEdit, .messageDelete].contains($0.kind) }) { item in
+                WriteStatusLine(item: item, label: item.kind == .messageEdit ? "Edit" : "Delete").padding(.horizontal, 56).padding(.bottom, 6)
+            }
         }
-        .font(.amb(.caption))
+        .ambHoverRow(radius: Amb.radiusPanel)
     }
 
     private var flatCell: some View {
