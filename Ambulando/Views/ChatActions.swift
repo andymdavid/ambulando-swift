@@ -79,14 +79,14 @@ struct MessageCell: View, Equatable {
         return VStack(alignment: .trailing, spacing: 0) {
             OwnMessageRow(message: message, people: people, bodyOverride: pendingEdit?.isPending == true ? pendingEdit?.string("body") : nil,
                           workspace: workspace, continued: continued,
-                          reactions: showsReactions ? AnyView(ReactionBar(reactions: reactions, me: model.identity.npub, quickActions: false) { toggle($0) }) : nil)
+                          reactions: showsReactions ? AnyView(ReactionBar(reactions: reactions, me: model.identity.npub, quickActions: false) { toggle($0) }) : nil,
+                          controls: AnyView(messageControls))
                 .opacity(pendingDelete?.isPending == true ? 0.45 : 1)
-                .overlay(alignment: .topLeading) { messageControls }
             ForEach(writes.filter { [.messageEdit, .messageDelete].contains($0.kind) }) { item in
                 WriteStatusLine(item: item, label: item.kind == .messageEdit ? "Edit" : "Delete").padding(.horizontal, 56).padding(.bottom, 6)
             }
         }
-        .ambHoverRow(radius: Amb.radiusPanel)
+        .ambHoverTracking()   // the message block draws its own highlight, sized to the message
     }
 
     private var flatCell: some View {

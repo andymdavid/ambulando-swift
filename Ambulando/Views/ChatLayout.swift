@@ -88,13 +88,23 @@ struct OwnMessageRow: View {
     /// Continues the previous message's run: no name line or avatar.
     var continued = false
     var reactions: AnyView?
+    /// The hover toolbar, pinned to the message block's top-left corner.
+    var controls: AnyView?
+    @Environment(\.ambRowHovered) private var hovered
+
+    /// Same padding on all four sides of the message block, so its highlight hugs the message.
+    private static let inset: CGFloat = 10
 
     var body: some View {
         let display = MessageDisplayCache.shared.display(message)
         let sender = people.person(message.senderNpub, senderLabel: message.senderLabel)
         let interactive = !display.attachments.isEmpty || (bodyOverride == nil && (display.blocks.map(RichBlocksInfo.hasControls) ?? false))
-        HStack(alignment: .top, spacing: 14) {
+        HStack(alignment: .top, spacing: 0) {
             Spacer(minLength: 96)
+            // The hover toolbar hangs just outside the message's left edge, so it never covers the name or time.
+            Color.clear.frame(width: 4, height: 1)
+                .overlay(alignment: .topTrailing) { controls }
+            HStack(alignment: .top, spacing: 14) {
             VStack(alignment: .trailing, spacing: 9 * ChatTypography.scale) {
                 if !continued {
                     HStack(alignment: .firstTextBaseline, spacing: 8) {
@@ -130,8 +140,12 @@ struct OwnMessageRow: View {
             } else {
                 PersonAvatar(person: sender)
             }
+            }
+            .padding(Self.inset)
+            .background(hovered ? Amb.hoverFill : .clear, in: RoundedRectangle(cornerRadius: Amb.radiusPanel, style: .continuous))
         }
-        .padding(.horizontal, 12).padding(.top, continued ? 0 : ChatLayout.senderGap).padding(.bottom, 4)
+        // The space between senders sits outside the highlight.
+        .padding(.horizontal, 2).padding(.top, continued ? 0 : ChatLayout.senderGap - Self.inset)
     }
 }
 
@@ -243,5 +257,21 @@ struct ParticipantFacepile: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Participants: " + participants.people.map(\.name).joined(separator: ", "))
         .accessibilityIdentifier("thread.participants")
+    }
+}
+
+extension View {
+    /// Tracks hover like `ambHoverRow` (so `ambRevealOnHover` controls show) without painting the row; the view
+    /// draws its own highlight.
+    func ambHoverTracking() -> some View { modifier(HoverTracking()) }
+}
+
+private struct HoverTracking: ViewModifier {
+    @State private var hovered = false
+    func body(content: Content) -> some View {
+        content
+            .environment(\.ambRowHovered, hovered)
+            .environment(\.ambInHoverRow, true)
+            .onHover { hovered = $0 }
     }
 }
