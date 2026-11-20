@@ -379,3 +379,10 @@ Proposal and agreed decisions: https://claude.ai/artifact/NbziWbiYt1WhQc56PqrXtt
 - Avatars at sidebar size (≤18pt) show one letter, larger: "R" not "RI" (`InitialsAvatar`, `WorkspaceAvatar`).
 - Scope rows: a scope mark in front and the fold chevron right after the name (`SidebarRow` group layout); the rest
   of the row still opens the scope.
+- Checks for Phase 4 (run once for the batch): thread harness at the known failure ("synced reply must render in
+  actual thread"); `MacDeckComposerCheck` passes; iOS builds. Earlier runs on this branch twice hit the known
+  intermittent AppKit crash in the harness's window-resize steps. No iPad check needed: the Mac sidebar, header and
+  Solo views are Mac-only; shared edits (`ContextBar`, `WorkspaceFooter`, avatars at ≤18pt) are Mac-gated or affect
+  no iPad size in use.
+- Differs from upstream (for Pete): a sidebar choice keeps the tab instead of opening Deck (no lock); DM scopes are
+  split into Solo (agents only) and Direct messages (people); channels list conversations by newest activity.
