@@ -392,3 +392,13 @@ Proposal and agreed decisions: https://claude.ai/artifact/NbziWbiYt1WhQc56PqrXtt
   row with a stored width (`ux.sidebarWidth`, default 248pt, Ari 232 / Linear ~240) and `MacSidebarResizer`: a
   hairline edge with an 8pt grab area that drags between 200 and 380pt. Membership stays stable while hidden.
 - `SidebarRow` group rows: the name takes room before the space after its chevron (no "Operatio…" at 248pt).
+
+### 4.8 Solo as a scope (`feat(sidebar): Solo rows are your agent DMs, places with tabs`)
+- Andy's live app treats a DM (e.g. with Lara) as a place with Deck, Chat, Tasks, Docs and Files. Solo now does the
+  same: its rows are your DMs with agents and Note to self (most recent activity first; unread dot; spinner while an
+  agent works), and choosing one keeps the current tab. Its Chat tab is the list of every chat with that agent.
+  Replaces 4.3's one row per conversation and "Show all".
+- Direct messages with people also keep the tab instead of opening Chat without tabs; the header reads
+  "Solo / Rick" or "Direct messages / Ana Lima", with tabs.
+- Thread header back to the standard "← Rick" (the Solo-only header and Esc rule from 4.3 removed: there is a list
+  to go back to now). + New chat unchanged.

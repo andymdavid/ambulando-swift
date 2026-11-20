@@ -157,12 +157,11 @@ struct MacSidebarContent: View {
     /// One channel (sol `.sidebar-scope-channel-row`), with Channel settings as its hover action.
     private func channelRow(_ channel: ChannelRecord, nav: NavigationSnapshot, unread: Bool, level: Int) -> some View {
         let label = nav.label(channel)
-        let direct = SidebarNavigation.isDirectMessageChannel(channel)
         return SidebarRow(label: label, selected: inPlace && model.context.channelId == channel.id, unread: unread, level: level,
                           identifier: "sidebar.channel.\(label)",
                           action: {
                               let place = WorkContext(scopeId: channel.scopeId, channelId: channel.id)
-                              if direct { model.openConversation(place) } else { model.choosePlace(place) }
+                              model.choosePlace(place)   // a DM is a place like a channel, with all its tabs
                           }) {
             let others = SidebarNavigation.participants(channel).filter { $0 != model.connection?.signerNpub }
             if SidebarNavigation.isDirectMessageChannel(channel), others.count == 1, let person = others.first {

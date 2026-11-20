@@ -121,7 +121,10 @@ Goal: Linear-level polish for the Mac app without changing what the product does
 - **Order: Home, Solo, Scopes, Direct messages.** Your own agent work first, team spaces next, people last.
 - **Solo = DMs where everyone else is an agent, plus Note to self.** Works on today's data and upstream's DM flow; no
   server change. Buzz labels a private channel instead; Ambulando's threads already give one conversation per item.
-- **One Solo item per conversation** (a thread in those DMs), newest activity first, opening full width as a chat.
+- **Solo works like a scope: one row per agent DM** (and Note to self), each a place with all its tabs, as DMs are in
+  the live app. Its Chat tab lists every conversation with that agent, so any number of chats has a home. (First
+  built as one row per conversation, opening full width; dropped: no list of all chats, and DMs lost their tabs.)
+- **Every DM is a place with tabs**, Solo or with people, like a channel.
 - **No "Unread & Active" on the Mac.** It repeated channels that already show unread in place and pushed Solo down.
 - **Scopes are rows, not headings** (Linear's team rows): the row opens the scope, the chevron folds its channels.
 - **The sidebar says where, the tabs say what.** Section tabs move into the content header beside the place's name;

@@ -2,8 +2,8 @@ import AmbulandoCore
 import SwiftUI
 
 /// UX lab (Phase 4): the content header on the Mac. The sidebar says where you are; this names the place ("Ambulando /
-/// # general") and, under it, the views of that place (Deck, Chat, Tasks, Docs, Files). It replaces the section bar
-/// across the top and the context strip under it. A conversation (Solo or a direct message) and Toolbox have no tabs.
+/// # general", "Solo / Rick") and, under it, the views of that place (Deck, Chat, Tasks, Docs, Files). It replaces the
+/// section bar across the top and the context strip under it. Toolbox, which has no place, has no tabs.
 struct MacPlaceHeader: View {
     @Environment(AppModel.self) private var model
     @Environment(MacUI.self) private var ui
@@ -48,7 +48,7 @@ struct MacPlaceHeader: View {
         model.navigation.value.channel(model.context.channelId).flatMap { SidebarNavigation.isDirectMessageChannel($0) ? $0 : nil }
     }
 
-    private var showsTabs: Bool { model.mode != .toolbox && directMessage == nil }
+    private var showsTabs: Bool { model.mode != .toolbox }
 
     @ViewBuilder private var crumb: some View {
         let nav = model.navigation.value
@@ -56,10 +56,8 @@ struct MacPlaceHeader: View {
             if model.mode == .toolbox {
                 Text("Toolbox").fontWeight(.semibold).foregroundStyle(Amb.foreground)
             } else if let dm = directMessage {
-                if SoloDirectory.shared.contains(dm.id) {
-                    Text("Solo").foregroundStyle(Amb.mutedForeground)
-                    Text("/").foregroundStyle(Amb.faint)
-                }
+                Text(SoloDirectory.shared.contains(dm.id) ? "Solo" : "Direct messages").foregroundStyle(Amb.mutedForeground)
+                Text("/").foregroundStyle(Amb.faint)
                 Text(nav.label(dm)).fontWeight(.semibold).foregroundStyle(Amb.foreground)
             } else if let scope = nav.scope(model.context.scopeId) {
                 if let channel = nav.channel(model.context.channelId) {
@@ -110,11 +108,5 @@ extension AppModel {
         selectContext(next)
         if destination == .deck { deckPath = []; deckInboxRequests &+= 1 }
         mode = destination
-    }
-
-    /// A direct message is a conversation: it opens in Chat.
-    func openConversation(_ next: WorkContext) {
-        selectContext(next)
-        show(.chat)
     }
 }
