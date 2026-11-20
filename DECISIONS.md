@@ -125,6 +125,11 @@ Goal: Linear-level polish for the Mac app without changing what the product does
   the live app. Its Chat tab lists every conversation with that agent, so any number of chats has a home. (First
   built as one row per conversation, opening full width; dropped: no list of all chats, and DMs lost their tabs.)
 - **Every DM is a place with tabs**, Solo or with people, like a channel.
+- **No separate "your space" zone.** Order (Home, Solo, then Scopes and Direct messages) is enough; a dividing rule
+  or panel was mocked and not wanted.
+- **Collapsing hides the sidebar, as now.** An icon rail was considered: agents and people read as avatars, but
+  scopes have no icon or colour, so they'd be identical marks. Revisit if scopes get one.
+- **Sidebar opens at 248pt**, resizable 200–380 and remembered (it opened at its widest).
 - **No "Unread & Active" on the Mac.** It repeated channels that already show unread in place and pushed Solo down.
 - **Scopes are rows, not headings** (Linear's team rows): the row opens the scope, the chevron folds its channels.
 - **The sidebar says where, the tabs say what.** Section tabs move into the content header beside the place's name;
