@@ -285,3 +285,23 @@ Review: https://claude.ai/artifact/S4HCkDSDtn2gJtky9eWTNH
   apart, 6pt under the text and aligned with it (yours were right-aligned ~40pt below, inflating the hover area), then
   a small add-reaction button (same picker as the toolbar). Mac only; iPhone/iPad keep their bar. Picker content
   shared by both buttons.
+
+### 3.14–3.18 Rough edges before Phase 4
+- 3.14 (`style(chat): others' thread messages get the hugging, even-padded highlight`): `threadCell` in
+  `MessageCell` (Mac, thread, not yours): `MessageRow(bare:)` inside `messageHighlight(continued:)` (16pt sides, 12pt
+  top/bottom, 4pt in a same-sender run; text hugs), sender gap outside; toolbar stays at the row's top right. Yours use
+  the same modifier.
+- 3.15 (`fix(chat): one sample banner in thread panels; reopen the channel's thread on return`): `threadInPanel`
+  environment drops ThreadView's own sample banner inside the Mac thread panel. `InlineThreadMemory` remembers the
+  thread each channel had open in place; leaving Chat or switching channel and coming back reopens it; closing it
+  yourself (back, Esc) forgets it. In memory only.
+- 3.16 (`fix(chat): switching section closes the quick-view and New thread modals`): `ThreadFocusPresenter` watches
+  section changes; the quick-view and New thread modals close unless the same change opened the thread (Open in
+  #channel).
+- Section tab bar clipping: no change needed. The side panel that caused it is gone; at the window's 900pt minimum
+  the labelled tabs fit, and `MacSectionBar` falls back to icons only (`ViewThatFits`) before clipping.
+- 3.17 (`style(deck): New thread composer lines up with the text above`): Mac composer in `DeckThreadComposer` offset
+  by its own 16pt inset.
+- 3.18 (`style(chat): channel participants facepile beside New thread`): everyone in the channel's conversations,
+  most recent first, agents as rounded squares, names in the tooltip.
+- Checks for the batch: thread harness at the known failure; `MacDeckComposerCheck` passes; iOS builds.

@@ -67,6 +67,10 @@ Goal: Linear-level polish for the Mac app without changing what the product does
 - **No bubbles.** Tried for everything, then for your own messages: they suit quick back-and-forth between people,
   not briefs and long agent replies (lists, tables). Messages are flat rows.
 - **In a thread your own messages sit on the right** (flat, mirrored), with more space between senders.
+- **A message's hover highlight hugs the message** with even padding (more at the sides, which carry no line
+  spacing); the gap between senders sits outside it. A full-row highlight made every message look as wide as the page.
+- **A channel reopens the thread you left open there**; closing it yourself forgets it. **Switching section closes
+  the quick-view**, which belongs to the screen it was opened from.
 - **Agents have rounded-square avatars**, people circles, so the two read apart at a glance.
 - **Relative times** ("12m ago") for today; older messages show the clock time under a day label.
 - **A channel is a list of conversations, newest activity first** (direction A of the mockups): title, brief, who's
