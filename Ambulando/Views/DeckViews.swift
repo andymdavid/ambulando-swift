@@ -1425,6 +1425,9 @@ struct DeckThreadComposer: View {
                     Composer(target: ChatTarget(connectionId: connection.id, workspaceId: workspace.id, channelId: channelId),
                              workspace: workspace, store: store, placeholder: "Start a new thread…", onEnqueued: { requestId = $0 })
                         .id(channelId)
+                        #if os(macOS)
+                        .padding(.horizontal, -16)   // UX lab: the composer box lines up with the text above (it has its own 16pt inset)
+                        #endif
                 } else {
                     Text(pending.value?.lastError ?? "Starting thread… Your message is saved on this device.")
                         .accessibilityIdentifier("deck.compose.pending")
