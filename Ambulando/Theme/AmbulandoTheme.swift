@@ -98,6 +98,19 @@ enum Amb {
         static let rowSpacing: CGFloat = 1
         static let sectionGap: CGFloat = 18
     }
+    /// UX lab (Mac): content lists (Tasks, Docs, channel lists) share one header, section label and row. Rows are
+    /// separated by an inset hairline; the unread dot sits in the leading margin.
+    enum ListLayout {
+        static let leading: CGFloat = 20        // list edge to a row's content (the margin holds the unread dot)
+        static let trailing: CGFloat = 16
+        static let rowHeight: CGFloat = 38      // one-line rows
+        static let rowGap: CGFloat = 10         // between a row's columns
+        static let sectionTop: CGFloat = 18     // space above a section label; no rule
+        static let sectionBottom: CGFloat = 6
+        static let sizeColumn: CGFloat = 88     // task size
+        static let placeColumn: CGFloat = 120   // channel
+        static let personColumn: CGFloat = 140  // assignee
+    }
 
     // Computed so they follow the app text size (`TextScale`).
     @MainActor static var editorial: Font { .amb(.title2, design: .serif).weight(.semibold) }   // --font-editorial
