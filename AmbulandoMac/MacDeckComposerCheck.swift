@@ -12,7 +12,7 @@ extension MacThreadRegression {
         model.selectContext(.home); await settle()
         try press(window, "deck.inbox.new"); await settle()
         try require(find(window, "composer.field") == nil, "Home asks for a channel before composing")
-        try press(window, "deck.compose.option.\(FixtureTower.generalChannel)"); await settle()
+        try await menuAction(window, title: "#general", button: "deck.compose.channel"); await settle()   // UX lab: the Channel menu
         try require(find(window, "composer.field") != nil, "explicit channel choice opens the composer")
         try type(window, "@An"); await settle()
         try press(window, "mention.Ana Lima"); await settle()
@@ -41,7 +41,7 @@ extension MacThreadRegression {
         try press(window, "deck.compose.cancel"); await settle()
         try press(window, "deck.inbox.new"); await settle()
         try require(find(window, "composer.field") == nil, "Home asks again on reopen")
-        try press(window, "deck.compose.option.\(FixtureTower.generalChannel)"); await settle()
+        try await menuAction(window, title: "#general", button: "deck.compose.channel"); await settle()   // UX lab: the Channel menu
         try require(try textView(window).string.contains("Review this"), "cancel/reopen keeps the chosen channel's draft")
     }
 }

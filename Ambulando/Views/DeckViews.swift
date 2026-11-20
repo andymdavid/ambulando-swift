@@ -1430,25 +1430,9 @@ struct DeckThreadComposer: View {
                         .accessibilityIdentifier("deck.compose.pending")
                 }
             } else {
-                Text(channels.isEmpty ? "No channels in this context." : "Choose a channel here to start your thread.")
+                Text(channels.isEmpty ? "No channels in this context." : ChatLayout.mac ? "Choose a channel to start your thread." : "Choose a channel here to start your thread.")
                 #if os(macOS)
-                // UX lab: plain rows rather than a grey list box.
-                VStack(alignment: .leading, spacing: 2) {
-                    ForEach(channels) { channel in
-                        Button {
-                            channelId = channel.id
-                            choosingChannel = false
-                        } label: {
-                            Text("#\(nav.label(channel))").font(.amb(.body)).foregroundStyle(Amb.foreground)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.horizontal, 10).frame(height: Amb.rowHeight)
-                                .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                        .ambHoverRow()
-                        .accessibilityIdentifier("deck.compose.option.\(channel.id)")
-                    }
-                }
+                // UX lab: the Channel menu above is the only control on the Mac.
                 #else
                 List(channels) { channel in
                     Button("#\(nav.label(channel))") {
