@@ -82,6 +82,11 @@ struct FilesView: View {
         .sheet(isPresented: $uploading) { UploadSheet(workspace: workspace, choice: snapshot.value.choice, context: context) }
         .refreshable { model.openFiles(workspace, scopeId: scopeId, force: true) }
         .task(id: model.context) { start(); model.openFiles(workspace, scopeId: scopeId) }
+        // UX lab: `-UXOpen file:<name>` (sample app only), for captures.
+        .onChange(of: snapshot.value.groups) { _, groups in
+            let files = groups.flatMap { $0.loose + $0.folders.flatMap(\.files) }
+            UXLabOpen.record(kind: "file", among: files.map { ($0.id, $0.displayName) }, model: model)
+        }
         .onChange(of: model.identity) { _, state in if case .unlocked = state { model.openFiles(workspace, scopeId: scopeId) } }
     }
 

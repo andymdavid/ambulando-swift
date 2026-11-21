@@ -59,6 +59,9 @@ struct DocumentsView: View {
         .sheet(isPresented: $creating) { DocumentCreateSheet(workspace: workspace, choice: snapshot.value.choice, context: context) }
         .refreshable { model.openDocs(workspace, scopeId: scopeId, force: true) }
         .task(id: model.context) { start(); model.openDocs(workspace, scopeId: scopeId) }
+        // UX lab: `-UXOpen doc:<title>` or `doc:new` (sample app only), for captures.
+        .onChange(of: snapshot.value.docs) { _, docs in UXLabOpen.record(kind: "doc", among: docs.map { ($0.id, $0.title) }, model: model) }
+        .onAppear { if UXLabOpen.create(kind: "doc") { creating = true } }
         .onChange(of: model.identity) { _, state in if case .unlocked = state { model.openDocs(workspace, scopeId: scopeId) } }
     }
 

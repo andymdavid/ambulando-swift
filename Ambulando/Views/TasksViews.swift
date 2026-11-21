@@ -153,6 +153,7 @@ struct TasksView: View {
             // UX lab: `-UXSelectTasks 2` (sample app only) ticks the first tasks, to capture the bulk bar.
             let lab = FixtureEnvironment.requested ? UserDefaults.standard.integer(forKey: "UXSelectTasks") : 0
             if lab > 0, selected.isEmpty, !labSelected { labSelected = true; selected = Set(selectable.prefix(lab).map(\.id)) }
+            UXLabOpen.record(kind: "task", among: snapshot.value.rows.map { ($0.id, $0.title) }, model: model)
         }
         .onKeyPress(.escape) { if !busy { selected.removeAll(); selecting = false }; return .handled }
         .sheet(isPresented: $creating) {
@@ -168,6 +169,7 @@ struct TasksView: View {
         .task(id: model.context) { start(); model.openTasks(workspace, scopeId: scopeId) }
         // UX lab: `-UXStartTab board` or `tasks` (sample app only) opens the board or the list, for screen captures.
         .onAppear {
+            if UXLabOpen.create(kind: "task") { creating = true }
             guard FixtureEnvironment.requested, let tab = UserDefaults.standard.string(forKey: "UXStartTab") else { return }
             if tab == "board" { board = true } else if tab == "tasks" { board = false }
         }

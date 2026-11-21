@@ -573,3 +573,13 @@ Proposal and mockups: https://claude.ai/artifact/PFA62Dm9pTnTHMNrHH686J. Mac onl
 - Checked at 900pt with sidebars of 248 and 380pt, and at 1440pt (all columns). Checks rerun: thread harness at the
   known failure; `MacDeckComposerCheck` and `MacKanbanCheck` pass; iOS builds. Earlier captures were all at 1440pt,
   which is how this was missed.
+
+## Phase 6: Screens (`ux/screens`, off `lab` after Phase 5)
+
+Proposal and mockups: https://claude.ai/artifact/CMRBzByqnjaX5ACzQLvLW1. Mac only unless noted.
+
+### 6.0 Open a record for captures (`test(fixture): -UXOpen opens a task, document, file or composer at launch`)
+- `-UXOpen "task:<title>"`, `doc:<title>` or `file:<name>` opens that record once its list loads; `task:new` and `doc:new`
+  open New task / New document (`UXLabOpen.swift`, one call in each list). Sample app only. For captures of the
+  detail screens without clicking.
+
