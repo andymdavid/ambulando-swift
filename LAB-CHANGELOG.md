@@ -546,3 +546,8 @@ Proposal and mockups: https://claude.ai/artifact/PFA62Dm9pTnTHMNrHH686J. Mac onl
   and Files (`ListHeaderBar`, Mac only) and Chat's filters (`ChannelConversationList`, `MacPlaceConversations`).
   Before, Tasks/Docs/Files had 6pt above and below (cramped against the column labels) and Chat 12pt above, 8pt below.
 - No iPad check needed (`ListHeaderBar` keeps its padding on iPhone and iPad).
+
+### 5.6b Chat rows flush (`style(chat): conversation rows hover flush between full-width rules`)
+- Conversation rows (a channel's list and the Chat tab at Home or a scope) had a rounded hover wider than their rules,
+  which stopped 20pt and 12pt short of the row. Rules now span the row and the hover is square, as in Tasks and Docs;
+  text keeps its 20pt inner margin.

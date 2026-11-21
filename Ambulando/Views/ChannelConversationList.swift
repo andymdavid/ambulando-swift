@@ -129,8 +129,9 @@ struct ConversationRow: View {
                 content
             }
         }
-        .ambHoverRow(radius: Amb.radiusPanel)
-        .overlay(alignment: .top) { Rectangle().fill(Amb.border).frame(height: 1).padding(.leading, 20).padding(.trailing, 12) }
+        // Square hover and rules across the whole row, so the fill sits flush between the rules (as Tasks and Docs).
+        .ambHoverRow(radius: 0)
+        .overlay(alignment: .top) { Rectangle().fill(Amb.border).frame(height: 1) }
         .accessibilityIdentifier("channel.conversation")
     }
 
