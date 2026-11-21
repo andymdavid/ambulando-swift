@@ -97,7 +97,7 @@ struct MacPlaceConversations: View {
                 .buttonStyle(.ambPrimary)
                 .accessibilityIdentifier("place.newThread")
         }
-        .padding(.horizontal, 12).padding(.top, Amb.Space.m).padding(.bottom, Amb.Space.s)
+        .padding(.horizontal, 12).frame(minHeight: Amb.ListLayout.toolbarHeight)   // centred, as every list's toolbar
     }
 
     @ViewBuilder private var empty: some View {

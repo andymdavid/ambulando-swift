@@ -114,6 +114,7 @@ enum Amb {
         static let timeColumn: CGFloat = 72     // updated
         static let actionColumn: CGFloat = 28   // ••• on hover
         static let dragMargin: CGFloat = 28     // left of a table row's tick box: room for the drag handle
+        static let toolbarHeight: CGFloat = 52  // a list's toolbar row (filters, search, the main action), content centred
     }
 
     // Computed so they follow the app text size (`TextScale`).

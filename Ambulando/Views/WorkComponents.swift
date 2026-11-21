@@ -222,10 +222,18 @@ func byteLabel(_ count: Int?) -> String {
 struct ListHeaderBar<Content: View>: View {
     @ViewBuilder let content: () -> Content
     var body: some View {
+        #if os(macOS)
+        // UX lab: a fixed-height row with its content centred, the same on every tab (Tasks, Docs, Files, Chat).
+        HStack(spacing: 12) { content() }
+            .padding(.horizontal, 16)
+            .frame(maxWidth: .infinity, minHeight: Amb.ListLayout.toolbarHeight, alignment: .leading)
+            .background(Amb.background)
+        #else
         HStack(spacing: 12) { content() }
             .padding(.horizontal, 16).padding(.vertical, 6)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Amb.background)
+        #endif
     }
 }
 

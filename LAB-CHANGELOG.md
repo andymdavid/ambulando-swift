@@ -540,3 +540,9 @@ Proposal and mockups: https://claude.ai/artifact/PFA62Dm9pTnTHMNrHH686J. Mac onl
   actions, archiving documents.
 - For Pete (in addition to Phase 4's): the Mac Deck's Inbox is under review (Phase 5 Deck, on hold); task and doc
   lists are tables after gr8r-studio; manual task order is per device.
+
+### 5.6 Toolbar rows centred (`style(theme): list toolbars are one fixed height with centred content`)
+- Every list's toolbar row is now 52pt high with its content centred (`Amb.ListLayout.toolbarHeight`): Tasks, Docs
+  and Files (`ListHeaderBar`, Mac only) and Chat's filters (`ChannelConversationList`, `MacPlaceConversations`).
+  Before, Tasks/Docs/Files had 6pt above and below (cramped against the column labels) and Chat 12pt above, 8pt below.
+- No iPad check needed (`ListHeaderBar` keeps its padding on iPhone and iPad).

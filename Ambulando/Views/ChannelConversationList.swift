@@ -82,7 +82,7 @@ struct ChannelConversationList: View {
                 .buttonStyle(.ambPrimary)
                 .accessibilityIdentifier("channel.newThread")
         }
-        .padding(.horizontal, 12).padding(.top, Amb.Space.m).padding(.bottom, Amb.Space.s)
+        .padding(.horizontal, 12).frame(minHeight: Amb.ListLayout.toolbarHeight)   // centred, as every list's toolbar
     }
 
     private var channelPeople: ThreadParticipants {
