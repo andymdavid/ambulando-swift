@@ -488,3 +488,14 @@ Proposal and mockups: https://claude.ai/artifact/PFA62Dm9pTnTHMNrHH686J. Mac onl
 - Every task row has a hairline under it (a group's last task too), and rules start at the tick box's edge, as in
   gr8r-studio; before, the last task had none and rules started a few points right of the boxes.
 - Titles (and the Task label) sit 20pt past the group's name, so tasks read as inside their status group.
+
+### 5.4h Drag tasks; full-width hover (`feat(tasks): drag tasks by a handle to reorder or regroup`)
+- With Sort: Manual, a six-dot handle appears in the left margin on hover (`TaskGrip`). Drag a task by it: a 2pt
+  accent line shows where it lands (above or below a task, or at the top of a group). Dropping it in another group
+  changes that value (status, size or assignee, with the same writes as the bulk bar); channels don't change by drag.
+- **Order is saved on this device only** (`tasks.list.order.v1`, per workspace): Tower keeps no task order (tasks come
+  newest-changed first). Tasks you haven't placed stay above, newest first. *For Pete: a shared manual order needs a
+  task position on Tower.*
+- Task rows' hover and selected fills run the full width, square, against the rules (as gr8r-studio), replacing the
+  inset rounded fill of 5.4f.
+- Drag and drop not exercised here (no mouse in the lab session); needs a hand check.

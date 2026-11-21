@@ -1,5 +1,6 @@
 import AmbulandoCore
 import SwiftUI
+import UniformTypeIdentifiers
 
 #if os(macOS)
 /// UX lab (Mac): Tasks as a table, laid out after gr8r-studio's task list (Phase 5.4, round 6). A toolbar (search, sort,
@@ -25,6 +26,12 @@ struct MacTaskList: View {
     /// Archive asks first (the board's confirmation).
     let archiveSelected: () -> Void
     @AppStorage("tasks.list.collapsed.v1") private var collapsedList = ""
+    /// Your own order of tasks (Sort: Manual), per workspace, on this device: Tower keeps no task order.
+    @AppStorage("tasks.list.order.v1") private var orderJSON = "{}"
+    /// Where a dragged task would land: before or after a task, or at the top of a group.
+    @State private var dropMark: DropMark?
+
+    struct DropMark: Equatable { let id: String; let after: Bool }
 
     /// Inside a channel every task is in it: the column would repeat the place.
     private var showsChannel: Bool { model.context.channelId == nil }
@@ -37,9 +44,18 @@ struct MacTaskList: View {
                     if !snapshot.creating.isEmpty { creatingGroup }
                     ForEach(groups) { group in
                         groupRow(group)
+                            .overlay(alignment: .bottom) { if dropMark == DropMark(id: "group:" + group.id, after: true) { dropLine } }
+                            .onDrop(of: [.plainText], delegate: TaskRowDrop(height: 44, mark: { after in
+                                dropMark = after == nil ? nil : DropMark(id: "group:" + group.id, after: true)
+                            }, perform: { text, _ in move(text, before: group.rows.first, after: false, into: group) }))
                         if !collapsed.contains(key(group)) {
-                            ForEach(Array(group.rows.enumerated()), id: \.element.id) { index, row in
-                                taskRow(row).modifier(TaskTableRule())
+                            ForEach(group.rows) { row in
+                                taskRow(row)
+                                    .modifier(TaskTableRule(selected: selected.contains(row.id)))
+                                    .overlay(alignment: dropMark?.after == true ? .bottom : .top) { if dropMark?.id == row.id { dropLine } }
+                                    .onDrop(of: [.plainText], delegate: TaskRowDrop(height: Amb.ListLayout.rowHeight, mark: { after in
+                                        dropMark = after.map { DropMark(id: row.id, after: $0) }
+                                    }, perform: { text, after in move(text, before: row, after: after, into: group) }))
                             }
                         }
                     }
@@ -205,7 +221,18 @@ struct MacTaskList: View {
 
     private func sorted(_ rows: [TaskRow]) -> [TaskRow] {
         switch sort {
-        case .manual: return rows
+        case .manual:
+            // Your saved order; tasks you haven't placed yet stay above, in Tower's order (newest change first).
+            let saved = manualOrder
+            let rank = Dictionary(saved.enumerated().map { ($1, $0) }, uniquingKeysWith: { a, _ in a })
+            return rows.enumerated().sorted { a, b in
+                switch (rank[a.element.id], rank[b.element.id]) {
+                case let (x?, y?): return x < y
+                case (nil, _?): return true
+                case (_?, nil): return false
+                default: return a.offset < b.offset
+                }
+            }.map(\.element)
         case .title: return rows.sorted { $0.title.localizedStandardCompare($1.title) == .orderedAscending }
         case .updated: return rows.sorted { $0.task.updatedAt > $1.task.updatedAt }
         case .size:
@@ -227,6 +254,7 @@ struct MacTaskList: View {
     private func taskRow(_ row: TaskRow) -> some View {
         let ticked = selected.contains(row.id)
         return HStack(spacing: 0) {
+            dragHandle(row).frame(width: Self.gutter)
             TaskCheckbox(state: ticked ? .on : .off, label: "Select \(row.title)") {
                 if ticked { selected.remove(row.id) } else { selected.insert(row.id) }
             }
@@ -235,13 +263,8 @@ struct MacTaskList: View {
             Color.clear.frame(width: Self.titleIndent, height: 1)
             rowContent(row)
         }
-        .padding(.leading, Self.gutter).padding(.trailing, Amb.ListLayout.trailing)
+        .padding(.trailing, Amb.ListLayout.trailing)
         .frame(minHeight: Amb.ListLayout.rowHeight)
-        // Inset to the hairlines' extent, so the highlight doesn't run to the window edge.
-        .background {
-            RoundedRectangle(cornerRadius: Amb.radiusControl, style: .continuous).fill(ticked ? Amb.selectedFill : .clear)
-                .padding(.leading, Self.gutter - 6).padding(.trailing, Amb.ListLayout.trailing - 6)
-        }
         .contextMenu {
             if row.taskState != .inProgress { Button("Start") { setState(row, .inProgress) } }
             if row.taskState != .done { Button("Mark done") { setState(row, .done) } }
@@ -275,6 +298,88 @@ struct MacTaskList: View {
         }
     }
 
+    // MARK: Moving tasks
+
+    /// Six dots in the margin, shown on hover: drag a task to reorder it, or into another group to change that value.
+    @ViewBuilder private func dragHandle(_ row: TaskRow) -> some View {
+        if sort == .manual && canChange(row) {
+            TaskGrip()
+                .frame(maxWidth: .infinity, maxHeight: .infinity).contentShape(Rectangle())
+                .draggable(TaskBoardDrag(signer: model.identity.npub ?? "", connection: model.connection?.id ?? "", workspace: workspace.id,
+                                         app: workspace.appNpub, task: row.id).text) {
+                    Text(row.title).font(.amb(.body)).lineLimit(1).padding(.horizontal, 12).padding(.vertical, 8)
+                        .background(Amb.raised, in: RoundedRectangle(cornerRadius: Amb.radiusControl))
+                }
+                .ambRevealOnHover()
+                .ambTooltip("Drag to move")
+                .accessibilityLabel("Move \(row.title)")
+        } else {
+            Color.clear
+        }
+    }
+
+    private var dropLine: some View {
+        Rectangle().fill(Amb.primary).frame(height: 2)
+            .padding(.leading, Self.gutter).padding(.trailing, Amb.ListLayout.trailing)
+            .allowsHitTesting(false).accessibilityHidden(true)
+    }
+
+    private var manualOrder: [String] {
+        let all = (try? JSONSerialization.jsonObject(with: Data(orderJSON.utf8))) as? [String: [String]]
+        return all?[workspace.id] ?? []
+    }
+
+    /// Drops a task before or after another (or at the top of a group): saves the order on this device and, when the
+    /// group differs, changes the task's status, size or assignee to the group's. Tasks can't move between channels here.
+    private func move(_ text: String, before target: TaskRow?, after: Bool, into group: MacTaskGroup) {
+        dropMark = nil
+        guard let id = TaskBoardDrag.taskId(from: text, signer: model.identity.npub ?? "", connection: model.connection?.id ?? "",
+                                            workspace: workspace.id, app: workspace.appNpub),
+              let row = snapshot.rows.first(where: { $0.id == id }), canChange(row), target?.id != id else { return }
+        let from = groups.first { $0.rows.contains { $0.id == id } }
+        if from?.id != group.id {
+            guard let intent = change(row, to: group) else { return }
+            model.submit(intent, in: workspace)
+        }
+        var order = groups.flatMap(\.rows).map(\.id).filter { $0 != id }
+        let anchor = target.flatMap { t in order.firstIndex(of: t.id) }
+        let index = anchor.map { after ? $0 + 1 : $0 } ?? (group.rows.first.flatMap { order.firstIndex(of: $0.id) } ?? order.count)
+        order.insert(id, at: min(index, order.count))
+        var all = ((try? JSONSerialization.jsonObject(with: Data(orderJSON.utf8))) as? [String: [String]]) ?? [:]
+        all[workspace.id] = order
+        if let data = try? JSONSerialization.data(withJSONObject: all), let json = String(data: data, encoding: .utf8) { orderJSON = json }
+    }
+
+    /// The write that puts a task in another group, by the current grouping.
+    private func change(_ row: TaskRow, to group: MacTaskGroup) -> WriteIntent? {
+        switch grouping {
+        case .status:
+            guard let state = group.state, row.state != state.rawValue else { return nil }
+            return WriteIntent(kind: .taskState, targetId: row.id, payload: ["state": state.rawValue])
+        case .size:
+            guard TaskPriority(rawValue: group.id) != nil else { return nil }
+            return sizeIntent(row, group.id)
+        case .assignee:
+            return assignIntent(row, group.id == "unassigned" ? nil : group.id)
+        case .channel:
+            return nil
+        }
+    }
+
+    private func sizeIntent(_ row: TaskRow, _ size: String) -> WriteIntent? {
+        guard row.priority != size else { return nil }
+        let payload: [String: any Sendable] = ["base_row_version": row.task.rowVersion,
+            "base": ["title": row.task.title, "description": row.task.description ?? "", "priority": row.task.priority],
+            "patch": ["priority": size]]
+        return WriteIntent(kind: .taskPatch, targetId: row.id, payload: payload)
+    }
+
+    private func assignIntent(_ row: TaskRow, _ npub: String?) -> WriteIntent? {
+        guard row.assignee != npub else { return nil }
+        return WriteIntent(kind: .taskAssign, targetId: row.id, payload: ["assigned_to_npub": npub ?? "", "base_row_version": row.task.rowVersion,
+                                                                           "base_assigned_to_npub": row.task.assignedToNpub ?? ""])
+    }
+
     // MARK: Bulk changes
 
     private var chosen: [TaskRow] { snapshot.rows.filter { selected.contains($0.id) && canChange($0) } }
@@ -300,15 +405,7 @@ struct MacTaskList: View {
             }
             barMenu("Size", "smallcircle.filled.circle", identifier: "tasks.bulk.size") {
                 ForEach(TaskPriority.editable, id: \.self) { size in
-                    Button(size.label) {
-                        bulk { row in
-                            guard row.priority != size.rawValue else { return nil }
-                            let payload: [String: any Sendable] = ["base_row_version": row.task.rowVersion,
-                                "base": ["title": row.task.title, "description": row.task.description ?? "", "priority": row.task.priority],
-                                "patch": ["priority": size.rawValue]]
-                            return WriteIntent(kind: .taskPatch, targetId: row.id, payload: payload)
-                        }
-                    }
+                    Button(size.label) { bulk { row in sizeIntent(row, size.rawValue) } }
                 }
             }
             Button(action: archiveSelected) { Label("Archive", systemImage: "archivebox").fixedSize() }
@@ -345,13 +442,7 @@ struct MacTaskList: View {
         selected.removeAll()
     }
 
-    private func assign(_ npub: String?) {
-        bulk { row in
-            guard row.assignee != npub else { return nil }
-            return WriteIntent(kind: .taskAssign, targetId: row.id, payload: ["assigned_to_npub": npub ?? "", "base_row_version": row.task.rowVersion,
-                                                                               "base_assigned_to_npub": row.task.assignedToNpub ?? ""])
-        }
-    }
+    private func assign(_ npub: String?) { bulk { row in assignIntent(row, npub) } }
 
     private func title(_ row: TaskRow) -> some View {
         HStack(spacing: Amb.Space.s) {
@@ -409,18 +500,56 @@ struct MacTaskList: View {
     }
 }
 
-/// A task row's hover fill and the hairline under it, from the tick box's edge, so a group's last task is closed off
-/// too (gr8r-studio).
+/// A task row's hover and selected fills, full width and square against the rules (gr8r-studio), and the hairline
+/// under it from the tick box's edge, so a group's last task is closed off too.
 private struct TaskTableRule: ViewModifier {
+    var selected = false
     func body(content: Content) -> some View {
         let gutter = Amb.ListLayout.leading - 6
         content
-            .ambHoverRow(radius: Amb.radiusControl, inset: EdgeInsets(top: 1, leading: gutter - 6, bottom: 1, trailing: Amb.ListLayout.trailing - 6))
+            .background(selected ? Amb.selectedFill : .clear)
+            .ambHoverRow(radius: 0)
             .overlay(alignment: .bottom) {
                 Rectangle().fill(Amb.border).frame(height: 1)
                     .padding(.leading, gutter).padding(.trailing, Amb.ListLayout.trailing)
                     .accessibilityHidden(true)
             }
+    }
+}
+
+/// Six dots: the handle a task row is dragged by.
+private struct TaskGrip: View {
+    var body: some View {
+        VStack(spacing: 2.5) {
+            ForEach(0..<3, id: \.self) { _ in
+                HStack(spacing: 2.5) { Circle().frame(width: 2.5, height: 2.5); Circle().frame(width: 2.5, height: 2.5) }
+            }
+        }
+        .foregroundStyle(Amb.faint)
+        .accessibilityHidden(true)
+    }
+}
+
+/// Drop target for a task row: reports whether the drop would land in its top or bottom half, and hands over the
+/// dragged text.
+private struct TaskRowDrop: DropDelegate {
+    let height: CGFloat
+    let mark: (Bool?) -> Void
+    let perform: (String, Bool) -> Void
+
+    func validateDrop(info: DropInfo) -> Bool { info.hasItemsConforming(to: [.plainText]) }
+    func dropUpdated(info: DropInfo) -> DropProposal? { mark(info.location.y > height / 2); return DropProposal(operation: .move) }
+    func dropExited(info: DropInfo) { mark(nil) }
+    func performDrop(info: DropInfo) -> Bool {
+        let after = info.location.y > height / 2
+        mark(nil)
+        guard let provider = info.itemProviders(for: [.plainText]).first else { return false }
+        nonisolated(unsafe) let perform = perform
+        _ = provider.loadObject(ofClass: NSString.self) { object, _ in
+            guard let text = object as? String else { return }
+            DispatchQueue.main.async { perform(text, after) }
+        }
+        return true
     }
 }
 
