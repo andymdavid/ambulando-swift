@@ -68,6 +68,7 @@ struct TasksView: View {
     @AppStorage("tasks.list.sort.v1") private var listSort = MacTaskSortStored.manual
     @AppStorage("tasks.list.group.v1") private var listGrouping = MacTaskGroupingStored.status
     @State private var createState: TaskState?
+    @State private var labSelected = false
     /// UX lab (Mac): a card keeps its identity across lanes, so a move slides it to its new lane.
     @Namespace private var boardSpace
     @AppStorage("tasks.collapsed.v1") private var collapseJSON = "{}"
@@ -126,7 +127,8 @@ struct TasksView: View {
                 if board { boardView } else {
                     MacTaskList(workspace: workspace, snapshot: snapshot.value, search: listSearch, sort: listSortBinding.wrappedValue,
                                 grouping: listGroupingBinding.wrappedValue, me: model.identity.npub, setState: setState,
-                                newTask: { state in createState = state; creating = true }, sortBinding: listSortBinding)
+                                newTask: { state in createState = state; creating = true }, sortBinding: listSortBinding,
+                                selected: $selected, canChange: canChange, archiveSelected: { archiveConfirmation = true })
                         .overlay { listEmpty }
                 }
                 #else
@@ -143,7 +145,12 @@ struct TasksView: View {
         .onChange(of: preferenceKey) { _, _ in selected.removeAll(); selecting = false; feedback = nil }
         .onChange(of: model.context) { _, _ in selected.removeAll(); selecting = false; feedback = nil }
         .onChange(of: board) { _, _ in selected.removeAll(); selecting = false }
-        .onChange(of: snapshot.value.rows) { _, _ in selected.formIntersection(Set(selectable.map(\.id))) }
+        .onChange(of: snapshot.value.rows) { _, _ in
+            selected.formIntersection(Set(selectable.map(\.id)))
+            // UX lab: `-UXSelectTasks 2` (sample app only) ticks the first tasks, to capture the bulk bar.
+            let lab = FixtureEnvironment.requested ? UserDefaults.standard.integer(forKey: "UXSelectTasks") : 0
+            if lab > 0, selected.isEmpty, !labSelected { labSelected = true; selected = Set(selectable.prefix(lab).map(\.id)) }
+        }
         .onKeyPress(.escape) { if !busy { selected.removeAll(); selecting = false }; return .handled }
         .sheet(isPresented: $creating) {
             TaskCreateSheet(workspace: workspace, store: store, choice: snapshot.value.choice, context: context, initialState: createState)

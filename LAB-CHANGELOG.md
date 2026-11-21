@@ -471,3 +471,15 @@ Proposal and mockups: https://claude.ai/artifact/PFA62Dm9pTnTHMNrHH686J. Mac onl
 - Not taken from gr8r: checkboxes and bulk bar (bulk select stays on the board), "Add task" rows, task keys, due dates
   and labels (Ambulando tasks have none). Mockup rounds 4–5 (Linear-led) were not chosen.
 - No iPad check needed: `TaskCreateSheet` gains an optional status that only the Mac list passes.
+
+### 5.4f Select tasks for bulk changes (`feat(tasks): tick boxes and a bulk bar in the task table`)
+- Each task row starts with a tick box (accent when ticked; `TaskCheckbox`), under the group row's chevron; the title
+  is indented to line up with the group's name, as in gr8r-studio. The labels row has Select all (with a part-ticked
+  state). Ticked rows take the selected fill.
+- With anything ticked, a bar floats at the bottom: "N selected" · Status · Assignee · Size · Archive · ✕ (or Esc).
+  Status, Assignee and Size send the same writes as one task's edits (state, assign with its version check, size as a
+  task edit); Archive asks first (the board's confirmation). The selection is the board's, cleared on switching.
+- Content-list hover and selection fills stay within the rows' hairlines (`ambHoverRow(inset:)`) instead of running
+  to the window edge.
+- `-UXSelectTasks 2` ticks the first tasks in the sample app, for captures.
+- No iPad check needed: `ambHoverRow`'s new inset defaults to none; the list is Mac only.

@@ -143,7 +143,7 @@ Goal: Linear-level polish for the Mac app without changing what the product does
   and boxes per screen.
 - **The task list is a table, laid out like gr8r-studio's** in Ambulando's look: search, sort and group in a toolbar;
   labelled columns (Status, Assignee, Size, Channel, Updated); a group row per status with fold and +; hairlines
-  between rows; ••• on hover. A Linear-style list (bands, icons before the title, a Display menu) was mocked twice and
+  between rows; ••• on hover; a tick box per task with a floating bar for bulk status, assignee, size and archive. A Linear-style list (bands, icons before the title, a Display menu) was mocked twice and
   read as less organised; one-line rows without labels (round 1) left a wide window feeling empty. Size is a dot scaled
   to Rock/Pebble/Sand plus the word (Rock orange).
 - **Board moves animate:** a card slides to its new lane rather than vanishing and reappearing.

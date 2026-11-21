@@ -44,7 +44,7 @@ extension ContentListSectionLabel where Mark == EmptyView {
 extension View {
     /// A content list row: hover fill, and a hairline above it unless it opens its section.
     func contentListRow(first: Bool) -> some View {
-        ambHoverRow(radius: Amb.radiusControl)
+        ambHoverRow(radius: Amb.radiusControl, inset: EdgeInsets(top: 0, leading: Amb.ListLayout.leading - 12, bottom: 0, trailing: Amb.ListLayout.trailing - 6))
             .overlay(alignment: .top) {
                 if !first {
                     Rectangle().fill(Amb.border).frame(height: 1)
