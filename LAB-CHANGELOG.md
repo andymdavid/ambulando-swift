@@ -578,6 +578,12 @@ Proposal and mockups: https://claude.ai/artifact/PFA62Dm9pTnTHMNrHH686J. Mac onl
 
 Proposal and mockups: https://claude.ai/artifact/CMRBzByqnjaX5ACzQLvLW1. Mac only unless noted.
 
+**To do (Andy, 2026-11-21): redesign every modal and settings sheet.** They're still plain system forms. The list:
+channel settings and its access pages (Grant/Change access), workspace management (members, groups, scopes, apps,
+danger zone), scope setup and move-to-scope, New scope / New DM, agent setup, Settings, unlock, workspace selection
+and connect, Upload, the task sheets (Edit, Add subtask), document versions/review/history, rename thread, Get it
+done, notification detail, Search (iPhone). The round 6 composer (6.4) and Members popover (6.6) set the style.
+
 ### 6.0 Open a record for captures (`test(fixture): -UXOpen opens a task, document, file or composer at launch`)
 - `-UXOpen "task:<title>"`, `doc:<title>` or `file:<name>` opens that record once its list loads; `task:new` and `doc:new`
   open New task / New document (`UXLabOpen.swift`, one call in each list). Sample app only. For captures of the
