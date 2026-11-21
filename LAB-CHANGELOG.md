@@ -551,3 +551,10 @@ Proposal and mockups: https://claude.ai/artifact/PFA62Dm9pTnTHMNrHH686J. Mac onl
 - Conversation rows (a channel's list and the Chat tab at Home or a scope) had a rounded hover wider than their rules,
   which stopped 20pt and 12pt short of the row. Rules now span the row and the hover is square, as in Tasks and Docs;
   text keeps its 20pt inner margin.
+
+### 5.6c Reply count on the meta line (`style(chat): reply count beside who's taken part`)
+- "3 replies" moves from under the time to the meta line, after the faces and before the latest reply ("3 replies ·
+  Ana: …"), so it reads with who's in the conversation; the right keeps the time only. Accent and medium weight while
+  the conversation is unread (Slack's reply line), grey otherwise; nothing without replies.
+- The sample data marks no conversation unread, so the accent state is untested on screen. *For Pete: a count of
+  unread replies per conversation would allow "2 new".*

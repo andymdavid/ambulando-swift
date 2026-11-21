@@ -144,13 +144,7 @@ struct ConversationRow: View {
                 meta.padding(.top, 4)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            VStack(alignment: .trailing, spacing: 6) {
-                MessageTimeText(iso: conversation.lastActivityAt)
-                if conversation.replyCount > 0 {
-                    Text("\(conversation.replyCount) \(conversation.replyCount == 1 ? "reply" : "replies")")
-                        .font(.amb(.caption)).foregroundStyle(Amb.mutedForeground).monospacedDigit()
-                }
-            }
+            MessageTimeText(iso: conversation.lastActivityAt)
         }
         .padding(.leading, 20).padding(.trailing, 12).padding(.vertical, 14)
         // Titles line up with the filters above; the unread dot sits in the margin.
@@ -181,6 +175,16 @@ struct ConversationRow: View {
             if let place { ConversationPlaceTag(place: place, people: people) }
             // In a DM the place already shows the one face; a facepile only where people vary.
             if place?.direct != true { ParticipantStack(npubs: conversation.participants, people: people) }
+            // How much has been said, read with who's in it; accent while there's something new (Slack's reply line).
+            if conversation.replyCount > 0 {
+                HStack(spacing: Amb.Space.s) {
+                    Text("\(conversation.replyCount) \(conversation.replyCount == 1 ? "reply" : "replies")")
+                        .font(.amb(.footnote).weight(conversation.unread ? .medium : .regular))
+                        .foregroundStyle(conversation.unread ? Amb.primary : Amb.mutedForeground)
+                        .monospacedDigit().fixedSize()
+                    Text("·").font(.amb(.footnote)).foregroundStyle(Amb.faint)
+                }
+            }
             TimelineView(.periodic(from: .now, by: 15)) { context in
                 if let agent = workingAgent(now: context.date) {
                     WorkingLabel(name: people.person(agent).name)
