@@ -154,6 +154,9 @@ Goal: Linear-level polish for the Mac app without changing what the product does
   heading. Open columns on the page were tried first; lanes read better as separate statuses.
 - **Docs use the same table as Tasks**: toolbar, labels, optional groups (channel or when changed), tick boxes, a bar
   to archive several, and a ••• menu. Tower's summary is raw body text, so rows show the title only.
+- **Narrow windows: columns give way, the title never does.** Lower-priority table columns hide as the pane narrows
+  (the task's status first when grouped by it); toolbars shorten to icons; the sidebar narrows before the content
+  drops under its minimum.
 - **The Chat tab at Home or a scope lists the place's conversations, newest first** (one list across its channels and
   DMs, each row tagged with where it lives), not its channels again. The sidebar already lists channels by type, so
   filters are about state (All, Unread, Mine), not type. A DM shows its face once. A refined channel overview (C1) was
