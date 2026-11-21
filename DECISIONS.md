@@ -141,9 +141,12 @@ Goal: Linear-level polish for the Mac app without changing what the product does
 - **Lists share one pattern** (`Amb.ListLayout`, `AmbContentList.swift`): filters left and the main action right; section
   labels separated by space, never a rule; a hairline between rows; unread as a dot in the margin. Round 1 mixed rules
   and boxes per screen.
-- **Tasks as one-line rows grouped by status.** Status ring, title, then size, channel and assignee in fixed columns.
-  Rows don't repeat their group's status. Size is a dot scaled to Rock/Pebble/Sand plus the word (Rock orange), not
-  capitals in a pill.
+- **The task list is a table, laid out like gr8r-studio's** in Ambulando's look: search, sort and group in a toolbar;
+  labelled columns (Status, Assignee, Size, Channel, Updated); a group row per status with fold and +; hairlines
+  between rows; ••• on hover. A Linear-style list (bands, icons before the title, a Display menu) was mocked twice and
+  read as less organised; one-line rows without labels (round 1) left a wide window feeling empty. Size is a dot scaled
+  to Rock/Pebble/Sand plus the word (Rock orange).
+- **Board moves animate:** a card slides to its new lane rather than vanishing and reappearing.
 - **Board: each status is a lane** (recessed, hairline edge, as gr8r-studio), with bordered cards and the list's ring
   heading. Open columns on the page were tried first; lanes read better as separate statuses.
 - **The Chat tab at Home or a scope lists the place's conversations, newest first** (one list across its channels and

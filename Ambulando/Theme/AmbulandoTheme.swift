@@ -110,6 +110,9 @@ enum Amb {
         static let sizeColumn: CGFloat = 88     // task size
         static let placeColumn: CGFloat = 120   // channel
         static let personColumn: CGFloat = 140  // assignee
+        static let statusColumn: CGFloat = 116  // task status
+        static let timeColumn: CGFloat = 72     // updated
+        static let actionColumn: CGFloat = 28   // ••• on hover
     }
 
     // Computed so they follow the app text size (`TextScale`).

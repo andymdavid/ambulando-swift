@@ -458,3 +458,16 @@ Proposal and mockups: https://claude.ai/artifact/PFA62Dm9pTnTHMNrHH686J. Mac onl
   identity across lanes (`matchedGeometryEffect`), and the board springs to the new placement (0.38s), so the card
   slides over and both lanes close and open the gap; the drop highlight fades in and out. Same for bulk moves.
 - Not watched in motion here (no mouse in the lab session); needs a hand check.
+
+### 5.4e Task table (`style(tasks): task list as a table, after gr8r-studio`)
+- Replaces 5.4's list layout (Andy: gr8r-studio's layout, our look). `MacTaskList` is now a table: toolbar (Search
+  tasks, Sort: Manual/Size/Updated/Title, Group: Status/Size/Assignee/Channel; remembered), a row of column labels
+  (Task, Size and Updated sort when clicked), group rows (fold chevron, mark, name, count, +; hairline under; folds
+  remembered), and one-line tasks with hairlines between: title (subtasks done/total), Status (ring and word),
+  Assignee (face and name, or "Unassigned"), Size (dot and word), Channel (hidden inside a channel), Updated, and •••
+  on hover (Start, Mark done, Move to).
+- A group's + opens New task with that status (`TaskCreateSheet.initialState`; status grouping only).
+- New tokens `Amb.ListLayout.statusColumn`, `timeColumn`, `actionColumn`. `-UXStartTab tasks` now opens the list.
+- Not taken from gr8r: checkboxes and bulk bar (bulk select stays on the board), "Add task" rows, task keys, due dates
+  and labels (Ambulando tasks have none). Mockup rounds 4–5 (Linear-led) were not chosen.
+- No iPad check needed: `TaskCreateSheet` gains an optional status that only the Mac list passes.

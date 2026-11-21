@@ -62,6 +62,12 @@ struct TasksView: View {
     @State private var feedback: String?
     @State private var archiveConfirmation = false
     @State private var targeted: TaskState?
+    /// UX lab (Mac): the task table's search, sort and grouping (MacTaskList), and the status a New task started from
+    /// a group gets.
+    @State private var listSearch = ""
+    @AppStorage("tasks.list.sort.v1") private var listSort = MacTaskSortStored.manual
+    @AppStorage("tasks.list.group.v1") private var listGrouping = MacTaskGroupingStored.status
+    @State private var createState: TaskState?
     /// UX lab (Mac): a card keeps its identity across lanes, so a move slides it to its new lane.
     @Namespace private var boardSpace
     @AppStorage("tasks.collapsed.v1") private var collapseJSON = "{}"
@@ -89,6 +95,9 @@ struct TasksView: View {
                         .accessibilityIdentifier("tasks.select")
                     if selecting { selectionMenu }
                 }
+                #if os(macOS)
+                if !board { MacTaskListControls(search: $listSearch, sort: listSortBinding, grouping: listGroupingBinding) }
+                #endif
                 Spacer()
                 Picker("Layout", selection: $board) {
                     Image(systemName: "list.bullet").tag(false).accessibilityLabel("List")
@@ -102,7 +111,7 @@ struct TasksView: View {
                 .ambTooltip("Show as list or board")
                 .accessibilityIdentifier("tasks.layout")
                 #if os(macOS)
-                Button { creating = true } label: { Label("New task", systemImage: "plus") }
+                Button { createState = nil; creating = true } label: { Label("New task", systemImage: "plus") }
                     .buttonStyle(.ambPrimary)
                     .accessibilityIdentifier("tasks.new")
                 #else
@@ -114,7 +123,12 @@ struct TasksView: View {
             Group {
                 #if os(macOS)
                 // UX lab: one-line rows grouped by status (MacTaskList).
-                if board { boardView } else { MacTaskList(workspace: workspace, snapshot: snapshot.value, columns: columns, me: model.identity.npub, setState: setState).overlay { listEmpty } }
+                if board { boardView } else {
+                    MacTaskList(workspace: workspace, snapshot: snapshot.value, search: listSearch, sort: listSortBinding.wrappedValue,
+                                grouping: listGroupingBinding.wrappedValue, me: model.identity.npub, setState: setState,
+                                newTask: { state in createState = state; creating = true }, sortBinding: listSortBinding)
+                        .overlay { listEmpty }
+                }
                 #else
                 if board { boardView } else { listView }
                 #endif
@@ -132,14 +146,26 @@ struct TasksView: View {
         .onChange(of: snapshot.value.rows) { _, _ in selected.formIntersection(Set(selectable.map(\.id))) }
         .onKeyPress(.escape) { if !busy { selected.removeAll(); selecting = false }; return .handled }
         .sheet(isPresented: $creating) {
-            TaskCreateSheet(workspace: workspace, store: store, choice: snapshot.value.choice, context: context)
+            TaskCreateSheet(workspace: workspace, store: store, choice: snapshot.value.choice, context: context, initialState: createState)
         }
         .refreshable { model.openTasks(workspace, scopeId: scopeId, force: true) }
         .task(id: model.context) { start(); model.openTasks(workspace, scopeId: scopeId) }
-        // UX lab: `-UXStartTab board` (sample app only) opens the board, for screen captures.
-        .onAppear { if FixtureEnvironment.requested && UserDefaults.standard.string(forKey: "UXStartTab") == "board" { board = true } }
+        // UX lab: `-UXStartTab board` or `tasks` (sample app only) opens the board or the list, for screen captures.
+        .onAppear {
+            guard FixtureEnvironment.requested, let tab = UserDefaults.standard.string(forKey: "UXStartTab") else { return }
+            if tab == "board" { board = true } else if tab == "tasks" { board = false }
+        }
         .onChange(of: model.identity) { _, state in if case .unlocked = state { model.openTasks(workspace, scopeId: scopeId) } }
     }
+
+    #if os(macOS)
+    private var listSortBinding: Binding<MacTaskSort> {
+        Binding(get: { MacTaskSort(rawValue: listSort.rawValue) ?? .manual }, set: { listSort = MacTaskSortStored(rawValue: $0.rawValue) ?? .manual })
+    }
+    private var listGroupingBinding: Binding<MacTaskGrouping> {
+        Binding(get: { MacTaskGrouping(rawValue: listGrouping.rawValue) ?? .status }, set: { listGrouping = MacTaskGroupingStored(rawValue: $0.rawValue) ?? .status })
+    }
+    #endif
 
     private var boardFeedback: some View {
         ScrollView {
@@ -784,6 +810,8 @@ struct TaskCreateSheet: View {
     let context: WorkContext
     var parentTaskId: String? = nil
     var parentChannelId: String? = nil
+    /// UX lab: the status a task started from a list group gets.
+    var initialState: TaskState? = nil
     @State private var title = ""
     @State private var detail = ""
     @State private var channelId: String?
@@ -823,6 +851,7 @@ struct TaskCreateSheet: View {
             }
             .task {
                 channelId = parentChannelId ?? channelId ?? context.channelId ?? channels.first?.id
+                if let initialState, TaskState.board.contains(initialState) { state = initialState }
                 members = (try? await store.reader.directoryMembers(workspaceId: workspace.id)) ?? []
             }
         }
@@ -1014,3 +1043,8 @@ struct TaskSubtasksView: View {
         }
     }
 }
+
+/// UX lab: the Mac task table's stored sort and grouping (raw values shared with `MacTaskSort` and `MacTaskGrouping`,
+/// which exist on the Mac only).
+enum MacTaskSortStored: String { case manual, size, updated, title }
+enum MacTaskGroupingStored: String { case status, size, assignee, channel }
