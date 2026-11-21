@@ -56,7 +56,7 @@ struct MacTaskList: View {
                         if !collapsed.contains(key(group)) {
                             ForEach(group.rows) { row in
                                 taskRow(row)
-                                    .modifier(TaskTableRule(selected: selected.contains(row.id)))
+                                    .modifier(AmbTableRule(selected: selected.contains(row.id)))
                                     .overlay(alignment: dropMark?.after == true ? .bottom : .top) { if dropMark?.id == row.id { dropLine } }
                                     .onDrop(of: [.plainText], delegate: TaskRowDrop(height: Amb.ListLayout.rowHeight, mark: { after in
                                         dropMark = after.map { DropMark(id: row.id, after: $0) }
@@ -80,10 +80,8 @@ struct MacTaskList: View {
         .animation(.easeOut(duration: 0.18), value: selected.isEmpty)
     }
 
-    /// Before a title: the tick box under the group's chevron, then room up to the group's name.
-    private static let gutter: CGFloat = Amb.ListLayout.dragMargin
-    /// Past the group's name, so a task reads as inside its group (gr8r-studio).
-    private static let titleIndent: CGFloat = 48
+    private static let gutter = AmbTable.gutter
+    private static let titleIndent = AmbTable.titleIndent
 
     // MARK: Columns
 
@@ -95,7 +93,7 @@ struct MacTaskList: View {
         let ticked = rows.filter { selected.contains($0.id) }.count
         return HStack(spacing: Amb.ListLayout.rowGap) {
             HStack(spacing: 0) {
-                TaskCheckbox(state: ticked == 0 ? .off : ticked == rows.count ? .on : .mixed, label: "Select all tasks") {
+                AmbTableCheckbox(state: ticked == 0 ? .off : ticked == rows.count ? .on : .mixed, label: "Select all tasks") {
                     if ticked == rows.count { selected.subtract(rows.map(\.id)) } else { selected.formUnion(rows.map(\.id)) }
                 }
                 .disabled(rows.isEmpty)
@@ -135,35 +133,9 @@ struct MacTaskList: View {
     // MARK: Groups
 
     private func groupRow(_ group: MacTaskGroup) -> some View {
-        let closed = collapsed.contains(key(group))
-        return HStack(spacing: Amb.Space.s) {
-            Button { toggle(group) } label: {
-                Image(systemName: closed ? "chevron.right" : "chevron.down").font(.amb(.caption).weight(.semibold))
-                    .foregroundStyle(Amb.mutedForeground).frame(width: 16, height: 16).contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("\(closed ? "Show" : "Hide") \(group.title)")
-            .accessibilityIdentifier("tasks.group.toggle.\(group.id)")
-            group.mark
-            Text(group.title).font(.amb(.subheadline).weight(.semibold)).foregroundStyle(Amb.foreground)
-            Text("\(group.rows.count)").font(.amb(.subheadline)).foregroundStyle(Amb.mutedForeground).monospacedDigit()
-            Button { newTask(group.state) } label: {
-                Image(systemName: "plus").font(.amb(.caption).weight(.semibold)).foregroundStyle(Amb.mutedForeground)
-                    .frame(width: 20, height: 20).contentShape(Rectangle())
-            }
-            .buttonStyle(.plain).ambHover()
-            .ambTooltip(group.state.map { "New task in \($0.label)" } ?? "New task")
-            .accessibilityIdentifier("tasks.group.new.\(group.id)")
-            Spacer(minLength: 0)
-        }
-        .padding(.leading, Self.gutter).padding(.trailing, Amb.ListLayout.trailing)
-        .padding(.top, Amb.ListLayout.sectionTop).padding(.bottom, Amb.Space.s)
-        .overlay(alignment: .bottom) {
-            // Rules run edge to edge, so hover and selected fills sit flush between them (gr8r-studio).
-            Rectangle().fill(Amb.border).frame(height: 1)
-        }
-        .accessibilityElement(children: .contain)
-        .accessibilityAddTraits(.isHeader)
+        AmbTableGroupRow(id: group.id, title: group.title, count: group.rows.count, closed: collapsed.contains(key(group)),
+                         toggle: { toggle(group) }, addHelp: group.state.map { "New task in \($0.label)" } ?? "New task",
+                         add: { newTask(group.state) }) { group.mark }
     }
 
     private var creatingGroup: some View {
@@ -260,7 +232,7 @@ struct MacTaskList: View {
         let ticked = selected.contains(row.id)
         return HStack(spacing: 0) {
             dragHandle(row).frame(width: Self.gutter)
-            TaskCheckbox(state: ticked ? .on : .off, label: "Select \(row.title)") {
+            AmbTableCheckbox(state: ticked ? .on : .off, label: "Select \(row.title)") {
                 if ticked { selected.remove(row.id) } else { selected.insert(row.id) }
             }
             .disabled(!canChange(row))
@@ -271,7 +243,7 @@ struct MacTaskList: View {
         .padding(.trailing, Amb.ListLayout.trailing)
         .frame(minHeight: Amb.ListLayout.rowHeight)
         // Right-click offers the same as •••.
-        .contextMenu { TaskMenuItems(items: actions(row)) }
+        .contextMenu { AmbTableMenuItems(items: actions(row)) }
     }
 
     private func rowContent(_ row: TaskRow) -> some View {
@@ -388,55 +360,29 @@ struct MacTaskList: View {
     private var chosen: [TaskRow] { snapshot.rows.filter { selected.contains($0.id) && canChange($0) } }
 
     private var bulkBar: some View {
-        HStack(spacing: 2) {
-            Text("\(selected.count) selected").font(.amb(.footnote).weight(.semibold)).foregroundStyle(Amb.foreground)
-                .monospacedDigit().padding(.horizontal, 10)
-            barDivider
-            barMenu("Status", "circle.dashed", identifier: "tasks.bulk.status") {
+        AmbBulkBar(count: selected.count, identifier: "tasks.bulk", clear: { selected.removeAll() }) {
+            AmbBulkBarMenu(title: "Status", symbol: "circle.dashed", identifier: "tasks.bulk.status") {
                 ForEach(TaskState.board, id: \.self) { state in
                     Button(state.label) {
                         bulk { row in row.state == state.rawValue ? nil : WriteIntent(kind: .taskState, targetId: row.id, payload: ["state": state.rawValue]) }
                     }
                 }
             }
-            barMenu("Assignee", "person", identifier: "tasks.bulk.assignee") {
+            AmbBulkBarMenu(title: "Assignee", symbol: "person", identifier: "tasks.bulk.assignee") {
                 Button("Unassigned") { assign(nil) }
                 Divider()
                 ForEach(snapshot.names.keys.sorted { name($0) < name($1) }, id: \.self) { npub in
                     Button(name(npub)) { assign(npub) }
                 }
             }
-            barMenu("Size", "smallcircle.filled.circle", identifier: "tasks.bulk.size") {
+            AmbBulkBarMenu(title: "Size", symbol: "smallcircle.filled.circle", identifier: "tasks.bulk.size") {
                 ForEach(TaskPriority.editable, id: \.self) { size in
                     Button(size.label) { bulk { row in sizeIntent(row, size.rawValue) } }
                 }
             }
             Button(action: archiveSelected) { Label("Archive", systemImage: "archivebox").fixedSize() }
                 .buttonStyle(.ambGhost).accessibilityIdentifier("tasks.bulk.archive")
-            barDivider
-            Button { selected.removeAll() } label: { Image(systemName: "xmark") }
-                .buttonStyle(.ambIcon).ambTooltip("Clear selection (Esc)")
-                .accessibilityLabel("Clear selection").accessibilityIdentifier("tasks.bulk.clear")
         }
-        .font(.amb(.footnote))
-        .padding(6)
-        .background(Amb.raised, in: RoundedRectangle(cornerRadius: Amb.radiusPanel, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: Amb.radiusPanel, style: .continuous).stroke(Amb.borderStrong))
-        .shadow(color: .black.opacity(0.18), radius: 16, y: 6)
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel("Bulk actions")
-        .accessibilityIdentifier("tasks.bulk")
-    }
-
-    private var barDivider: some View { Rectangle().fill(Amb.border).frame(width: 1, height: 18).padding(.horizontal, 4) }
-
-    private func barMenu<Items: View>(_ title: String, _ symbol: String, identifier: String, @ViewBuilder items: () -> Items) -> some View {
-        Menu { items() } label: { Label(title, systemImage: symbol).font(.amb(.footnote).weight(.medium)) }
-            .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
-            .tint(Amb.secondaryForeground).foregroundStyle(Amb.secondaryForeground)
-            .padding(.horizontal, 8).padding(.vertical, 4)
-            .ambHover()
-            .accessibilityIdentifier(identifier)
     }
 
     /// Sends one write per selected task that needs it, then clears the selection.
@@ -524,37 +470,6 @@ struct MacTaskList: View {
     private func send(_ intent: WriteIntent?) { if let intent { model.submit(intent, in: workspace) } }
 }
 
-/// A task row's hover and selected fills and the hairline under it, all edge to edge, so the fills sit flush between
-/// the rules and a group's last task is closed off too (gr8r-studio).
-private struct TaskTableRule: ViewModifier {
-    var selected = false
-    func body(content: Content) -> some View {
-        content
-            .background(selected ? Amb.selectedFill : .clear)
-            .ambHoverRow(radius: 0)
-            .overlay(alignment: .bottom) {
-                Rectangle().fill(Amb.border).frame(height: 1).accessibilityHidden(true)
-            }
-    }
-}
-
-/// The ••• menu's items as a SwiftUI menu, for right-click.
-private struct TaskMenuItems: View {
-    let items: [NativeMessageAction]
-    var body: some View {
-        ForEach(Array(items.enumerated()), id: \.offset) { _, item in
-            if item.children.isEmpty {
-                Button { item.perform?() } label: { label(item) }
-            } else {
-                Menu { TaskMenuItems(items: item.children) } label: { label(item) }
-            }
-        }
-    }
-    @ViewBuilder private func label(_ item: NativeMessageAction) -> some View {
-        if item.symbol.isEmpty { Text(item.title) } else { Label(item.title, systemImage: item.symbol) }
-    }
-}
-
 /// Six dots: the handle a task row is dragged by.
 private struct TaskGrip: View {
     var body: some View {
@@ -588,35 +503,6 @@ private struct TaskRowDrop: DropDelegate {
             DispatchQueue.main.async { perform(text, after) }
         }
         return true
-    }
-}
-
-/// A square tick box in the accent when ticked (selection is an interaction: the accent's job).
-struct TaskCheckbox: View {
-    enum State { case off, on, mixed }
-    let state: State
-    let label: String
-    let action: () -> Void
-    @Environment(\.isEnabled) private var enabled
-
-    var body: some View {
-        Button(action: action) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 4, style: .continuous)
-                    .fill(state == .off ? Color.clear : Amb.primary)
-                RoundedRectangle(cornerRadius: 4, style: .continuous)
-                    .strokeBorder(state == .off ? Amb.borderStrong : .clear, lineWidth: 1.25)
-                if state == .on { Image(systemName: "checkmark").font(.system(size: 9, weight: .bold)).foregroundStyle(Amb.primaryForeground) }
-                if state == .mixed { Capsule().fill(Amb.primaryForeground).frame(width: 8, height: 2) }
-            }
-            .frame(width: 16, height: 16)
-            .opacity(enabled ? 1 : 0.4)
-            .frame(width: 16, height: 28)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(label)
-        .accessibilityValue(state == .on ? "Selected" : state == .mixed ? "Some selected" : "Not selected")
     }
 }
 
@@ -655,37 +541,12 @@ struct MacTaskListControls: View {
 
     var body: some View {
         HStack(spacing: Amb.Space.m) {
-            HStack(spacing: 6) {
-                Image(systemName: "magnifyingglass").foregroundStyle(Amb.mutedForeground).accessibilityHidden(true)
-                TextField("Search tasks", text: $search).textFieldStyle(.plain)
-                    .accessibilityIdentifier("tasks.search")
-            }
-            .font(.amb(.footnote))
-            .padding(.horizontal, 10).frame(width: 240, height: 28)
-            .overlay(RoundedRectangle(cornerRadius: Amb.radiusControl).stroke(Amb.border))
-            menu("arrow.up.arrow.down", "Sort", sort.label, identifier: "tasks.sort") {
-                ForEach(MacTaskSort.allCases, id: \.self) { value in
-                    Button { sort = value } label: { if sort == value { Label(value.label, systemImage: "checkmark") } else { Text(value.label) } }
-                }
-            }
-            menu("rectangle.grid.1x2", "Group", grouping.label, identifier: "tasks.group") {
-                ForEach(MacTaskGrouping.allCases, id: \.self) { value in
-                    Button { grouping = value } label: { if grouping == value { Label(value.label, systemImage: "checkmark") } else { Text(value.label) } }
-                }
-            }
+            AmbTableSearchField(prompt: "Search tasks", text: $search, identifier: "tasks.search")
+            AmbTableToolbarMenu(symbol: "arrow.up.arrow.down", title: "Sort", values: MacTaskSort.allCases, label: \.label,
+                                selection: $sort, identifier: "tasks.sort")
+            AmbTableToolbarMenu(symbol: "rectangle.grid.1x2", title: "Group", values: MacTaskGrouping.allCases, label: \.label,
+                                selection: $grouping, identifier: "tasks.group")
         }
-    }
-
-    private func menu<Items: View>(_ symbol: String, _ title: String, _ value: String, identifier: String, @ViewBuilder items: () -> Items) -> some View {
-        // One label: a borderless Mac menu keeps only its first text, and tints its icon with the accent.
-        Menu { items() } label: {
-            Label { Text(title + ": " + value) } icon: { Image(systemName: symbol) }
-                .font(.amb(.footnote).weight(.medium))
-        }
-        .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
-        .tint(Amb.secondaryForeground)
-        .foregroundStyle(Amb.secondaryForeground)
-        .accessibilityIdentifier(identifier)
     }
 }
 

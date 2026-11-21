@@ -514,3 +514,8 @@ Proposal and mockups: https://claude.ai/artifact/PFA62Dm9pTnTHMNrHH686J. Mac onl
   uses the bulk bar's confirmation, which now reads "Archive this task?" for one. Only Open shows for a task that can't
   change (locked, a parent of subtasks, or with a change still sending).
 - Menus not opened here (no mouse in the lab session); needs a hand check.
+
+### 5.5a Shared table pieces (`refactor(theme): the task table's pieces become the shared AmbTable`)
+- New `AmbTable.swift` (Mac): `AmbTable` (gutter, title indent), `AmbTableRule`, `AmbTableCheckbox`,
+  `AmbTableMenuItems`, `AmbTableGroupRow`, `AmbBulkBar` (+ menu and divider), `AmbTableSearchField`,
+  `AmbTableToolbarMenu`. Moved out of `MacTaskList` so Docs uses the same table. No visible change.
