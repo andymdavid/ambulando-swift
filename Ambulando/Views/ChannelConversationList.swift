@@ -15,6 +15,8 @@ struct ChannelConversationList: View {
     let threadTitles: [String: String]
     let loaded: Bool
     @State private var filter: Filter = .all
+    @State private var search = ""
+    @State private var found = ConversationSearchResult()
     /// Writing a new thread, in place of the list.
     @State private var composing = false
 
@@ -23,10 +25,13 @@ struct ChannelConversationList: View {
     private var me: String? { model.identity.npub }
 
     private var shown: [ChannelConversation] {
+        let conversations = ConversationSearch.filter(conversations, query: search, result: found) { c in
+            [Self.title(c, threadTitles: threadTitles)] + c.participants.map { people.person($0).name }
+        }
         switch filter {
-        case .all: conversations
-        case .unread: conversations.filter(\.unread)
-        case .mine: conversations.filter { c in me.map { c.participants.contains($0) || c.root.senderNpub == $0 } ?? false }
+        case .all: return conversations
+        case .unread: return conversations.filter(\.unread)
+        case .mine: return conversations.filter { c in me.map { c.participants.contains($0) || c.root.senderNpub == $0 } ?? false }
         }
     }
 
@@ -46,12 +51,18 @@ struct ChannelConversationList: View {
 
     private var list: some View {
         VStack(spacing: 0) {
-            header.chatColumn()
+            #if os(macOS)   // the list is the Mac's channel view (ChatLayout.mac)
+            ConversationListToolbar(search: $search, filter: $filter, identifier: "channel", newThread: { composing = true }) {
+                // Who's in this channel's conversations, most recent first (Buzz-style facepile).
+                if !channelPeople.people.isEmpty { ParticipantFacepile(participants: channelPeople).padding(.trailing, 4) }
+            }
+            #endif
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 0) {
                     ForEach(shown) { conversation in
                         ConversationRow(conversation: conversation, workspace: workspace, people: people,
-                                        title: Self.title(conversation, threadTitles: threadTitles), me: me)
+                                        title: Self.title(conversation, threadTitles: threadTitles), me: me,
+                                        match: ConversationSearch.matchedMessage(conversation, query: search, result: found), query: search)
                     }
                     if loaded && shown.isEmpty { empty }
                 }
@@ -59,30 +70,15 @@ struct ChannelConversationList: View {
                 .chatColumn()
             }
         }
-    }
-
-    private var header: some View {
-        HStack(spacing: Amb.Space.s) {
-            HStack(spacing: 2) {
-                ForEach(Filter.allCases, id: \.self) { option in
-                    Button(option.rawValue) { filter = option }
-                        .buttonStyle(.plain)
-                        .font(.amb(.footnote).weight(.medium))
-                        .foregroundStyle(filter == option ? Amb.foreground : Amb.mutedForeground)
-                        .padding(.horizontal, 8).padding(.vertical, 4)
-                        .background(filter == option ? Amb.selectedFill : .clear, in: RoundedRectangle(cornerRadius: Amb.radiusControl, style: .continuous))
-                        .accessibilityAddTraits(filter == option ? .isSelected : [])
-                        .accessibilityIdentifier("channel.filter.\(option.rawValue.lowercased())")
-                }
-            }
-            Spacer(minLength: 0)
-            // Who's in this channel's conversations, most recent first (Buzz-style facepile).
-            if !channelPeople.people.isEmpty { ParticipantFacepile(participants: channelPeople).padding(.trailing, 4) }
-            Button { composing = true } label: { Label("New thread", systemImage: "square.and.pencil") }
-                .buttonStyle(.ambPrimary)
-                .accessibilityIdentifier("channel.newThread")
+        .onAppear { if search.isEmpty { search = UXLabOpen.search } }   // UX lab: `-UXSearch` (sample app only)
+        // Search every stored message in the channel, a moment after typing stops.
+        .task(id: search) {
+            guard let store = model.store else { return }
+            try? await Task.sleep(for: .milliseconds(200))
+            guard !Task.isCancelled else { return }
+            found = await ConversationSearch.run(store: store, workspaceId: workspace.id, channelIds: [target.channelId], query: search,
+                                                 loaded: Set(conversations.map(ConversationSearch.key)))
         }
-        .padding(.horizontal, 12).frame(minHeight: Amb.ListLayout.toolbarHeight)   // centred, as every list's toolbar
     }
 
     private var channelPeople: ThreadParticipants {
@@ -92,7 +88,8 @@ struct ChannelConversationList: View {
     }
 
     private var empty: some View {
-        Text(filter == .all ? "No conversations yet. Start one with New thread." : filter == .unread ? "You're all caught up." : "No conversations you've taken part in.")
+        Text(ConversationSearch.active(search) ? "No conversations match “\(search.trimmingCharacters(in: .whitespaces))”."
+             : filter == .all ? "No conversations yet. Start one with New thread." : filter == .unread ? "You're all caught up." : "No conversations you've taken part in.")
             .font(.amb(.footnote)).foregroundStyle(Amb.mutedForeground)
             .frame(maxWidth: .infinity).padding(.vertical, 40)
     }
@@ -116,6 +113,9 @@ struct ConversationRow: View {
     let me: String?
     /// Where the conversation lives, when the list spans several channels (the Chat tab at Home or a scope).
     var place: ConversationPlace? = nil
+    /// While searching: the message that matched, quoted in place of the opening line, and what was searched for.
+    var match: MessageRecord? = nil
+    var query = ""
 
     var body: some View {
         Group {
@@ -140,7 +140,11 @@ struct ConversationRow: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)
                     .font(.amb(.body).weight(conversation.unread ? .semibold : .medium)).foregroundStyle(Amb.foreground).lineLimit(1)
-                if let brief { Text(brief).font(.amb(.footnote)).foregroundStyle(Amb.mutedForeground).lineLimit(1) }
+                if let match = quoted {
+                    (Text(senderName(match) + ": ").fontWeight(.medium).foregroundColor(Amb.secondaryForeground)
+                     + Text(ConversationSearch.snippet(match.body, query: query)).foregroundColor(Amb.mutedForeground))
+                        .font(.amb(.footnote)).lineLimit(1)
+                } else if let brief { Text(brief).font(.amb(.footnote)).foregroundStyle(Amb.mutedForeground).lineLimit(1) }
                 meta.padding(.top, 4)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -154,6 +158,13 @@ struct ConversationRow: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(accessibilityText)
+    }
+
+    /// The matching message, unless it is the opening one and the title already shows the words.
+    private var quoted: MessageRecord? {
+        guard let match else { return nil }
+        let q = query.trimmingCharacters(in: .whitespaces)
+        return match.id == conversation.root.id && title.localizedStandardContains(q) ? nil : match
     }
 
     /// The opening message's first line, when the title doesn't already say it.
@@ -182,17 +193,21 @@ struct ConversationRow: View {
                         .font(.amb(.footnote).weight(conversation.unread ? .medium : .regular))
                         .foregroundStyle(conversation.unread ? Amb.primary : Amb.mutedForeground)
                         .monospacedDigit().fixedSize()
-                    Text("·").font(.amb(.footnote)).foregroundStyle(Amb.faint)
+                    if conversation.latestReply == nil || conversation.latestReply?.id != quoted?.id {
+                        Text("·").font(.amb(.footnote)).foregroundStyle(Amb.faint)
+                    }
                 }
             }
             TimelineView(.periodic(from: .now, by: 15)) { context in
                 if let agent = workingAgent(now: context.date) {
                     WorkingLabel(name: people.person(agent).name)
                 } else if let reply = conversation.latestReply {
-                    // In a DM the place already names the other person: only "You:" is said.
-                    (Text(namedInPlace(reply) ? "" : senderName(reply) + ": ").fontWeight(.medium).foregroundColor(Amb.secondaryForeground)
-                     + Text(ConversationPreview.plain(reply.body)).foregroundColor(Amb.mutedForeground))
-                        .font(.amb(.footnote)).lineLimit(1)
+                    if reply.id != quoted?.id {   // not again when it's the quoted match
+                        // In a DM the place already names the other person: only "You:" is said.
+                        (Text(namedInPlace(reply) ? "" : senderName(reply) + ": ").fontWeight(.medium).foregroundColor(Amb.secondaryForeground)
+                         + Text(ConversationPreview.plain(reply.body)).foregroundColor(Amb.mutedForeground))
+                            .font(.amb(.footnote)).lineLimit(1)
+                    }
                 } else if !namedInPlace(conversation.root) {
                     // No replies yet: who started it.
                     Text(senderName(conversation.root)).font(.amb(.footnote).weight(.medium)).foregroundStyle(Amb.secondaryForeground).lineLimit(1)

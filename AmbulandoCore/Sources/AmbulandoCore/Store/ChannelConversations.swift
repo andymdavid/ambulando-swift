@@ -19,7 +19,11 @@ public struct ChannelConversation: Sendable, Equatable, Identifiable {
 extension StoreReader {
     /// The channel's conversations, newest activity first. Uses the same rule as `channelFeed` for which message starts
     /// a conversation (the thread's source message, or its earliest stored message when the source is missing).
-    public func channelConversations(workspaceId: String, channelId: String, limit: Int) throws -> [ChannelConversation] {
+    /// `only` limits it to these conversations (thread ids, or the message id of one without a thread), for search.
+    public func channelConversations(workspaceId: String, channelId: String, limit: Int, only: Set<String>? = nil) throws -> [ChannelConversation] {
+        if let only, only.isEmpty { return [] }
+        let keys = only.map(Array.init) ?? []
+        let onlyClause = only == nil ? "" : "AND (m.thread_id IN (\(keys.map { _ in "?" }.joined(separator: ", "))) OR m.id IN (\(keys.map { _ in "?" }.joined(separator: ", "))))"
         let columns = Self.messageColumns.split(separator: ",").map { "m." + $0.trimmingCharacters(in: .whitespaces) }.joined(separator: ", ")
         let s = try db.prepare("""
         SELECT \(columns),
@@ -33,9 +37,10 @@ extension StoreReader {
                           AND s.deleted = 0 AND s.thread_source_id = s.id)
               AND NOT EXISTS (SELECT 1 FROM messages e WHERE e.workspace_id = m.workspace_id AND e.thread_id = m.thread_id AND e.deleted = 0
                               AND (e.created_at < m.created_at OR (e.created_at = m.created_at AND e.id < m.id)))))
+        \(onlyClause)
         ORDER BY last_activity DESC, m.id DESC LIMIT ?
         """)
-        try s.bind([.text(workspaceId), .text(channelId), .int(Int64(limit))])
+        try s.bind([.text(workspaceId), .text(channelId)] + (keys + keys).map { .text($0) } + [.int(Int64(limit))])
         var heads: [(MessageRecord, Int, String)] = []
         while try s.step() {
             let root = Self.message(s, workspaceId: workspaceId)

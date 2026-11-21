@@ -583,3 +583,18 @@ Proposal and mockups: https://claude.ai/artifact/CMRBzByqnjaX5ACzQLvLW1. Mac onl
   open New task / New document (`UXLabOpen.swift`, one call in each list). Sample app only. For captures of the
   detail screens without clicking.
 
+### 6.0b Chat lists get the Tasks/Docs toolbar and search (`feat(chat): conversation lists share the table toolbar and search`)
+- Asked first, before the round 6 screens. The Chat tab and a channel's conversation list share one toolbar
+  (`ConversationListToolbar`): the same full-width bar as Tasks and Docs (`ListHeaderBar`, 16pt gutter), "Search
+  chats", All / Unread / Mine as a quiet segmented switch (as Tasks' list/board), then New thread (keeps its pencil;
+  icon only when narrow). The list itself keeps the chat column. A channel keeps its facepile by New thread.
+- Search filters as you type: the title, the people and the place on each row, plus every stored message in the
+  list's channels through the full-text index (`StoreReader.conversationMatches`, new). Conversations older than the
+  list holds (40 per channel) are brought in (`channelConversations(…, only:)`, an optional filter). Each match quotes
+  the matching message with the words in bold, unless the title already shows them; the reply preview isn't repeated.
+  Local only: what this Mac has stored (Tower has no search).
+- Lab flags (sample app only): `-UXSearch <text>` fills the search; `-UXOpen channel:<name>` opens a channel.
+- Checked at 1440 and 900pt (sidebar 248 and 380), searching on the Chat tab and in #general. Thread regression: only
+  the known failure. Mac only; no iPad check (the shared Core query adds an optional parameter, default unchanged).
+- For Pete: `channelConversations` gains an optional `only:` set; `conversationMatches` is a new reader query.
+

@@ -13,6 +13,8 @@ struct MacPlaceConversations: View {
     let store: LocalStore
     @State private var snapshot = LiveQuery<PlaceConversationsSnapshot>(initial: PlaceConversationsSnapshot())
     @State private var filter: ChannelConversationList.Filter = .all
+    @State private var search = ""
+    @State private var found = ConversationSearchResult()
 
     /// Conversations read per channel; the merged list keeps the newest.
     private static let perChannel = 40
@@ -28,7 +30,12 @@ struct MacPlaceConversations: View {
     }
 
     private var conversations: [ChannelConversation] {
-        let all = snapshot.value.conversations
+        let nav = model.navigation.value
+        let all = ConversationSearch.filter(snapshot.value.conversations, query: search, result: found) { c in
+            let place = nav.channel(c.root.channelId).map { ConversationPlace.of($0, nav: nav, viewer: model.connection?.signerNpub) }
+            return [ChannelConversationList.title(c, threadTitles: snapshot.value.threadTitles), place?.label, place?.person.map { snapshot.value.people.person($0).name }]
+                .compactMap { $0 } + c.participants.map { snapshot.value.people.person($0).name }
+        }
         switch filter {
         case .all: return all
         case .unread: return all.filter(\.unread)
@@ -40,14 +47,15 @@ struct MacPlaceConversations: View {
         let nav = model.navigation.value
         let ids = Set(channels.map { $0.id.lowercased() })
         VStack(spacing: 0) {
-            header.chatColumn()
+            ConversationListToolbar(search: $search, filter: $filter, identifier: "place", newThread: { model.composingThread = true }) { EmptyView() }
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 0) {
                     ForEach(conversations) { conversation in
                         let channel = nav.channel(conversation.root.channelId)
                         ConversationRow(conversation: conversation, workspace: workspace, people: snapshot.value.people,
                                         title: ChannelConversationList.title(conversation, threadTitles: snapshot.value.threadTitles), me: me,
-                                        place: channel.map { ConversationPlace.of($0, nav: nav, viewer: model.connection?.signerNpub) })
+                                        place: channel.map { ConversationPlace.of($0, nav: nav, viewer: model.connection?.signerNpub) },
+                                        match: ConversationSearch.matchedMessage(conversation, query: search, result: found), query: search)
                     }
                     if snapshot.loaded && conversations.isEmpty { empty }
                 }
@@ -66,6 +74,11 @@ struct MacPlaceConversations: View {
             }
         }
         .onAppear { for id in ids { InlineThreadHosts.shared.add(id) } }
+        // UX lab: `-UXSearch <text>` and `-UXOpen channel:<name>` (sample app only), for captures.
+        .onAppear { if search.isEmpty { search = UXLabOpen.search } }
+        .onChange(of: channels.map(\.id), initial: true) { _, _ in
+            UXLabOpen.record(kind: "channel", among: channels.map { ($0.id, nav.label($0)) }, model: model)
+        }
         .onDisappear {
             for id in ids { InlineThreadHosts.shared.remove(id) }
             if let channel = model.focusedThread?.channelId?.lowercased(), ids.contains(channel) { model.focusedThread = nil }
@@ -74,34 +87,20 @@ struct MacPlaceConversations: View {
             if mode != .chat, let channel = model.focusedThread?.channelId?.lowercased(), ids.contains(channel) { model.focusedThread = nil }
         }
         .task(id: channels.map(\.id)) { start() }
+        // Search every stored message in the place's channels, a moment after typing stops.
+        .task(id: [search] + channels.map(\.id)) {
+            try? await Task.sleep(for: .milliseconds(200))
+            guard !Task.isCancelled else { return }
+            found = await ConversationSearch.run(store: store, workspaceId: workspace.id, channelIds: channels.map(\.id), query: search,
+                                                 loaded: Set(snapshot.value.conversations.map(ConversationSearch.key)))
+        }
         .onChange(of: nav.groups.isEmpty, initial: true) { _, empty in if !empty { model.markCachedListShown() } }
         .accessibilityIdentifier("chat.place.conversations")
     }
 
-    private var header: some View {
-        HStack(spacing: Amb.Space.s) {
-            HStack(spacing: 2) {
-                ForEach(ChannelConversationList.Filter.allCases, id: \.self) { option in
-                    Button(option.rawValue) { filter = option }
-                        .buttonStyle(.plain)
-                        .font(.amb(.footnote).weight(.medium))
-                        .foregroundStyle(filter == option ? Amb.foreground : Amb.mutedForeground)
-                        .padding(.horizontal, 8).padding(.vertical, 4)
-                        .background(filter == option ? Amb.selectedFill : .clear, in: RoundedRectangle(cornerRadius: Amb.radiusControl, style: .continuous))
-                        .accessibilityAddTraits(filter == option ? .isSelected : [])
-                        .accessibilityIdentifier("place.filter.\(option.rawValue.lowercased())")
-                }
-            }
-            Spacer(minLength: 0)
-            Button { model.composingThread = true } label: { Label("New thread", systemImage: "square.and.pencil") }
-                .buttonStyle(.ambPrimary)
-                .accessibilityIdentifier("place.newThread")
-        }
-        .padding(.horizontal, 12).frame(minHeight: Amb.ListLayout.toolbarHeight)   // centred, as every list's toolbar
-    }
-
     @ViewBuilder private var empty: some View {
         let text = channels.isEmpty ? "No channels here."
+            : ConversationSearch.active(search) ? "No conversations match “\(search.trimmingCharacters(in: .whitespaces))”."
             : filter == .all ? "No conversations yet. Start one with New thread."
             : filter == .unread ? "You're all caught up." : "No conversations you've taken part in."
         Text(text).font(.amb(.footnote)).foregroundStyle(Amb.mutedForeground)
