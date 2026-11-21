@@ -145,8 +145,8 @@ Goal: Linear-level polish for the Mac app without changing what the product does
   labelled columns (Status, Assignee, Size, Channel, Updated); a group row per status with fold and +; hairlines
   between rows; ••• on hover; a tick box per task with a floating bar for bulk status, assignee, size and archive;
   drag by a handle to reorder or move between groups. A task's ••• and right-click menus offer everything you can do to
-  it (the task screen's edits plus the bulk bar's actions). Row fills are full width and square, as in gr8r. Manual order is
-  kept on the device until Tower has a task position. A Linear-style list (bands, icons before the title, a Display menu) was mocked twice and
+  it (the task screen's edits plus the bulk bar's actions). Row fills are full width and square, as in gr8r. Moving a task
+  into another group changes it on Tower; reordering within a group is a personal arrangement, kept on the device. A Linear-style list (bands, icons before the title, a Display menu) was mocked twice and
   read as less organised; one-line rows without labels (round 1) left a wide window feeling empty. Size is a dot scaled
   to Rock/Pebble/Sand plus the word (Rock orange).
 - **Board moves animate:** a card slides to its new lane rather than vanishing and reappearing.
