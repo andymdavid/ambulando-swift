@@ -1110,7 +1110,9 @@ enum MacThreadRegression {
             guard let card = find(window, "kanban.card") else { throw Failure(description: "Missing Kanban card") }
             try require(containsText(card, row.title), "card title retained")
             try require(!containsText(card, status), "card does not repeat status")
-            try require(containsText(card, (TaskPriority(rawValue: row.priority)?.label ?? row.priority).uppercased()), "priority retained")
+            // UX lab: sizes read "Rock" (dot and word) rather than an all-caps pill; either keeps the priority on the card.
+            let size = TaskPriority(rawValue: row.priority)?.label ?? row.priority
+            try require(containsText(card, size) || containsText(card, size.uppercased()), "priority retained")
             try snapshot(window, model: model, name: "mac-kanban-\(theme)")
             window.contentView = NSHostingView(rootView: TaskRowView(row: row, snapshot: taskSnapshot, me: nil).padding().preferredColorScheme(theme))
             await settle()
