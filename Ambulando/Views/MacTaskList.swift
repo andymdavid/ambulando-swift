@@ -39,7 +39,7 @@ struct MacTaskList: View {
                         groupRow(group)
                         if !collapsed.contains(key(group)) {
                             ForEach(Array(group.rows.enumerated()), id: \.element.id) { index, row in
-                                taskRow(row).contentListRow(first: index == 0)
+                                taskRow(row).modifier(TaskTableRule())
                             }
                         }
                     }
@@ -61,7 +61,8 @@ struct MacTaskList: View {
 
     /// Before a title: the tick box under the group's chevron, then room up to the group's name.
     private static let gutter: CGFloat = Amb.ListLayout.leading - 6
-    private static let titleIndent: CGFloat = 28
+    /// Past the group's name, so a task reads as inside its group (gr8r-studio).
+    private static let titleIndent: CGFloat = 48
 
     // MARK: Columns
 
@@ -138,7 +139,7 @@ struct MacTaskList: View {
         .padding(.top, Amb.ListLayout.sectionTop).padding(.bottom, Amb.Space.s)
         .overlay(alignment: .bottom) {
             Rectangle().fill(Amb.border).frame(height: 1)
-                .padding(.leading, Amb.ListLayout.leading).padding(.trailing, Amb.ListLayout.trailing)
+                .padding(.leading, Self.gutter).padding(.trailing, Amb.ListLayout.trailing)
         }
         .accessibilityElement(children: .contain)
         .accessibilityAddTraits(.isHeader)
@@ -239,7 +240,7 @@ struct MacTaskList: View {
         // Inset to the hairlines' extent, so the highlight doesn't run to the window edge.
         .background {
             RoundedRectangle(cornerRadius: Amb.radiusControl, style: .continuous).fill(ticked ? Amb.selectedFill : .clear)
-                .padding(.leading, Amb.ListLayout.leading - 12).padding(.trailing, Amb.ListLayout.trailing - 6)
+                .padding(.leading, Self.gutter - 6).padding(.trailing, Amb.ListLayout.trailing - 6)
         }
         .contextMenu {
             if row.taskState != .inProgress { Button("Start") { setState(row, .inProgress) } }
@@ -405,6 +406,21 @@ struct MacTaskList: View {
             NativeMessageAction(state.label, "circle") { setState(row, state) }
         }))
         return items
+    }
+}
+
+/// A task row's hover fill and the hairline under it, from the tick box's edge, so a group's last task is closed off
+/// too (gr8r-studio).
+private struct TaskTableRule: ViewModifier {
+    func body(content: Content) -> some View {
+        let gutter = Amb.ListLayout.leading - 6
+        content
+            .ambHoverRow(radius: Amb.radiusControl, inset: EdgeInsets(top: 1, leading: gutter - 6, bottom: 1, trailing: Amb.ListLayout.trailing - 6))
+            .overlay(alignment: .bottom) {
+                Rectangle().fill(Amb.border).frame(height: 1)
+                    .padding(.leading, gutter).padding(.trailing, Amb.ListLayout.trailing)
+                    .accessibilityHidden(true)
+            }
     }
 }
 

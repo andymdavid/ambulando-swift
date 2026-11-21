@@ -483,3 +483,8 @@ Proposal and mockups: https://claude.ai/artifact/PFA62Dm9pTnTHMNrHH686J. Mac onl
   to the window edge.
 - `-UXSelectTasks 2` ticks the first tasks in the sample app, for captures.
 - No iPad check needed: `ambHoverRow`'s new inset defaults to none; the list is Mac only.
+
+### 5.4g Task table rules and indent (`style(tasks): a rule under every task, titles indented inside their group`)
+- Every task row has a hairline under it (a group's last task too), and rules start at the tick box's edge, as in
+  gr8r-studio; before, the last task had none and rules started a few points right of the boxes.
+- Titles (and the Task label) sit 20pt past the group's name, so tasks read as inside their status group.
