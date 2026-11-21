@@ -505,3 +505,12 @@ Proposal and mockups: https://claude.ai/artifact/PFA62Dm9pTnTHMNrHH686J. Mac onl
   overhung rules that stopped short of both edges).
 - The margin left of the tick boxes is 28pt (`Amb.ListLayout.dragMargin`, was 14), so the six-dot handle has room;
   the labels and group rows move with it.
+
+### 5.4j Full task menu (`feat(tasks): a task's ••• and right-click menus offer everything it can do`)
+- Both menus now list the same items: Open; Edit title and description…; Status, Assignee and Size (submenus, the
+  current value ticked); Add subtask…; Select/Deselect; Archive…. That is what the task screen offers plus the bulk
+  bar's actions, so nothing needs the selection or the task screen. Was: Start, Mark done, Move to.
+- Edit and Add subtask open the task screen's own sheets (`TaskEditSheet`, `TaskCreateSheet` with the parent); Archive
+  uses the bulk bar's confirmation, which now reads "Archive this task?" for one. Only Open shows for a task that can't
+  change (locked, a parent of subtasks, or with a change still sending).
+- Menus not opened here (no mouse in the lab session); needs a hand check.

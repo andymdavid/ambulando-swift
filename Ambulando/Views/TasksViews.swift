@@ -69,6 +69,9 @@ struct TasksView: View {
     @AppStorage("tasks.list.group.v1") private var listGrouping = MacTaskGroupingStored.status
     @State private var createState: TaskState?
     @State private var labSelected = false
+    /// UX lab (Mac): a task's own sheets, from its row menu.
+    @State private var editingRow: TaskRow?
+    @State private var subtaskParent: TaskRow?
     /// UX lab (Mac): a card keeps its identity across lanes, so a move slides it to its new lane.
     @Namespace private var boardSpace
     @AppStorage("tasks.collapsed.v1") private var collapseJSON = "{}"
@@ -128,7 +131,9 @@ struct TasksView: View {
                     MacTaskList(workspace: workspace, snapshot: snapshot.value, search: listSearch, sort: listSortBinding.wrappedValue,
                                 grouping: listGroupingBinding.wrappedValue, me: model.identity.npub, setState: setState,
                                 newTask: { state in createState = state; creating = true }, sortBinding: listSortBinding,
-                                selected: $selected, canChange: canChange, archiveSelected: { archiveConfirmation = true })
+                                selected: $selected, canChange: canChange, archiveSelected: { archiveConfirmation = true },
+                                edit: { editingRow = $0 }, addSubtask: { subtaskParent = $0 },
+                                archive: { row in selected = [row.id]; archiveConfirmation = true })
                         .overlay { listEmpty }
                 }
                 #else
@@ -138,7 +143,7 @@ struct TasksView: View {
             boardFeedback
         }
         .navigationTitle("Tasks")
-        .confirmationDialog("Archive \(selected.count) selected tasks?", isPresented: $archiveConfirmation, titleVisibility: .visible) {
+        .confirmationDialog(selected.count == 1 ? "Archive this task?" : "Archive \(selected.count) selected tasks?", isPresented: $archiveConfirmation, titleVisibility: .visible) {
             Button("Archive selected", role: .destructive) { apply(.archive) }
         }
 
@@ -154,6 +159,12 @@ struct TasksView: View {
         .onKeyPress(.escape) { if !busy { selected.removeAll(); selecting = false }; return .handled }
         .sheet(isPresented: $creating) {
             TaskCreateSheet(workspace: workspace, store: store, choice: snapshot.value.choice, context: context, initialState: createState)
+        }
+        .sheet(item: $editingRow) { row in TaskEditSheet(row: row, workspace: workspace) }
+        .sheet(item: $subtaskParent) { parent in
+            TaskCreateSheet(workspace: workspace, store: store, choice: snapshot.value.choice,
+                            context: WorkContext(scopeId: parent.task.scopeId, channelId: parent.task.channelId),
+                            parentTaskId: parent.id, parentChannelId: parent.task.channelId)
         }
         .refreshable { model.openTasks(workspace, scopeId: scopeId, force: true) }
         .task(id: model.context) { start(); model.openTasks(workspace, scopeId: scopeId) }

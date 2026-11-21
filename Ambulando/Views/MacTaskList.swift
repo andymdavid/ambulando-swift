@@ -25,6 +25,11 @@ struct MacTaskList: View {
     let canChange: (TaskRow) -> Bool
     /// Archive asks first (the board's confirmation).
     let archiveSelected: () -> Void
+    /// One task's sheets and archive, for its ••• and right-click menus.
+    let edit: (TaskRow) -> Void
+    let addSubtask: (TaskRow) -> Void
+    let archive: (TaskRow) -> Void
+    @Environment(\.pushRoute) private var pushRoute
     @AppStorage("tasks.list.collapsed.v1") private var collapsedList = ""
     /// Your own order of tasks (Sort: Manual), per workspace, on this device: Tower keeps no task order.
     @AppStorage("tasks.list.order.v1") private var orderJSON = "{}"
@@ -265,10 +270,8 @@ struct MacTaskList: View {
         }
         .padding(.trailing, Amb.ListLayout.trailing)
         .frame(minHeight: Amb.ListLayout.rowHeight)
-        .contextMenu {
-            if row.taskState != .inProgress { Button("Start") { setState(row, .inProgress) } }
-            if row.taskState != .done { Button("Mark done") { setState(row, .done) } }
-        }
+        // Right-click offers the same as •••.
+        .contextMenu { TaskMenuItems(items: actions(row)) }
     }
 
     private func rowContent(_ row: TaskRow) -> some View {
@@ -489,15 +492,36 @@ struct MacTaskList: View {
         return out
     }
 
+    /// Everything you can do to one task, in its ••• and right-click menus: what the task screen offers (edit, status,
+    /// assignee, size, subtasks) and the bulk bar (select, archive). A tick marks the current value.
     private func actions(_ row: TaskRow) -> [NativeMessageAction] {
-        var items: [NativeMessageAction] = []
-        if row.taskState != .inProgress { items.append(NativeMessageAction("Start", "play") { setState(row, .inProgress) }) }
-        if row.taskState != .done { items.append(NativeMessageAction("Mark done", "checkmark") { setState(row, .done) }) }
-        items.append(NativeMessageAction("Move to", "arrow.right", children: TaskState.board.filter { $0.rawValue != row.state }.map { state in
-            NativeMessageAction(state.label, "circle") { setState(row, state) }
-        }))
+        let changeable = canChange(row)
+        func mark(_ current: Bool) -> String { current ? "checkmark" : "" }
+        var items = [NativeMessageAction("Open", "arrow.up.right.square") { pushRoute(WorkRoute.task(workspaceId: workspace.id, taskId: row.id)) }]
+        guard changeable else { return items }
+        items += [
+            NativeMessageAction("Edit title and description…", "pencil") { edit(row) },
+            NativeMessageAction("Status", "circle.dashed", children: TaskState.board.map { state in
+                NativeMessageAction(state.label, mark(row.state == state.rawValue)) { if row.state != state.rawValue { setState(row, state) } }
+            }),
+            NativeMessageAction("Assignee", "person", children:
+                [NativeMessageAction("Unassigned", mark(row.assignee == nil)) { send(assignIntent(row, nil)) }]
+                + snapshot.names.keys.sorted { name($0) < name($1) }.map { npub in
+                    NativeMessageAction(name(npub), mark(row.assignee == npub)) { send(assignIntent(row, npub)) }
+                }),
+            NativeMessageAction("Size", "smallcircle.filled.circle", children: TaskPriority.editable.map { size in
+                NativeMessageAction(size.label, mark(row.priority == size.rawValue)) { send(sizeIntent(row, size.rawValue)) }
+            }),
+            NativeMessageAction("Add subtask…", "plus") { addSubtask(row) },
+            NativeMessageAction(selected.contains(row.id) ? "Deselect" : "Select", "checkmark.square") {
+                if selected.contains(row.id) { selected.remove(row.id) } else { selected.insert(row.id) }
+            },
+            NativeMessageAction("Archive…", "archivebox") { archive(row) },
+        ]
         return items
     }
+
+    private func send(_ intent: WriteIntent?) { if let intent { model.submit(intent, in: workspace) } }
 }
 
 /// A task row's hover and selected fills and the hairline under it, all edge to edge, so the fills sit flush between
@@ -511,6 +535,23 @@ private struct TaskTableRule: ViewModifier {
             .overlay(alignment: .bottom) {
                 Rectangle().fill(Amb.border).frame(height: 1).accessibilityHidden(true)
             }
+    }
+}
+
+/// The ••• menu's items as a SwiftUI menu, for right-click.
+private struct TaskMenuItems: View {
+    let items: [NativeMessageAction]
+    var body: some View {
+        ForEach(Array(items.enumerated()), id: \.offset) { _, item in
+            if item.children.isEmpty {
+                Button { item.perform?() } label: { label(item) }
+            } else {
+                Menu { TaskMenuItems(items: item.children) } label: { label(item) }
+            }
+        }
+    }
+    @ViewBuilder private func label(_ item: NativeMessageAction) -> some View {
+        if item.symbol.isEmpty { Text(item.title) } else { Label(item.title, systemImage: item.symbol) }
     }
 }
 
