@@ -530,3 +530,13 @@ Proposal and mockups: https://claude.ai/artifact/PFA62Dm9pTnTHMNrHH686J. Mac onl
 - Tower's summary is the start of the body (Markdown, tables, ticked items), so it isn't shown. No drag (documents have
   no status or shared order). Export, Versioning and Move stay on the document screen, which has the document open.
 - iPhone and iPad keep today's list; no iPad check needed.
+
+### Phase 5 checks (Chat tab, Tasks, board, Docs; Deck on hold)
+- Thread harness: only the known failure ("synced reply must render in actual thread"). `MacDeckComposerCheck` passes.
+  `MacKanbanCheck` (run too, for the board and list changes) passes after one test change: it looked for the size in
+  capitals ("ROCK"); cards now say "Rock" with a dot (5.4), so it accepts either (`test(mac)` commit). iOS builds.
+- Sub-checks such as `MacDeckComposerCheck` only run with `-AmbulandoMacThreadRegression`; alone they wait silently.
+- Hand checks still wanted (no mouse in the lab session): dragging tasks, the task and document ••• menus, bulk
+  actions, archiving documents.
+- For Pete (in addition to Phase 4's): the Mac Deck's Inbox is under review (Phase 5 Deck, on hold); task and doc
+  lists are tables after gr8r-studio; manual task order is per device.
