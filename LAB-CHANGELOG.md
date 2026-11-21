@@ -536,6 +536,8 @@ Proposal and mockups: https://claude.ai/artifact/PFA62Dm9pTnTHMNrHH686J. Mac onl
   `MacKanbanCheck` (run too, for the board and list changes) passes after one test change: it looked for the size in
   capitals ("ROCK"); cards now say "Rock" with a dot (5.4), so it accepts either (`test(mac)` commit). iOS builds.
 - Sub-checks such as `MacDeckComposerCheck` only run with `-AmbulandoMacThreadRegression`; alone they wait silently.
+- Rerun before merging into `lab` (after 5.6–5.6c): same results (thread harness at the known failure;
+  `MacDeckComposerCheck` and `MacKanbanCheck` pass; iOS builds). Upstream unchanged since 548b4e8.
 - Hand checks still wanted (no mouse in the lab session): dragging tasks, the task and document ••• menus, bulk
   actions, archiving documents.
 - For Pete (in addition to Phase 4's): the Mac Deck's Inbox is under review (Phase 5 Deck, on hold); task and doc
