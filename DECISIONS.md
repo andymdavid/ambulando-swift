@@ -152,6 +152,8 @@ Goal: Linear-level polish for the Mac app without changing what the product does
 - **Board moves animate:** a card slides to its new lane rather than vanishing and reappearing.
 - **Board: each status is a lane** (recessed, hairline edge, as gr8r-studio), with bordered cards and the list's ring
   heading. Open columns on the page were tried first; lanes read better as separate statuses.
+- **Docs use the same table as Tasks**: toolbar, labels, optional groups (channel or when changed), tick boxes, a bar
+  to archive several, and a ••• menu. Tower's summary is raw body text, so rows show the title only.
 - **The Chat tab at Home or a scope lists the place's conversations, newest first** (one list across its channels and
   DMs, each row tagged with where it lives), not its channels again. The sidebar already lists channels by type, so
   filters are about state (All, Unread, Mine), not type. A DM shows its face once. A refined channel overview (C1) was

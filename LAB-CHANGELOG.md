@@ -519,3 +519,14 @@ Proposal and mockups: https://claude.ai/artifact/PFA62Dm9pTnTHMNrHH686J. Mac onl
 - New `AmbTable.swift` (Mac): `AmbTable` (gutter, title indent), `AmbTableRule`, `AmbTableCheckbox`,
   `AmbTableMenuItems`, `AmbTableGroupRow`, `AmbBulkBar` (+ menu and divider), `AmbTableSearchField`,
   `AmbTableToolbarMenu`. Moved out of `MacTaskList` so Docs uses the same table. No visible change.
+
+### 5.5b Docs table (`style(docs): documents as a table, the same as Tasks`)
+- New `MacDocList` (Mac) replaces the Docs list: toolbar (Search docs, Sort: Updated/Title, Group: None/Channel/
+  Updated as Today, This week, Earlier; remembered) with a labelled New document button; labels row (Title and Updated
+  sort); one-line documents with a tick box, icon, title and "Unsaved edits" pill, Channel (hidden inside a channel),
+  Updated; full-width hover and rules; ••• and right-click: Open, Copy reference, Select, Archive….
+- Ticked documents: bar with Archive (asks first; online and version guarded, as the document screen's archive;
+  failures listed). Search moves out of the window's title bar (the `.searchable` field) into the toolbar.
+- Tower's summary is the start of the body (Markdown, tables, ticked items), so it isn't shown. No drag (documents have
+  no status or shared order). Export, Versioning and Move stay on the document screen, which has the document open.
+- iPhone and iPad keep today's list; no iPad check needed.

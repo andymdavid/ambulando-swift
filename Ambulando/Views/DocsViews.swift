@@ -21,6 +21,12 @@ struct DocumentsView: View {
     @State private var filter = ""
     @State private var snapshot = LiveQuery<DocsSnapshot>(initial: DocsSnapshot())
     @State private var creating = false
+    /// UX lab (Mac): the table's sort, grouping, ticked documents and the archive in hand.
+    @AppStorage("docs.list.sort.v1") private var docSort = "updated"
+    @AppStorage("docs.list.group.v1") private var docGrouping = "none"
+    @State private var selected = Set<String>()
+    @State private var archiving: [DocRecord] = []
+    @State private var archiveError: String?
 
     private var visible: [DocRecord] {
         let q = filter.trimmingCharacters(in: .whitespaces).lowercased()
@@ -28,6 +34,51 @@ struct DocumentsView: View {
     }
 
     var body: some View {
+        documents
+        .overlay {
+            if snapshot.loaded && snapshot.value.docs.isEmpty && snapshot.value.creating.isEmpty {
+                EmptyNote(title: "No documents", systemImage: "doc.text", detail: model.isUnlocked ? "Documents in this scope appear here." : "Unlock to load documents.")
+            }
+        }
+        .navigationTitle("Docs")
+        .safeAreaInset(edge: .top, spacing: 0) {
+            ListHeaderBar {
+                #if os(macOS)
+                // UX lab: the Tasks table's toolbar; the filter leaves the window's title bar.
+                MacDocListControls(search: $filter, sort: sortBinding, grouping: groupingBinding)
+                Spacer()
+                Button { creating = true } label: { Label("New document", systemImage: "plus") }
+                    .buttonStyle(.ambPrimary)
+                    .accessibilityIdentifier("docs.new")
+                #else
+                Spacer()
+                Button { creating = true } label: { Image(systemName: "plus") }
+                    .buttonStyle(.ambIcon)
+                    .ambTooltip("New document").accessibilityLabel("New document").accessibilityIdentifier("docs.new")
+                #endif
+            }
+        }
+        .sheet(isPresented: $creating) { DocumentCreateSheet(workspace: workspace, choice: snapshot.value.choice, context: context) }
+        .refreshable { model.openDocs(workspace, scopeId: scopeId, force: true) }
+        .task(id: model.context) { start(); model.openDocs(workspace, scopeId: scopeId) }
+        .onChange(of: model.identity) { _, state in if case .unlocked = state { model.openDocs(workspace, scopeId: scopeId) } }
+    }
+
+    @ViewBuilder private var documents: some View {
+        #if os(macOS)
+        // UX lab: Docs as a table, the same as Tasks (MacDocList).
+        MacDocList(workspace: workspace, snapshot: snapshot.value, search: filter, sort: sortBinding.wrappedValue,
+                   grouping: groupingBinding.wrappedValue, sortBinding: sortBinding, selected: $selected,
+                   archive: { docs in archiving = docs })
+            .confirmationDialog(archiving.count == 1 ? "Archive this document?" : "Archive \(archiving.count) documents?",
+                                isPresented: Binding(get: { !archiving.isEmpty }, set: { if !$0 { archiving = [] } }), titleVisibility: .visible) {
+                Button(archiving.count == 1 ? "Archive document" : "Archive documents") { archive(archiving) }
+            }
+            .alert("Some documents weren't archived", isPresented: Binding(get: { archiveError != nil }, set: { if !$0 { archiveError = nil } })) {
+                Button("OK") { archiveError = nil }
+            } message: { Text(archiveError ?? "") }
+            .onChange(of: model.context) { _, _ in selected.removeAll() }
+        #else
         List {
             ForEach(snapshot.value.creating) { item in
                 VStack(alignment: .leading, spacing: 4) {
@@ -56,25 +107,32 @@ struct DocumentsView: View {
         .groupedList()
         .scrollContentBackground(.hidden)
         .searchable(text: $filter, placement: .drawer, prompt: "Filter documents")
-        .overlay {
-            if snapshot.loaded && snapshot.value.docs.isEmpty && snapshot.value.creating.isEmpty {
-                EmptyNote(title: "No documents", systemImage: "doc.text", detail: model.isUnlocked ? "Documents in this scope appear here." : "Unlock to load documents.")
-            }
-        }
-        .navigationTitle("Docs")
-        .safeAreaInset(edge: .top, spacing: 0) {
-            ListHeaderBar {
-                Spacer()
-                Button { creating = true } label: { Image(systemName: "plus") }
-                    .buttonStyle(.ambIcon)
-                    .ambTooltip("New document").accessibilityLabel("New document").accessibilityIdentifier("docs.new")
-            }
-        }
-        .sheet(isPresented: $creating) { DocumentCreateSheet(workspace: workspace, choice: snapshot.value.choice, context: context) }
-        .refreshable { model.openDocs(workspace, scopeId: scopeId, force: true) }
-        .task(id: model.context) { start(); model.openDocs(workspace, scopeId: scopeId) }
-        .onChange(of: model.identity) { _, state in if case .unlocked = state { model.openDocs(workspace, scopeId: scopeId) } }
+        #endif
     }
+
+    #if os(macOS)
+    private var sortBinding: Binding<MacDocSort> {
+        Binding(get: { MacDocSort(rawValue: docSort) ?? .updated }, set: { docSort = $0.rawValue })
+    }
+    private var groupingBinding: Binding<MacDocGrouping> {
+        Binding(get: { MacDocGrouping(rawValue: docGrouping) ?? .none }, set: { docGrouping = $0.rawValue })
+    }
+
+    /// Archives each document on Tower (online, version guarded, never queued: as the document screen does).
+    private func archive(_ docs: [DocRecord]) {
+        archiving = []
+        guard let saver = model.saver, let connection = model.connection else { return }
+        let workspace = workspace
+        Task { @MainActor in
+            var failed: [String] = []
+            for doc in docs {
+                do { try await saver.setLifecycle(connection, workspace, doc: doc, delete: false); selected.remove(doc.id) }
+                catch { failed.append("“\(doc.title)”: \(error.localizedDescription)") }
+            }
+            if !failed.isEmpty { archiveError = failed.joined(separator: "\n") }
+        }
+    }
+    #endif
 
     private func start() {
         let w = workspace.id, context = context, store = store, connection = model.connection?.id ?? ""
