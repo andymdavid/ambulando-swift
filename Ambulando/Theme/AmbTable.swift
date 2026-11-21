@@ -10,6 +10,20 @@ enum AmbTable {
     static let gutter: CGFloat = Amb.ListLayout.dragMargin
     /// From the tick box to a row's title: past the group's name, so a row reads as inside its group.
     static let titleIndent: CGFloat = 48
+    /// The title column never gets narrower than this; other columns give way first.
+    static let titleMinimum: CGFloat = 200
+
+    /// The columns that fit in `width`, keeping the title at its minimum: columns leave in `dropOrder` until the rest
+    /// fit. Without a width yet (0), every column shows.
+    static func fitting<Column: Hashable>(_ columns: [(Column, CGFloat)], dropOrder: [Column], width: CGFloat,
+                                         titleIndent: CGFloat = AmbTable.titleIndent) -> Set<Column> {
+        var shown = columns
+        guard width > 0 else { return Set(shown.map(\.0)) }
+        let fixed = gutter + 16 + titleIndent + titleMinimum + Amb.ListLayout.rowGap + Amb.ListLayout.actionColumn + Amb.ListLayout.trailing
+        func needed() -> CGFloat { fixed + shown.reduce(0) { $0 + $1.1 + Amb.ListLayout.rowGap } }
+        for column in dropOrder where needed() > width { shown.removeAll { $0.0 == column } }
+        return Set(shown.map(\.0))
+    }
 }
 
 /// A table row's hover and selected fills and the hairline under it, all edge to edge, so the fills sit flush between
@@ -165,11 +179,28 @@ struct AmbBulkBarMenu<Items: View>: View {
     }
 }
 
+/// A toolbar's main action ("New task"), shortened to its + in a narrow window.
+struct AmbTablePrimaryButton: View {
+    let title: String
+    let identifier: String
+    let action: () -> Void
+
+    var body: some View {
+        ViewThatFits(in: .horizontal) {
+            Button(action: action) { Label(title, systemImage: "plus").fixedSize() }
+                .buttonStyle(.ambPrimary).accessibilityIdentifier(identifier)
+            Button(action: action) { Image(systemName: "plus") }
+                .buttonStyle(.ambPrimary).ambTooltip(title).accessibilityLabel(title).accessibilityIdentifier(identifier)
+        }
+    }
+}
+
 /// The toolbar's search field.
 struct AmbTableSearchField: View {
     let prompt: String
     @Binding var text: String
     let identifier: String
+    var width: CGFloat = 240
 
     var body: some View {
         HStack(spacing: 6) {
@@ -177,7 +208,8 @@ struct AmbTableSearchField: View {
             TextField(prompt, text: $text).textFieldStyle(.plain).accessibilityIdentifier(identifier)
         }
         .font(.amb(.footnote))
-        .padding(.horizontal, 10).frame(width: 240, height: 28)
+        // Shrinks in a narrow window rather than pushing the toolbar wider than its pane.
+        .padding(.horizontal, 10).frame(minWidth: 100, idealWidth: width, maxWidth: width, minHeight: 28, maxHeight: 28)
         .overlay(RoundedRectangle(cornerRadius: Amb.radiusControl).stroke(Amb.border))
     }
 }
@@ -190,8 +222,19 @@ struct AmbTableToolbarMenu<Value: Hashable>: View {
     let label: (Value) -> String
     @Binding var selection: Value
     let identifier: String
+    /// Icon only (the full "Sort: Updated" becomes its tooltip), for narrow windows.
+    var compact = false
 
     var body: some View {
+        // Full "Sort: Updated" when it fits, else the icon alone (the text becomes its tooltip).
+        if compact {
+            menu(compact: true)
+        } else {
+            ViewThatFits(in: .horizontal) { menu(compact: false); menu(compact: true) }
+        }
+    }
+
+    private func menu(compact: Bool) -> some View {
         // One label: a borderless Mac menu keeps only its first text, and tints its icon with the accent.
         Menu {
             ForEach(values, id: \.self) { value in
@@ -200,12 +243,18 @@ struct AmbTableToolbarMenu<Value: Hashable>: View {
                 }
             }
         } label: {
-            Label { Text(title + ": " + label(selection)) } icon: { Image(systemName: symbol) }
-                .font(.amb(.footnote).weight(.medium))
+            if compact {
+                Image(systemName: symbol).font(.amb(.footnote).weight(.medium))
+            } else {
+                Label { Text(title + ": " + label(selection)) } icon: { Image(systemName: symbol) }
+                    .font(.amb(.footnote).weight(.medium))
+            }
         }
         .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
         .tint(Amb.secondaryForeground)
         .foregroundStyle(Amb.secondaryForeground)
+        .ambTooltip(compact ? title + ": " + label(selection) : "")
+        .accessibilityLabel(title + ": " + label(selection))
         .accessibilityIdentifier(identifier)
     }
 }

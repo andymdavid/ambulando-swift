@@ -41,6 +41,20 @@ struct MacTaskList: View {
     /// Inside a channel every task is in it: the column would repeat the place.
     private var showsChannel: Bool { model.context.channelId == nil }
 
+    enum Column: Hashable { case status, assignee, size, channel, updated }
+    /// The table's width, measured: lower-priority columns give way so the title keeps its room in a narrow window.
+    @State private var width: CGFloat = 0
+
+    private var columns: Set<Column> {
+        var all: [(Column, CGFloat)] = [(.status, Amb.ListLayout.statusColumn), (.assignee, Amb.ListLayout.personColumn),
+                                        (.size, Amb.ListLayout.sizeColumn)]
+        if showsChannel { all.append((.channel, Amb.ListLayout.placeColumn)) }
+        all.append((.updated, Amb.ListLayout.timeColumn))
+        // Grouped by status, the group row already says it; otherwise status matters more than when or where.
+        let drop: [Column] = grouping == .status ? [.status, .updated, .channel, .assignee, .size] : [.updated, .channel, .assignee, .status, .size]
+        return AmbTable.fitting(all, dropOrder: drop, width: width)
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             columnLabels
@@ -78,6 +92,9 @@ struct MacTaskList: View {
             }
         }
         .animation(.easeOut(duration: 0.18), value: selected.isEmpty)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
+        .clipped()
     }
 
     private static let gutter = AmbTable.gutter
@@ -102,11 +119,13 @@ struct MacTaskList: View {
                 sortLabel("Task", .title)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            Text("Status").frame(width: Amb.ListLayout.statusColumn, alignment: .leading)
-            Text("Assignee").frame(width: Amb.ListLayout.personColumn, alignment: .leading)
-            sortLabel("Size", .size).frame(width: Amb.ListLayout.sizeColumn, alignment: .leading)
-            if showsChannel { Text("Channel").frame(width: Amb.ListLayout.placeColumn, alignment: .leading) }
-            HStack(spacing: 0) { Spacer(minLength: 0); sortLabel("Updated", .updated) }.frame(width: Amb.ListLayout.timeColumn)
+            if columns.contains(.status) { Text("Status").frame(width: Amb.ListLayout.statusColumn, alignment: .leading) }
+            if columns.contains(.assignee) { Text("Assignee").frame(width: Amb.ListLayout.personColumn, alignment: .leading) }
+            if columns.contains(.size) { sortLabel("Size", .size).frame(width: Amb.ListLayout.sizeColumn, alignment: .leading) }
+            if columns.contains(.channel) { Text("Channel").frame(width: Amb.ListLayout.placeColumn, alignment: .leading) }
+            if columns.contains(.updated) {
+                HStack(spacing: 0) { Spacer(minLength: 0); sortLabel("Updated", .updated) }.frame(width: Amb.ListLayout.timeColumn)
+            }
             Color.clear.frame(width: Amb.ListLayout.actionColumn, height: 1)
         }
         .font(.amb(.footnote).weight(.medium)).foregroundStyle(Amb.mutedForeground)
@@ -251,18 +270,22 @@ struct MacTaskList: View {
             WorkRecordLink(route: WorkRoute.task(workspaceId: workspace.id, taskId: row.id)) {
                 HStack(spacing: Amb.ListLayout.rowGap) {
                     title(row).frame(maxWidth: .infinity, alignment: .leading)
-                    HStack(spacing: 6) {
-                        TaskStatusRing(state: row.taskState ?? .new)
-                        Text(row.taskState?.label ?? row.state.capitalized).lineLimit(1)
+                    if columns.contains(.status) {
+                        HStack(spacing: 6) {
+                            TaskStatusRing(state: row.taskState ?? .new)
+                            Text(row.taskState?.label ?? row.state.capitalized).lineLimit(1)
+                        }
+                        .frame(width: Amb.ListLayout.statusColumn, alignment: .leading)
                     }
-                    .frame(width: Amb.ListLayout.statusColumn, alignment: .leading)
-                    assignee(row).frame(width: Amb.ListLayout.personColumn, alignment: .leading)
-                    TaskSizeLabel(priority: row.priority).frame(width: Amb.ListLayout.sizeColumn, alignment: .leading)
-                    if showsChannel {
+                    if columns.contains(.assignee) { assignee(row).frame(width: Amb.ListLayout.personColumn, alignment: .leading) }
+                    if columns.contains(.size) { TaskSizeLabel(priority: row.priority).frame(width: Amb.ListLayout.sizeColumn, alignment: .leading) }
+                    if columns.contains(.channel) {
                         Text(snapshot.choice.channelName(row.task.channelId).map { "#\($0)" } ?? "")
                             .lineLimit(1).frame(width: Amb.ListLayout.placeColumn, alignment: .leading)
                     }
-                    HStack(spacing: 0) { Spacer(minLength: 0); MessageTimeText(iso: row.task.updatedAt) }.frame(width: Amb.ListLayout.timeColumn)
+                    if columns.contains(.updated) {
+                        HStack(spacing: 0) { Spacer(minLength: 0); MessageTimeText(iso: row.task.updatedAt) }.frame(width: Amb.ListLayout.timeColumn)
+                    }
                 }
                 .font(.amb(.footnote)).foregroundStyle(Amb.secondaryForeground)
             }
@@ -540,12 +563,17 @@ struct MacTaskListControls: View {
     @Binding var grouping: MacTaskGrouping
 
     var body: some View {
+        // In a narrow window the search field shrinks and Sort and Group become icons.
+        controls(search: 240, compact: false)
+    }
+
+    private func controls(search width: CGFloat, compact: Bool) -> some View {
         HStack(spacing: Amb.Space.m) {
-            AmbTableSearchField(prompt: "Search tasks", text: $search, identifier: "tasks.search")
+            AmbTableSearchField(prompt: "Search tasks", text: $search, identifier: "tasks.search", width: width)
             AmbTableToolbarMenu(symbol: "arrow.up.arrow.down", title: "Sort", values: MacTaskSort.allCases, label: \.label,
-                                selection: $sort, identifier: "tasks.sort")
+                                selection: $sort, identifier: "tasks.sort", compact: compact)
             AmbTableToolbarMenu(symbol: "rectangle.grid.1x2", title: "Group", values: MacTaskGrouping.allCases, label: \.label,
-                                selection: $grouping, identifier: "tasks.group")
+                                selection: $grouping, identifier: "tasks.group", compact: compact)
         }
     }
 }

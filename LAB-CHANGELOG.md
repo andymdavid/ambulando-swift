@@ -560,3 +560,16 @@ Proposal and mockups: https://claude.ai/artifact/PFA62Dm9pTnTHMNrHH686J. Mac onl
   the conversation is unread (Slack's reply line), grey otherwise; nothing without replies.
 - The sample data marks no conversation unread, so the accent state is untested on screen. *For Pete: a count of
   unread replies per conversation would allow "2 new".*
+
+### 5.7 Narrow windows (`fix(mac): sidebar gives way so content keeps its minimum` and `style(theme): tables and toolbars fit narrow windows`)
+- Shell (fixes 4.7): the content pane has a 580pt minimum and the window a 900pt one, so a sidebar wider than 319pt
+  pushed the layout past both window edges (content spilled over the sidebar, the toolbar's right end was cut). The
+  sidebar now shows narrower in such a window (never under 200pt); its stored width is kept for wider windows.
+- Tables (Tasks, Docs): columns give way as the pane narrows, keeping the title at least 200pt
+  (`AmbTable.fitting`). Tasks drops, in order: Status when grouped by status (the group row says it), Updated,
+  Channel, Assignee, then Size; otherwise Updated, Channel, Assignee, Status, Size. Docs drops Channel, then Updated.
+- Toolbars: the search field shrinks to 100pt, Sort and Group fall back to their icons (full text as tooltip), and
+  New task / New document to "+" (`AmbTablePrimaryButton`) when there isn't room.
+- Checked at 900pt with sidebars of 248 and 380pt, and at 1440pt (all columns). Checks rerun: thread harness at the
+  known failure; `MacDeckComposerCheck` and `MacKanbanCheck` pass; iOS builds. Earlier captures were all at 1440pt,
+  which is how this was missed.

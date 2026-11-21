@@ -47,9 +47,7 @@ struct DocumentsView: View {
                 // UX lab: the Tasks table's toolbar; the filter leaves the window's title bar.
                 MacDocListControls(search: $filter, sort: sortBinding, grouping: groupingBinding)
                 Spacer()
-                Button { creating = true } label: { Label("New document", systemImage: "plus") }
-                    .buttonStyle(.ambPrimary)
-                    .accessibilityIdentifier("docs.new")
+                AmbTablePrimaryButton(title: "New document", identifier: "docs.new") { creating = true }
                 #else
                 Spacer()
                 Button { creating = true } label: { Image(systemName: "plus") }

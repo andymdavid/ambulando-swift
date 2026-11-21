@@ -26,6 +26,16 @@ struct MacDocList: View {
     /// Titles sit past a group's name; with no groups, just clear of the tick box.
     private var titleIndent: CGFloat { grouping == .none ? Amb.Space.l : AmbTable.titleIndent }
 
+    /// The table's width, measured: Channel then Updated give way so the title keeps its room in a narrow window.
+    @State private var width: CGFloat = 0
+    private enum Column: Hashable { case channel, updated }
+    private var columns: Set<Column> {
+        var all: [(Column, CGFloat)] = []
+        if showsChannel { all.append((.channel, Amb.ListLayout.placeColumn)) }
+        all.append((.updated, Amb.ListLayout.timeColumn))
+        return AmbTable.fitting(all, dropOrder: [.channel, .updated], width: width, titleIndent: titleIndent)
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             columnLabels
@@ -71,6 +81,9 @@ struct MacDocList: View {
         }
         .animation(.easeOut(duration: 0.18), value: selected.isEmpty)
         .onKeyPress(.escape) { selected.removeAll(); return .handled }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
+        .clipped()
     }
 
     // MARK: Columns
@@ -89,8 +102,10 @@ struct MacDocList: View {
                 sortLabel("Title", .title)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            if showsChannel { Text("Channel").frame(width: Amb.ListLayout.placeColumn, alignment: .leading) }
-            HStack(spacing: 0) { Spacer(minLength: 0); sortLabel("Updated", .updated) }.frame(width: Amb.ListLayout.timeColumn)
+            if columns.contains(.channel) { Text("Channel").frame(width: Amb.ListLayout.placeColumn, alignment: .leading) }
+            if columns.contains(.updated) {
+                HStack(spacing: 0) { Spacer(minLength: 0); sortLabel("Updated", .updated) }.frame(width: Amb.ListLayout.timeColumn)
+            }
             Color.clear.frame(width: Amb.ListLayout.actionColumn, height: 1)
         }
         .font(.amb(.footnote).weight(.medium)).foregroundStyle(Amb.mutedForeground)
@@ -176,11 +191,13 @@ struct MacDocList: View {
                 WorkRecordLink(route: WorkRoute.doc(workspaceId: workspace.id, docId: doc.id)) {
                     HStack(spacing: Amb.ListLayout.rowGap) {
                         title(doc).frame(maxWidth: .infinity, alignment: .leading)
-                        if showsChannel {
+                        if columns.contains(.channel) {
                             Text(snapshot.choice.channelName(doc.channelId).map { "#\($0)" } ?? "")
                                 .lineLimit(1).frame(width: Amb.ListLayout.placeColumn, alignment: .leading)
                         }
-                        HStack(spacing: 0) { Spacer(minLength: 0); MessageTimeText(iso: doc.updatedAt) }.frame(width: Amb.ListLayout.timeColumn)
+                        if columns.contains(.updated) {
+                            HStack(spacing: 0) { Spacer(minLength: 0); MessageTimeText(iso: doc.updatedAt) }.frame(width: Amb.ListLayout.timeColumn)
+                        }
                     }
                     .font(.amb(.footnote)).foregroundStyle(Amb.secondaryForeground)
                 }
@@ -255,12 +272,17 @@ struct MacDocListControls: View {
     @Binding var grouping: MacDocGrouping
 
     var body: some View {
+        // In a narrow window the search field shrinks and Sort and Group become icons.
+        controls(search: 240, compact: false)
+    }
+
+    private func controls(search width: CGFloat, compact: Bool) -> some View {
         HStack(spacing: Amb.Space.m) {
-            AmbTableSearchField(prompt: "Search docs", text: $search, identifier: "docs.search")
+            AmbTableSearchField(prompt: "Search docs", text: $search, identifier: "docs.search", width: width)
             AmbTableToolbarMenu(symbol: "arrow.up.arrow.down", title: "Sort", values: MacDocSort.allCases, label: \.label,
-                                selection: $sort, identifier: "docs.sort")
+                                selection: $sort, identifier: "docs.sort", compact: compact)
             AmbTableToolbarMenu(symbol: "rectangle.grid.1x2", title: "Group", values: MacDocGrouping.allCases, label: \.label,
-                                selection: $grouping, identifier: "docs.group")
+                                selection: $grouping, identifier: "docs.group", compact: compact)
         }
     }
 }

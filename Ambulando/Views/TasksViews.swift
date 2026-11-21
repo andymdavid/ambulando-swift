@@ -115,9 +115,7 @@ struct TasksView: View {
                 .ambTooltip("Show as list or board")
                 .accessibilityIdentifier("tasks.layout")
                 #if os(macOS)
-                Button { createState = nil; creating = true } label: { Label("New task", systemImage: "plus") }
-                    .buttonStyle(.ambPrimary)
-                    .accessibilityIdentifier("tasks.new")
+                AmbTablePrimaryButton(title: "New task", identifier: "tasks.new") { createState = nil; creating = true }
                 #else
                 Button { creating = true } label: { Image(systemName: "plus") }
                     .buttonStyle(.ambIcon)
