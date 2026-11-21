@@ -21,9 +21,12 @@ struct MacWorkspaceShell: View {
         // Removing/reinserting a child during a resize churns AppKit's constraint hierarchy and the live naplets.
         // UX lab: a row with a stored sidebar width, not `HSplitView`, which ignored the ideal width and always opened
         // the sidebar at its widest. Drag the edge to resize (MacSidebarResizer); the width is remembered.
+        // The content pane keeps its 580pt minimum: in a window too narrow for both, the sidebar shows narrower (never
+        // under its own minimum) instead of pushing the layout past the window's edges. The stored width is kept.
+        GeometryReader { geometry in
         HStack(spacing: 0) {
             MacSidebar()
-                .frame(width: ui.sidebarVisible ? MacSidebarResizer.clamp(sidebarWidth) : 0)
+                .frame(width: ui.sidebarVisible ? MacSidebarResizer.fitted(sidebarWidth, window: geometry.size.width) : 0)
                 .clipped()
                 .opacity(ui.sidebarVisible ? 1 : 0)
                 .allowsHitTesting(ui.sidebarVisible)
@@ -35,8 +38,9 @@ struct MacWorkspaceShell: View {
                 sectionView(model.mode)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .frame(minWidth: 580, maxWidth: .infinity, maxHeight: .infinity)
+            .frame(minWidth: MacSidebarResizer.contentMinimum, maxWidth: .infinity, maxHeight: .infinity)
             .environment(\.openMention, OpenMentionAction { kind, id in model.openRecord(kind: kind, id: id) })
+        }
         }
         // HTTPS links open as tabs in the browser window; record mentions open the record in its section.
         .environment(\.openURL, OpenURLAction { model.browser.handleLink($0) })
@@ -200,6 +204,13 @@ struct MacSidebarResizer: View {
     static let minWidth: Double = 200
     static let maxWidth: Double = 380
     static func clamp(_ width: Double) -> CGFloat { CGFloat(min(max(width, minWidth), maxWidth)) }
+    /// The content pane's minimum width.
+    static let contentMinimum: CGFloat = 580
+    /// The stored width, narrowed so the content pane keeps its minimum in this window (not below the sidebar's own).
+    static func fitted(_ width: Double, window: CGFloat) -> CGFloat {
+        guard window > 0 else { return clamp(width) }
+        return max(CGFloat(minWidth), min(clamp(width), window - contentMinimum - 1))
+    }
 
     @Binding var width: Double
     let visible: Bool
