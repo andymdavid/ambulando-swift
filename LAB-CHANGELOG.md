@@ -499,3 +499,9 @@ Proposal and mockups: https://claude.ai/artifact/PFA62Dm9pTnTHMNrHH686J. Mac onl
 - Task rows' hover and selected fills run the full width, square, against the rules (as gr8r-studio), replacing the
   inset rounded fill of 5.4f.
 - Drag and drop not exercised here (no mouse in the lab session); needs a hand check.
+
+### 5.4i Flush fills, room for the handle (`style(tasks): edge-to-edge rules and a wider drag margin`)
+- Task and group rules now run edge to edge, so the full-width hover and selected fills sit flush between them (they
+  overhung rules that stopped short of both edges).
+- The margin left of the tick boxes is 28pt (`Amb.ListLayout.dragMargin`, was 14), so the six-dot handle has room;
+  the labels and group rows move with it.

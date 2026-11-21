@@ -76,7 +76,7 @@ struct MacTaskList: View {
     }
 
     /// Before a title: the tick box under the group's chevron, then room up to the group's name.
-    private static let gutter: CGFloat = Amb.ListLayout.leading - 6
+    private static let gutter: CGFloat = Amb.ListLayout.dragMargin
     /// Past the group's name, so a task reads as inside its group (gr8r-studio).
     private static let titleIndent: CGFloat = 48
 
@@ -154,8 +154,8 @@ struct MacTaskList: View {
         .padding(.leading, Self.gutter).padding(.trailing, Amb.ListLayout.trailing)
         .padding(.top, Amb.ListLayout.sectionTop).padding(.bottom, Amb.Space.s)
         .overlay(alignment: .bottom) {
+            // Rules run edge to edge, so hover and selected fills sit flush between them (gr8r-studio).
             Rectangle().fill(Amb.border).frame(height: 1)
-                .padding(.leading, Self.gutter).padding(.trailing, Amb.ListLayout.trailing)
         }
         .accessibilityElement(children: .contain)
         .accessibilityAddTraits(.isHeader)
@@ -320,7 +320,7 @@ struct MacTaskList: View {
 
     private var dropLine: some View {
         Rectangle().fill(Amb.primary).frame(height: 2)
-            .padding(.leading, Self.gutter).padding(.trailing, Amb.ListLayout.trailing)
+            .padding(.leading, Self.gutter)
             .allowsHitTesting(false).accessibilityHidden(true)
     }
 
@@ -500,19 +500,16 @@ struct MacTaskList: View {
     }
 }
 
-/// A task row's hover and selected fills, full width and square against the rules (gr8r-studio), and the hairline
-/// under it from the tick box's edge, so a group's last task is closed off too.
+/// A task row's hover and selected fills and the hairline under it, all edge to edge, so the fills sit flush between
+/// the rules and a group's last task is closed off too (gr8r-studio).
 private struct TaskTableRule: ViewModifier {
     var selected = false
     func body(content: Content) -> some View {
-        let gutter = Amb.ListLayout.leading - 6
         content
             .background(selected ? Amb.selectedFill : .clear)
             .ambHoverRow(radius: 0)
             .overlay(alignment: .bottom) {
-                Rectangle().fill(Amb.border).frame(height: 1)
-                    .padding(.leading, gutter).padding(.trailing, Amb.ListLayout.trailing)
-                    .accessibilityHidden(true)
+                Rectangle().fill(Amb.border).frame(height: 1).accessibilityHidden(true)
             }
     }
 }
