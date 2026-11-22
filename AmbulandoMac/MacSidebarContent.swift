@@ -65,8 +65,8 @@ struct MacSidebarContent: View {
             // A house, like Toolbox's icon below it; the workspace's own monogram heads the sidebar (UX lab).
             Image(systemName: "house").font(.amb(.caption)).foregroundStyle(Amb.mutedForeground)
         }
-        // Toolbox works across the workspace, not in a place, so it's a destination of its own rather than a tab.
-        SidebarRow(label: "Toolbox", selected: model.mode == .toolbox, identifier: "sidebar.toolbox", action: { model.show(.toolbox) }) {
+        // Apps (the Toolbox) work across the workspace, not in a place, so it's a destination of its own rather than a tab.
+        SidebarRow(label: AppMode.toolboxTitle, selected: model.mode == .toolbox, identifier: "sidebar.toolbox", action: { model.show(.toolbox) }) {
             Image(systemName: AppMode.toolbox.systemImage).font(.amb(.caption)).foregroundStyle(Amb.mutedForeground)
         }
 

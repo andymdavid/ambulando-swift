@@ -165,6 +165,8 @@ Goal: Linear-level polish for the Mac app without changing what the product does
   sidebar read as one frame and the working area stands out, as in Ari. The gap replaces the sidebar's hairline.
 - **Mac sidebar: the workspace heads it, you end it** (avatar and name, opens Settings), no rules. Where you are
   reads top-down (workspace, then places); the toolbar keeps only Search, Notifications and Browser.
+- **Toolbox is "Apps" on the Mac**: the page lists only apps, and "Toolbox" makes you guess. Mac only for now; the web
+  and iOS still say Toolbox, so the products differ until Pete decides whether to follow.
 - **Chat lists share the table toolbar and are searchable.** The Chat tab and a channel get Tasks' and Docs' bar
   (search, filters, main action); All / Unread / Mine stay one click (segmented, not a menu). Search reaches every
   stored message, not only the loaded list, and quotes the match so you see why a row is there.

@@ -11,9 +11,7 @@ struct MacTitleBarSearch: View {
                 Image(systemName: "magnifyingglass").foregroundStyle(Amb.mutedForeground)
                 Text("Search or jump to…").foregroundStyle(Amb.mutedForeground)
                 Spacer(minLength: 8)
-                Text("⌘F").font(.amb(.caption)).foregroundStyle(Amb.faint)
-                    .padding(.horizontal, 5).padding(.vertical, 1)
-                    .overlay(RoundedRectangle(cornerRadius: 4).stroke(Amb.border))
+                HStack(spacing: 3) { Keycap(text: "⌘"); Keycap(text: "F") }
             }
             .font(.amb(.footnote))
             .padding(.horizontal, 10)
@@ -45,10 +43,10 @@ struct MacTitleBarSearchInstaller: NSViewRepresentable {
             super.viewDidMoveToWindow()
             guard let window, let titlebar = window.standardWindowButton(.closeButton)?.superview,
                   !titlebar.subviews.contains(where: { $0.identifier == Self.id }) else { return }
-            let host = NSHostingView(rootView: MacTitleBarSearch(action: action).appTextSize())
+            let host = ClickableHost(rootView: AnyView(MacTitleBarSearch(action: action).appTextSize()))
             host.identifier = Self.id
             host.translatesAutoresizingMaskIntoConstraints = false
-            titlebar.addSubview(host)
+            titlebar.addSubview(host, positioned: .above, relativeTo: nil)
             NSLayoutConstraint.activate([
                 host.centerXAnchor.constraint(equalTo: titlebar.centerXAnchor),
                 host.centerYAnchor.constraint(equalTo: titlebar.centerYAnchor),
@@ -56,5 +54,23 @@ struct MacTitleBarSearchInstaller: NSViewRepresentable {
         }
 
         static let id = NSUserInterfaceItemIdentifier("ux.titlebar.search")
+    }
+
+    /// The title bar treats a press as the start of a window drag; this host keeps presses for its button, and takes
+    /// the first click even when the window isn't key.
+    private final class ClickableHost: NSHostingView<AnyView> {
+        override var mouseDownCanMoveWindow: Bool { false }
+        override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+    }
+}
+
+/// One key of a shortcut, drawn as a small keycap (as Ari's ⌘ K).
+private struct Keycap: View {
+    let text: String
+    var body: some View {
+        Text(text).font(.amb(.caption2).weight(.medium)).foregroundStyle(Amb.mutedForeground)
+            .frame(minWidth: 18, minHeight: 18)
+            .background(Amb.background, in: RoundedRectangle(cornerRadius: 4, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 4, style: .continuous).stroke(Amb.border))
     }
 }

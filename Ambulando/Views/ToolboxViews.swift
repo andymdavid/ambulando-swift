@@ -51,11 +51,11 @@ struct ToolboxView: View {
         }
         .groupedList()
         .scrollContentBackground(.hidden)
-        .navigationTitle("Toolbox")
+        .navigationTitle(AppMode.toolboxTitle)
         .overlay {
             if wapps.loaded && wapps.value.isEmpty && napplets.value.isEmpty && model.syncError(forKey: nappletKey) == nil {
-                if let error = model.syncError(forKey: key) { EmptyNote(title: "Toolbox unavailable", systemImage: "exclamationmark.icloud", detail: error) }
-                else { EmptyNote(title: "No WApps", systemImage: "wrench.and.screwdriver", detail: model.canRead ? "WApps you add in the web app appear here." : "Unlock to load your Toolbox.") }
+                if let error = model.syncError(forKey: key) { EmptyNote(title: "\(AppMode.toolboxTitle) unavailable", systemImage: "exclamationmark.icloud", detail: error) }
+                else { EmptyNote(title: "No WApps", systemImage: AppMode.toolboxImage, detail: model.canRead ? "WApps you add in the web app appear here." : "Unlock to load your \(AppMode.toolboxTitle).") }
             }
         }
         .refreshable { model.openToolbox(workspace, force: true) }

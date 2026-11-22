@@ -21,7 +21,7 @@ enum AppMode: String, CaseIterable, Codable {
         case .files: "Files"
         case .agents: "Agents"
         case .context: "Context"
-        case .toolbox: "Toolbox"
+        case .toolbox: Self.toolboxTitle
         }
     }
 
@@ -34,9 +34,16 @@ enum AppMode: String, CaseIterable, Codable {
         case .files: "folder"
         case .agents: "sparkles"
         case .context: "point.3.connected.trianglepath.dotted"
-        case .toolbox: "wrench.and.screwdriver"
+        case .toolbox: Self.toolboxImage
         }
     }
+
+    /// UX lab: on the Mac the Toolbox is "Apps" (it lists apps only); the web and iPhone/iPad still say Toolbox.
+    #if os(macOS)
+    static let toolboxTitle = "Apps", toolboxImage = "square.grid.2x2"
+    #else
+    static let toolboxTitle = "Toolbox", toolboxImage = "wrench.and.screwdriver"
+    #endif
 
     /// Sections whose records belong to the sidebar context; a new sidebar choice returns them to their first screen.
     var followsContext: Bool { [.tasks, .docs, .files, .agents, .context].contains(self) }

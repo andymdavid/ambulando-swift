@@ -54,7 +54,7 @@ struct MacPlaceHeader: View {
         let nav = model.navigation.value
         HStack(spacing: 6) {
             if model.mode == .toolbox {
-                Text("Toolbox").fontWeight(.semibold).foregroundStyle(Amb.foreground)
+                Text(AppMode.toolboxTitle).fontWeight(.semibold).foregroundStyle(Amb.foreground)
             } else if let dm = directMessage {
                 Text(SoloDirectory.shared.contains(dm.id) ? "Solo" : "Direct messages").foregroundStyle(Amb.mutedForeground)
                 Text("/").foregroundStyle(Amb.faint)

@@ -634,4 +634,10 @@ done, notification detail, Search (iPhone). The round 6 composer (6.4) and Membe
   the channel's New channel item). iPhone/iPad unchanged.
 - Batch checks still to run: thread regression (title-bar Search must still be found as `search`), iOS build
   (shared `WorkspaceShell`, `ChannelNavigatorView`), 900pt with a long channel title (the centred field could meet it).
+- Fix: clicking the field did nothing (the title bar took the press as a window drag). Its host now keeps presses
+  (`mouseDownCanMoveWindow` false) and takes the first click. The shortcut shows as two keycaps, ⌘ and F (as Ari).
+
+### 6.0f Toolbox is "Apps" on the Mac (`style(mac): Toolbox is Apps`)
+- The page lists apps only (workspace apps and your web apps), so the Mac calls it Apps, with a grid icon
+  (`AppMode.toolboxTitle` / `toolboxImage`). The web app, iPhone and iPad still say Toolbox. For Pete: follow or not.
 
