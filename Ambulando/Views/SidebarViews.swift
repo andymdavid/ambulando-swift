@@ -438,6 +438,8 @@ private struct ChannelRow: View {
 /// Workspace switcher at the bottom of the sidebar (sol `.sidebar-workspace-footer`).
 struct WorkspaceFooter: View {
     @Environment(AppModel.self) private var model
+    /// The rule above it; off where it heads the Mac sidebar (UX lab).
+    var rule = true
     @State private var showManagement = false
     @State private var showSelection = false
     #if os(macOS)
@@ -457,7 +459,7 @@ struct WorkspaceFooter: View {
         #else
         .padding(12)
         #endif
-        .overlay(alignment: .top) { Rectangle().fill(Amb.border).frame(height: 0.5) }
+        .overlay(alignment: .top) { if rule { Rectangle().fill(Amb.border).frame(height: 0.5) } }
     }
 
     @ViewBuilder private var workspaceMenu: some View {

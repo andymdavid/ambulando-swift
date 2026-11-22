@@ -3,7 +3,7 @@ import SwiftUI
 
 /// UX lab (Phase 4): the Mac sidebar, laid out with the one `SidebarRow`. Same content and behaviour as the shared
 /// `SidebarContent` (which the iPhone drawer and iPad keep): Home, then Scopes (each scope with its channels; Manage
-/// scopes on the heading) and the workspace switcher. Several enabled workspaces still use the shared stacked navigation.
+/// scopes on the heading). The workspace switcher heads it and you (Settings) end it, with no rules (UX lab). Several enabled workspaces still use the shared stacked navigation.
 struct MacSidebarContent: View {
     @Environment(AppModel.self) private var model
     @State private var sheet: SidebarSheet?
@@ -20,6 +20,7 @@ struct MacSidebarContent: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            WorkspaceFooter(rule: false)
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: Amb.SidebarLayout.rowSpacing) {
                     if model.enabledWorkspaceEntries.count > 1 {
@@ -42,7 +43,7 @@ struct MacSidebarContent: View {
                 }
                 .padding(.horizontal, Amb.SidebarLayout.gutter).padding(.vertical, 10)
             }
-            WorkspaceFooter()
+            MacSidebarPerson()
         }
         .onAppear { model.loadMembership() }
         .task(id: soloKey) { startSolo() }

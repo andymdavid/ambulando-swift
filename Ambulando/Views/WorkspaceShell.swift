@@ -358,6 +358,7 @@ private struct ShellToolbar: ViewModifier {
                             PinToggleButton(type: pin.type, id: pin.id, workspace: pin.workspace)
                         }
                         BrowserButton()
+                        #if os(iOS)   // UX lab: on the Mac you are at the foot of the sidebar (MacSidebarPerson)
                         // The profile menu (sol `.avatar-menu` button): the signed-in person's avatar or initials.
                         Button { showSettings = true } label: {
                             if let me = model.me.value?.person {
@@ -369,6 +370,7 @@ private struct ShellToolbar: ViewModifier {
                         .accessibilityLabel("Settings")
                         .accessibilityValue(model.me.value?.person.name ?? "")
                         .accessibilityIdentifier("settings")
+                        #endif
                     }
                     #if os(iOS)
                     .buttonStyle(HeaderToolbarButtonStyle())

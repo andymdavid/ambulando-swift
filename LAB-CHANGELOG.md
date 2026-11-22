@@ -616,3 +616,12 @@ done, notification detail, Search (iPhone). The round 6 composer (6.4) and Membe
 - Shown up by the frame (not changed here): the document screen's toolbar row is a chrome-coloured strip inside the
   panel. It goes with the document screen (round 6, 6.3/6.4).
 
+### 6.0d Workspace at the top of the sidebar, you at the foot (`style(mac): workspace heads the sidebar, you end it`)
+- Andy's ask: the workspace switcher moves to the top of the sidebar, the person to the bottom, and the rule above the
+  sidebar's foot goes. `WorkspaceFooter(rule: false)` now heads `MacSidebarContent`; new `MacSidebarPerson` ends it: a
+  sidebar row with your avatar and name that opens Settings (identifier `settings`, so the harness still finds it).
+  The avatar leaves the end of the window toolbar on the Mac (`#if os(iOS)` around it in `WorkspaceShell`).
+- Shared files: `WorkspaceFooter` gains `rule` (default true, unchanged elsewhere); the toolbar avatar is unchanged on
+  iPhone and iPad. iOS build passes; no iPad check needed. Thread regression: only the known failure.
+- Not changed: Home's icon is still the workspace's monogram, now just under the switcher with the same letters.
+

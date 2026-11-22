@@ -163,6 +163,8 @@ Goal: Linear-level polish for the Mac app without changing what the product does
   mocked and not chosen.
 - **The Mac content is a rounded panel on the window chrome** (8pt gap, 10pt corners, hairline), so the title bar and
   sidebar read as one frame and the working area stands out, as in Ari. The gap replaces the sidebar's hairline.
+- **Mac sidebar: the workspace heads it, you end it** (avatar and name, opens Settings), no rules. Where you are
+  reads top-down (workspace, then places); the toolbar keeps only Search, Notifications and Browser.
 - **Chat lists share the table toolbar and are searchable.** The Chat tab and a channel get Tasks' and Docs' bar
   (search, filters, main action); All / Unread / Mine stay one click (segmented, not a menu). Search reaches every
   stored message, not only the loaded list, and quotes the match so you see why a row is there.
