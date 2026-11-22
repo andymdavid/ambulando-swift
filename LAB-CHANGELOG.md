@@ -656,3 +656,4 @@ done, notification detail, Search (iPhone). The round 6 composer (6.4) and Membe
 - Known: the wash covers the window's content, not the title bar.
 - Batch checks still to run: iOS build (shared `TasksViews`, `DocsViews`, new `UXComposeRequest`), thread regression,
   light/dark and 900pt captures. No iPad check needed (iPad keeps the sheet).
+- Fix: hovering the menu also lit rows behind it. The window's content ignores the pointer while the menu is open.
