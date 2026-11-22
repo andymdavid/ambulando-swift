@@ -180,6 +180,11 @@ Goal: Linear-level polish for the Mac app without changing what the product does
 - **Files is a table like Tasks and Docs** (Mac): Name, Kind, Size, Channel, Updated; folders open in place; no tick
   boxes, since Tower has no bulk file actions yet.
 
+- **Task screen reads top to bottom** (Mac): title, description, subtasks, activity; properties in a rail (a grid when
+  narrow). Title and description edit in place, replacing the Edit sheet. Same writes as before.
+- **New task is a compact composer** (Mac): title first, every other field a chip with a sensible default; Create more
+  for batches. Same write as the old form.
+
 ## Deferred
 
 - **Flatten the Deck (Phase 5).** Four stacked layers (page, section panel, row card, tiles). Two is enough.

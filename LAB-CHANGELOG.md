@@ -701,3 +701,15 @@ done, notification detail, Search (iPhone). The round 6 composer (6.4) and Membe
   text, keeps the chips and counts what it made. Subtask: "Subtask of <title>", channel fixed.
 - Not done: typing s/z/a/c to open a chip (they would collide with typing in the fields). New document keeps its sheet
   (only the task composer was agreed).
+
+### 6.2 Task screen, layout A (`feat(mac): task screen reads top to bottom with a properties rail`)
+- New `MacTaskDetail` replaces the Mac task screen (`TaskDetailView` picks it; iPhone/iPad unchanged). A crumb row
+  (‹ Tasks or Esc, the channel, the parent for a subtask, ••• with Status, Assignee, Size, Archive…); the title, edited
+  in place (Return or clicking away saves, Esc reverts); the description, click to edit (Save ⌘↵, Cancel Esc); subtasks;
+  Activity (who created it and when, then comments oldest first, composer last, ⌘↵ sends).
+- Properties rail at 900pt and wider (Status, Size, Assignee as menus; Channel, Created by, Created, Updated shown);
+  narrower, the first four sit in a grid under the title. Same writes and version checks as before (`taskState`,
+  `taskPatch`, `taskAssign`, `taskComment`). The Edit button and sheet leave the Mac screen.
+- Subtasks: rows with ring, title and assignee, a done/total count, Add subtask last (the 6.4 composer); same loading
+  and refresh as the shared subtasks view. Not carried over: expanding a subtask's own subtasks in place (open it instead).
+- Watch: the window title now shows the task's title; a long one could reach the centred search field.

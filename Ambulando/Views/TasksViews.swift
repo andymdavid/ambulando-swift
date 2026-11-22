@@ -579,6 +579,15 @@ struct TaskDetailView: View {
     private static let splitWidth: CGFloat = 700
 
     var body: some View {
+        #if os(macOS)
+        // UX lab (6.2 A): the Mac's task screen reads top to bottom with a properties rail; iPhone and iPad keep this one.
+        MacTaskDetail(taskId: taskId, workspace: workspace, store: store)
+        #else
+        detail
+        #endif
+    }
+
+    private var detail: some View {
         GeometryReader { proxy in
             let wide = proxy.size.width >= Self.splitWidth
             Group {
