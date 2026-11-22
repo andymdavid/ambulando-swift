@@ -41,7 +41,9 @@ struct MacTitleBarSearchInstaller: NSViewRepresentable {
 
         override func viewDidMoveToWindow() {
             super.viewDidMoveToWindow()
-            guard let window, let titlebar = window.standardWindowButton(.closeButton)?.superview,
+            // The title bar's container, above the toolbar view: the toolbar's title area spans the whole bar and
+            // would otherwise take the click.
+            guard let window, let titlebar = window.standardWindowButton(.closeButton)?.superview?.superview,
                   !titlebar.subviews.contains(where: { $0.identifier == Self.id }) else { return }
             let host = ClickableHost(rootView: AnyView(MacTitleBarSearch(action: action).appTextSize()))
             host.identifier = Self.id

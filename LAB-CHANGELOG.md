@@ -636,6 +636,8 @@ done, notification detail, Search (iPhone). The round 6 composer (6.4) and Membe
   (shared `WorkspaceShell`, `ChannelNavigatorView`), 900pt with a long channel title (the centred field could meet it).
 - Fix: clicking the field did nothing (the title bar took the press as a window drag). Its host now keeps presses
   (`mouseDownCanMoveWindow` false) and takes the first click. The shortcut shows as two keycaps, ⌘ and F (as Ari).
+- Fix 2: still no click: the toolbar view (its title area spans the whole bar) sat above the field. The field now
+  sits in the title bar's container, above the toolbar view (hit test confirmed it receives the press).
 
 ### 6.0f Toolbox is "Apps" on the Mac (`style(mac): Toolbox is Apps`)
 - The page lists apps only (workspace apps and your web apps), so the Mac calls it Apps, with a grid icon
