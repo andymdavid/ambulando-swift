@@ -256,6 +256,12 @@ struct FileDetailView: View {
         .fixtureLabel()
         .navigationTitle("File")
         .inlineTitle()
+        #if os(macOS)
+        // UX lab: the record's crumb row (‹ Files / #channel), the one way back, as on a task.
+        .safeAreaInset(edge: .top, spacing: 0) {
+            MacRecordCrumbs(place: snapshot.value.file.flatMap { snapshot.value.choice.channelName($0.channelId) }.map { "#\($0)" })
+        }
+        #endif
         .quickLookPreview($preview)
         .task { start() }
         .onDisappear { downloadTask?.cancel() }

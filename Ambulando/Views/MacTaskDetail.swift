@@ -9,7 +9,6 @@ import SwiftUI
 /// Nothing here is new to Tower: it rearranges what the task screen already did.
 struct MacTaskDetail: View {
     @Environment(AppModel.self) private var model
-    @Environment(\.dismiss) private var dismiss
     let taskId: String
     let workspace: WorkspaceRecord
     let store: LocalStore
@@ -58,32 +57,14 @@ struct MacTaskDetail: View {
     // MARK: Header
 
     private var crumbs: some View {
-        HStack(spacing: 6) {
-            Button { dismiss() } label: {
-                HStack(spacing: 4) { Image(systemName: "chevron.left").font(.amb(.caption).weight(.semibold)); Text("Tasks") }
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain).foregroundStyle(Amb.secondaryForeground).ambTooltip("Back to the list (Esc)")
-            // Esc goes back, unless it is cancelling an edit.
-            .keyboardShortcut(editingDescription || titleFocused ? nil : KeyboardShortcut(.escape, modifiers: []))
-            .accessibilityIdentifier("task.back")
-            if let row = snapshot.value.row, let channel = snapshot.value.choice.channelName(row.task.channelId) {
-                Text("/").foregroundStyle(Amb.faint)
-                Text("#\(channel)").foregroundStyle(Amb.mutedForeground)
-            }
-            if let parent = parentTitle {
-                Text("/").foregroundStyle(Amb.faint)
-                Text("Parent: \(parent)").foregroundStyle(Amb.mutedForeground).lineLimit(1)
-            }
-            Spacer(minLength: 8)
+        let channel = snapshot.value.row.flatMap { snapshot.value.choice.channelName($0.task.channelId) }
+        return MacRecordCrumbs(place: channel.map { "#\($0)" }, detail: parentTitle.map { "Parent: \($0)" },
+                               escape: !(editingDescription || titleFocused)) {
             if let row = snapshot.value.row, canChange {
                 NativeMessageActions(items: actions(row), identifier: "task.actions", label: "Task actions", help: "More actions")
                     .frame(width: 28, height: 24)
             }
         }
-        .font(.amb(.footnote).weight(.medium))
-        .padding(.horizontal, 20).frame(height: 40)
-        .overlay(alignment: .bottom) { Rectangle().fill(Amb.border).frame(height: 0.5) }
     }
 
     @State private var parentTitle: String?

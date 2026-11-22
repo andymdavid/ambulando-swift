@@ -736,3 +736,18 @@ done, notification detail, Search (iPhone). The round 6 composer (6.4) and Membe
   Open: hide the window title (the place header already says where you are), or shorten it.
 - Noted (Andy): in the New task composer a chip's tooltip (Size's Rock/Pebble/Sand help) can linger over its open menu.
   Likely fix: no hover tip on the chips; the sizes' meaning goes inside the Size menu.
+
+### 6.7 One way back from a record (`style(mac): one crumb row on opened tasks, files and documents`)
+- New `MacRecordCrumbs`: ‹ and the section you came from (`model.mode.title`), the record's channel (and a subtask's
+  parent), then the record's own actions. The task screen's row now uses it; files and documents opened in the main
+  window get it too (not a document in its own window). Esc goes back, except while editing a task's title or
+  description, and on documents (Esc belongs to the editor).
+- The window toolbar's back arrow (in its glass circle) is hidden wherever the row shows (`navigationBarBackButtonHidden`).
+  Other pushed screens (canvas, context components) keep the system arrow.
+- Shown up, not changed: a document keeps its own button row (Open in New Window, Document actions, Edit) under the
+  crumb; it goes with the document screen (6.3, on hold).
+
+### To do next session: the file screen (round 7 mockup)
+- Opening a file still shows the old grouped form (icon, text/plain · 48 bytes, Channel and Updated rows, Download).
+  Design it as the task screen was: a preview of the file (image, text, PDF; Quick Look where the system can), name,
+  kind, size, channel, who uploaded it and when; Download, Quick Look and Open in default app as buttons; the 6.7 crumb.

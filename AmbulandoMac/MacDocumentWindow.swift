@@ -32,6 +32,8 @@ struct MacDocumentSurface: View {
     let store: LocalStore
     @State private var session: MacDocumentSession?
     @State private var surfaceId = UUID()
+    /// The document's channel, for the crumb row.
+    @State private var place: String?
 
     var body: some View {
         Group {
@@ -44,10 +46,19 @@ struct MacDocumentSurface: View {
                             .accessibilityIdentifier("doc.window.focus")
                     }
                 } else {
-                    DocumentView(docId: docId, workspace: workspace, store: store)
-                        .environment(\.macDocumentSession, session)
+                    // UX lab: the record's crumb row in the main window (a document window has no back). Esc stays
+                    // with the editor.
+                    VStack(spacing: 0) {
+                        MacRecordCrumbs(place: place, escape: false)
+                        DocumentView(docId: docId, workspace: workspace, store: store)
+                            .environment(\.macDocumentSession, session)
+                    }
                 }
             } else { ProgressView() }
+        }
+        .task(id: docId) {
+            let channel = try? await store.reader.doc(workspaceId: workspace.id, id: docId)?.channelId
+            place = model.navigation.value.channel(channel).map { "#" + model.navigation.value.label($0) }
         }
         .task {
             guard !Task.isCancelled, let key = MacDocumentWindows.shared.key(model, workspace: workspace, docId: docId) else { return }
