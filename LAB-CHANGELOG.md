@@ -690,3 +690,14 @@ done, notification detail, Search (iPhone). The round 6 composer (6.4) and Membe
   Uploads in progress sit at the top of their channel with their status. No tick boxes (no bulk file actions on Tower).
 - Shared: `FilesView` picks the table on the Mac (iPhone/iPad keep the list); `AmbTablePrimaryButton` gains
   `systemImage` (default +). Not done: Space for Quick Look (needs keyboard row selection, which the tables don't have yet).
+
+### 6.4 New task composer (`feat(mac): New task as a compact composer`)
+- New `MacTaskComposer` replaces the New task form on the Mac (`TaskCreateSheet` picks it, so the list's New task,
+  a group's +, the command menu and Add subtask all get it; iPhone/iPad keep the form). Place › New task and ✕ on top;
+  large title; description (today's text entry, mentions and pasted files included); chips for Status (dot), Size,
+  Assignee and Channel, each a menu holding a sensible value; Create more, ⌘↵, Cancel, Create task.
+- Defaults: status New, or the group's; size Sand; channel the one you're in, at Home the last one used
+  (`tasks.composer.lastChannel`). Esc or ✕ keeps a typed title/description until the app quits. Create more clears the
+  text, keeps the chips and counts what it made. Subtask: "Subtask of <title>", channel fixed.
+- Not done: typing s/z/a/c to open a chip (they would collide with typing in the fields). New document keeps its sheet
+  (only the task composer was agreed).

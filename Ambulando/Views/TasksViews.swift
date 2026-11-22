@@ -842,6 +842,16 @@ struct TaskCreateSheet: View {
     private var channels: [ChannelRecord] { choice.channels(in: context).filter { parentChannelId == nil || $0.id == parentChannelId } }
 
     var body: some View {
+        #if os(macOS)
+        // UX lab (6.4): the compact composer on the Mac; iPhone and iPad keep this form.
+        MacTaskComposer(workspace: workspace, store: store, choice: choice, context: context, parentTaskId: parentTaskId,
+                        parentChannelId: parentChannelId, initialState: initialState)
+        #else
+        form
+        #endif
+    }
+
+    private var form: some View {
         NavigationStack {
             Form {
                 TextField("Title", text: $title).accessibilityIdentifier("newtask.title")
