@@ -657,3 +657,7 @@ done, notification detail, Search (iPhone). The round 6 composer (6.4) and Membe
 - Batch checks still to run: iOS build (shared `TasksViews`, `DocsViews`, new `UXComposeRequest`), thread regression,
   light/dark and 900pt captures. No iPad check needed (iPad keeps the sheet).
 - Fix: hovering the menu also lit rows behind it. The window's content ignores the pointer while the menu is open.
+- Fix 2: Deck's Inbox still lit up. Section screens sit in their own AppKit hosting views, which get hover whatever
+  covers them. New environment flag `ambHoverPaused` (set while the menu is open) clears and stops the shared hover
+  fills (`ambHover`, `ambHoverRow`, Amb buttons, message rows). Shared theme files: iOS build at batch end; iPad unaffected
+  (never paused).

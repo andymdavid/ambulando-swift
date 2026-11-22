@@ -28,6 +28,7 @@ private struct AmbHoverFill: ViewModifier {
     let radius: CGFloat
     @Environment(\.ambInHoverRow) private var inHoverRow
     @State private var hovered = false
+    @Environment(\.ambHoverPaused) private var hoverPaused
     func body(content: Content) -> some View {
         // Inside an `ambHoverRow` the row draws the one fill; a second translucent layer would double up.
         if inHoverRow {
@@ -35,7 +36,8 @@ private struct AmbHoverFill: ViewModifier {
         } else {
             content
                 .background(hovered ? Amb.hoverFill : Color.clear, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
-                .onHover { hovered = $0 }
+                .onHover { hovered = $0 && !hoverPaused }
+                .onChange(of: hoverPaused) { _, paused in if paused { hovered = false } }
         }
     }
 }
@@ -46,6 +48,7 @@ private struct AmbHoverRow: ViewModifier {
     /// Draws the fill inside the row's edges (content lists keep it within their hairlines).
     var inset = EdgeInsets()
     @State private var hovered = false
+    @Environment(\.ambHoverPaused) private var hoverPaused
     func body(content: Content) -> some View {
         content
             .environment(\.ambRowHovered, hovered)
@@ -53,7 +56,8 @@ private struct AmbHoverRow: ViewModifier {
             .background {
                 RoundedRectangle(cornerRadius: radius, style: .continuous).fill(hovered && fill ? Amb.hoverFill : Color.clear).padding(inset)
             }
-            .onHover { hovered = $0 }
+            .onHover { hovered = $0 && !hoverPaused }
+            .onChange(of: hoverPaused) { _, paused in if paused { hovered = false } }
     }
 }
 
@@ -72,6 +76,7 @@ private struct AmbRevealOnHover: ViewModifier {
 
 private struct AmbRowHoveredKey: EnvironmentKey { static let defaultValue = false }
 private struct AmbInHoverRowKey: EnvironmentKey { static let defaultValue = false }
+private struct AmbHoverPausedKey: EnvironmentKey { static let defaultValue = false }
 
 extension EnvironmentValues {
     var ambRowHovered: Bool {
@@ -81,6 +86,12 @@ extension EnvironmentValues {
     var ambInHoverRow: Bool {
         get { self[AmbInHoverRowKey.self] }
         set { self[AmbInHoverRowKey.self] = newValue }
+    }
+    /// UX lab: true while something covers the screen (the Mac command menu). AppKit still sends hover to views
+    /// underneath, even in other hosting views, so the hover fills ignore it.
+    var ambHoverPaused: Bool {
+        get { self[AmbHoverPausedKey.self] }
+        set { self[AmbHoverPausedKey.self] = newValue }
     }
 }
 

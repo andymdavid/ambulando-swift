@@ -276,11 +276,13 @@ extension View {
 
 private struct HoverTracking: ViewModifier {
     @State private var hovered = false
+    @Environment(\.ambHoverPaused) private var hoverPaused
     func body(content: Content) -> some View {
         content
             .environment(\.ambRowHovered, hovered)
             .environment(\.ambInHoverRow, true)
-            .onHover { hovered = $0 }
+            .onHover { hovered = $0 && !hoverPaused }
+            .onChange(of: hoverPaused) { _, paused in if paused { hovered = false } }
     }
 }
 

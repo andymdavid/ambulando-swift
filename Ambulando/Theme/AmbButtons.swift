@@ -29,6 +29,7 @@ private struct AmbButtonBody: View {
     @Environment(\.isEnabled) private var enabled
     @Environment(\.controlSize) private var controlSize
     @State private var hovered = false
+    @Environment(\.ambHoverPaused) private var hoverPaused
 
     private var height: CGFloat {
         #if os(macOS)
@@ -73,7 +74,8 @@ private struct AmbButtonBody: View {
             .contentShape(Rectangle())
             #endif
             .opacity(enabled ? 1 : 0.45)
-            .onHover { hovered = $0 }
+            .onHover { hovered = $0 && !hoverPaused }
+            .onChange(of: hoverPaused) { _, paused in if paused { hovered = false } }
     }
 }
 

@@ -48,8 +48,10 @@ struct MacWorkspaceShell: View {
             .environment(\.openMention, OpenMentionAction { kind, id in model.openRecord(kind: kind, id: id) })
         }
         .background(Amb.sidebar)
-        // UX lab: nothing behind the command menu reacts to the pointer (hover, clicks) while it is open.
+        // UX lab: nothing behind the command menu reacts to the pointer while it is open: no clicks, and no hover
+        // fills (hover reaches the section screens' own hosting views regardless, so they are paused).
         .allowsHitTesting(!ui.showSearch)
+        .environment(\.ambHoverPaused, ui.showSearch)
         }
         // HTTPS links open as tabs in the browser window; record mentions open the record in its section.
         .environment(\.openURL, OpenURLAction { model.browser.handleLink($0) })
