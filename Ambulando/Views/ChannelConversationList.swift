@@ -53,8 +53,8 @@ struct ChannelConversationList: View {
         VStack(spacing: 0) {
             #if os(macOS)   // the list is the Mac's channel view (ChatLayout.mac)
             ConversationListToolbar(search: $search, filter: $filter, identifier: "channel", newThread: { composing = true }) {
-                // Who's in this channel's conversations, most recent first (Buzz-style facepile).
-                if !channelPeople.people.isEmpty { ParticipantFacepile(participants: channelPeople).padding(.trailing, 4) }
+                // UX lab (6.6): who has access, opening the Members popover (was: who has posted).
+                ChannelMembersButton(channelId: target.channelId, workspace: workspace, people: people).padding(.trailing, 4)
             }
             #endif
             ScrollView {

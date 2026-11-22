@@ -185,6 +185,9 @@ Goal: Linear-level polish for the Mac app without changing what the product does
 - **New task is a compact composer** (Mac): title first, every other field a chip with a sensible default; Create more
   for batches. Same write as the old form.
 
+- **A channel shows who has access** (Mac): the faces by New thread are members, not recent posters, and open a
+  Members popover to add, change or remove access. Same Tower calls as channel access settings.
+
 ## Deferred
 
 - **Flatten the Deck (Phase 5).** Four stacked layers (page, section panel, row card, tiles). Two is enough.

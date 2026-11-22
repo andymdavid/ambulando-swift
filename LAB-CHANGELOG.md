@@ -713,3 +713,16 @@ done, notification detail, Search (iPhone). The round 6 composer (6.4) and Membe
 - Subtasks: rows with ring, title and assignee, a done/total count, Add subtask last (the 6.4 composer); same loading
   and refresh as the shared subtasks view. Not carried over: expanding a subtask's own subtasks in place (open it instead).
 - Watch: the window title now shows the task's title; a long one could reach the centred search field.
+
+### 6.6 Channel Members popover (`feat(mac): channel Members popover`)
+- New `MacChannelMembers`: in a channel's toolbar, the faces by New thread are now up to three people with access and
+  the total (was: people who have posted), from the grants Tower last returned (saved as the channel access page saves
+  them). Click opens Members: "N with access to #channel"; Add people, agents or a group… (searches the workspace's
+  people and groups, leaving out anyone in; ↵ adds the first; "as can post" sets the level first); people, then
+  Groups, each with Can view / Can post / Can manage as a menu and ✕ on hover (asks once). Custom grants show
+  "Custom", read-only. Without Manage: the list, plain, and who to ask. A DM: its two people, nothing to add.
+- Same calls and authority check as the channel access page (`channelGrants`, `.channelGrant` add/update,
+  `.revokeChannelGrant`, `AdministrationAuthority.canManageChannelGrants`); nothing new on Tower.
+- Try it in the Test app with `-AmbulandoFixtureAdmin -AmbulandoFixtureGroups` (the sample Tower answers grants only
+  then; it starts with none). `-UXMembers <text>` opens the popover at launch with that text typed.
+- Not done: the footer's "Invite to the workspace…" and "Channel settings" links (it says to use Workspace settings).
