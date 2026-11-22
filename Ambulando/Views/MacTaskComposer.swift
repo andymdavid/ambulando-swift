@@ -100,8 +100,11 @@ struct MacTaskComposer: View {
                 Circle().fill(Amb.taskStatus(state.rawValue)).frame(width: 8, height: 8)
             }
             .accessibilityIdentifier("newtask.status")
-            ComposerChip(label: priority.label, help: TaskPriority.sizesHelp) {
-                ForEach(TaskPriority.editable, id: \.self) { value in Button(value.label) { priority = value } }
+            ComposerChip(label: priority.label, help: "Size") {
+                // What each size means sits in the menu, not in a tooltip (which lingered over the open menu).
+                ForEach(TaskPriority.editable, id: \.self) { value in
+                    Button { priority = value } label: { Text(value.label); Text(value.meaning) }
+                }
             } icon: {
                 Image(systemName: "circle.grid.cross").font(.amb(.caption2))
             }
@@ -202,7 +205,7 @@ private struct ComposerChip<Items: View, Icon: View>: View {
             .contentShape(Rectangle())
         }
         .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
-        .ambTooltip(help)
+        // No tooltip: it stayed up over the chip's open menu. The label says what the chip is.
         .accessibilityLabel("\(help): \(label)")
     }
 }

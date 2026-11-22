@@ -169,10 +169,12 @@ struct MacTaskDetail: View {
                 HStack(spacing: 6) { TaskStatusRing(state: state); Text(state.label) }
             })),
             ("Size", AnyView(PropertyMenu(enabled: canChange, identifier: "task.priority") {
-                ForEach(TaskPriority.editable, id: \.self) { size in Button(size.label) { patch(row, ["priority": size.rawValue]) } }
+                ForEach(TaskPriority.editable, id: \.self) { size in
+                    Button { patch(row, ["priority": size.rawValue]) } label: { Text(size.label); Text(size.meaning) }
+                }
             } label: {
                 Text(TaskPriority(rawValue: row.priority)?.label ?? row.priority)
-            }.ambTooltip(TaskPriority.sizesHelp))),
+            })),
             ("Assignee", AnyView(PropertyMenu(enabled: canChange, identifier: "task.assignee") {
                 Button("Unassigned") { assign(row, nil) }
                 Divider()

@@ -15,6 +15,13 @@ extension TaskPriority {
         }
     }
 
+    /// The explanation alone ("The most important work. Do these first."), for a menu item's subtitle.
+    var meaning: String {
+        guard let colon = help.firstIndex(of: ":") else { return help }
+        let rest = help[help.index(after: colon)...].trimmingCharacters(in: .whitespaces)
+        return rest.prefix(1).uppercased() + rest.dropFirst()
+    }
+
     /// The tooltip for all task sizes together (pickers and menus), one per line.
     static let sizesHelp = "Rock: the most important work. Do these first.\nPebble: important, but after the rocks.\nSand: small tasks that fill the gaps."
 }

@@ -734,8 +734,9 @@ done, notification detail, Search (iPhone). The round 6 composer (6.4) and Membe
 - Captures at 900pt, light: the task screen folds its properties under the title; Files drops Channel.
 - Found: at 900pt a long window title (a task's) runs under the centred title-bar search ("Review the native…").
   Open: hide the window title (the place header already says where you are), or shorten it.
-- Noted (Andy): in the New task composer a chip's tooltip (Size's Rock/Pebble/Sand help) can linger over its open menu.
-  Likely fix: no hover tip on the chips; the sizes' meaning goes inside the Size menu.
+- Fix (Andy): a chip's tooltip (Size's Rock/Pebble/Sand help) lingered over its open menu. The composer's chips have
+  no tooltip now; each size in the Size menu shows its meaning as a subtitle (`TaskPriority.meaning`, shared file,
+  additive). The task screen's Size menu does the same.
 
 ### 6.7 One way back from a record (`style(mac): one crumb row on opened tasks, files and documents`)
 - New `MacRecordCrumbs`: ‹ and the section you came from (`model.mode.title`), the record's channel (and a subtask's
