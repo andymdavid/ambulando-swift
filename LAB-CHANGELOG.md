@@ -604,3 +604,15 @@ done, notification detail, Search (iPhone). The round 6 composer (6.4) and Membe
   the known failure. Mac only; no iPad check (the shared Core query adds an optional parameter, default unchanged).
 - For Pete: `channelConversations` gains an optional `only:` set; `conversationMatches` is a new reader query.
 
+### 6.0c The content is a rounded panel (`style(mac): content pane as a rounded panel on the window chrome`)
+- Andy, after Ari: the working area should stand out as one panel, with the title bar and sidebar blending into a
+  single frame around it. The content pane (place header, tabs, section) is now inset `Amb.contentInset` (8pt) from
+  the sidebar and the window's right and bottom edges, rounded `Amb.radiusPanel` (10pt) on all four corners, with a
+  hairline border, on the `Amb.sidebar` chrome. The sidebar's hairline edge is gone; the gap is the resize handle.
+- `MacWorkspaceShell` only (plus one theme value). The sidebar's fitted width subtracts the two gaps so the content
+  keeps its 580pt minimum.
+- Checked dark and light, 1440 and 900pt (sidebar 248 and 380): Chat, Tasks list and board, Docs, a document.
+  Thread regression: only the known failure. Mac only; no iPad check.
+- Shown up by the frame (not changed here): the document screen's toolbar row is a chrome-coloured strip inside the
+  panel. It goes with the document screen (round 6, 6.3/6.4).
+

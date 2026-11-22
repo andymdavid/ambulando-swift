@@ -39,8 +39,15 @@ struct MacWorkspaceShell: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             .frame(minWidth: MacSidebarResizer.contentMinimum, maxWidth: .infinity, maxHeight: .infinity)
+            // UX lab: the content is a rounded panel on the window chrome, inset on every side, so the title bar and
+            // sidebar read as one frame around the working area (as Ari). The gap at its left is the resize handle.
+            .background(Amb.background)
+            .clipShape(RoundedRectangle(cornerRadius: Amb.radiusPanel, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: Amb.radiusPanel, style: .continuous).strokeBorder(Amb.border, lineWidth: 0.5))
+            .padding([.trailing, .bottom], Amb.contentInset)
             .environment(\.openMention, OpenMentionAction { kind, id in model.openRecord(kind: kind, id: id) })
         }
+        .background(Amb.sidebar)
         }
         // HTTPS links open as tabs in the browser window; record mentions open the record in its section.
         .environment(\.openURL, OpenURLAction { model.browser.handleLink($0) })
@@ -197,7 +204,7 @@ struct MacSectionBar: View {
     }
 }
 
-/// UX lab: the sidebar's right edge, a hairline with a wider grab area. Dragging sets the sidebar's width between
+/// UX lab: the sidebar's right edge, the gap before the content panel. Dragging sets the sidebar's width between
 /// `minWidth` and `maxWidth`; it opens at `defaultWidth`.
 struct MacSidebarResizer: View {
     static let defaultWidth: Double = 248
@@ -209,7 +216,7 @@ struct MacSidebarResizer: View {
     /// The stored width, narrowed so the content pane keeps its minimum in this window (not below the sidebar's own).
     static func fitted(_ width: Double, window: CGFloat) -> CGFloat {
         guard window > 0 else { return clamp(width) }
-        return max(CGFloat(minWidth), min(clamp(width), window - contentMinimum - 1))
+        return max(CGFloat(minWidth), min(clamp(width), window - contentMinimum - 2 * Amb.contentInset))
     }
 
     @Binding var width: Double
@@ -217,10 +224,11 @@ struct MacSidebarResizer: View {
     @State private var start: Double?
 
     var body: some View {
-        Rectangle().fill(Amb.border).frame(width: visible ? 0.5 : 0)
+        // UX lab: no hairline; the gap before the content panel is the edge, and the place to grab.
+        Color.clear.frame(width: Amb.contentInset)
             .overlay {
                 if visible {
-                    Color.clear.frame(width: 8).contentShape(Rectangle())
+                    Color.clear.frame(width: Amb.contentInset).contentShape(Rectangle())
                         .onHover { inside in if inside { NSCursor.resizeLeftRight.push() } else { NSCursor.pop() } }
                         .gesture(DragGesture(minimumDistance: 1, coordinateSpace: .global)
                             .onChanged { value in

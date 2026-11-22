@@ -161,6 +161,8 @@ Goal: Linear-level polish for the Mac app without changing what the product does
   DMs, each row tagged with where it lives), not its channels again. The sidebar already lists channels by type, so
   filters are about state (All, Unread, Mine), not type. A DM shows its face once. A refined channel overview (C1) was
   mocked and not chosen.
+- **The Mac content is a rounded panel on the window chrome** (8pt gap, 10pt corners, hairline), so the title bar and
+  sidebar read as one frame and the working area stands out, as in Ari. The gap replaces the sidebar's hairline.
 - **Chat lists share the table toolbar and are searchable.** The Chat tab and a channel get Tasks' and Docs' bar
   (search, filters, main action); All / Unread / Mine stay one click (segmented, not a menu). Search reaches every
   stored message, not only the loaded list, and quotes the match so you see why a row is there.

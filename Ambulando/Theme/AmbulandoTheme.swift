@@ -69,6 +69,8 @@ enum Amb {
     static let chatColumnWidth: CGFloat = 820
 
     static let radiusPanel: CGFloat = 10      // --radius-panel 0.625rem
+    /// UX lab (Mac): the content pane is a rounded panel inset from the window chrome by this gap (Ari's frame).
+    static let contentInset: CGFloat = 8
     static let radiusControl: CGFloat = 6     // --radius-control 0.375rem
     static let touchTarget: CGFloat = 44      // --touch-target 2.75rem
 
