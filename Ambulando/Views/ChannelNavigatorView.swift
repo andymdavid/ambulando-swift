@@ -22,7 +22,7 @@ struct ChatStack<Banner: View>: View {
             }
             .background(Amb.background)
             .toolbarItems(showSettings: $showSettings, pin: ToolbarPin.chat(nil, channel: model.context.channelId, workspace: model.selectedWorkspace))
-            .toolbar { ToolbarItem(placement: .primaryAction) { ChatNewButton(sheetScope: $newScope) } }
+            .toolbar { ToolbarItem(placement: .primaryAction) { ChatNewButton(sheetScope: $newScope) }.plainOnMac() }
             .navigationDestination(for: ChatRoute.self) { route in
                 Group {
                 if let workspace = model.selectedWorkspace, route.workspaceId == workspace.id, let store = model.store, let connection = model.connection {

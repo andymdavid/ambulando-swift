@@ -70,6 +70,8 @@ struct MacWorkspaceShell: View {
             let stored = AppMode(stored: lab == "board" ? "tasks" : lab ?? storedMode)
             if model.mode != stored { model.mode = stored }
         }
+        // UX lab: Search as a field centred in the title bar (as Ari); the window toolbar drops centred SwiftUI items.
+        .background(MacTitleBarSearchInstaller { [ui] in ui.showSearch = true })
         .onChange(of: model.mode) { _, mode in storedMode = mode.rawValue }
         .onChange(of: showAgents) { _, on in if !on && model.mode == .agents { model.mode = .deck } }
         .onChange(of: showContext) { _, on in if !on && model.mode == .context { model.mode = .deck } }

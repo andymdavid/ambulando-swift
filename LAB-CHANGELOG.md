@@ -625,3 +625,13 @@ done, notification detail, Search (iPhone). The round 6 composer (6.4) and Membe
   iPhone and iPad. iOS build passes; no iPad check needed. Thread regression: only the known failure.
 - Not changed: Home's icon is still the workspace's monogram, now just under the switcher with the same letters.
 
+### 6.0e Title bar: Search centred, plain icons; Home gets a house (`style(mac): search centred in the title bar, plain icons`)
+- Home's icon is a house (it matches Toolbox; the workspace's monogram heads the sidebar).
+- Search is a field centred in the title bar, "Search or jump to… ⌘F" (as Ari); it opens the same Search sheet. The
+  window toolbar drops SwiftUI `.principal`/`.navigation` items and a toolbar search field here (only primary-action
+  items reach it), so `MacTitleBarSearchInstaller` places an AppKit hosting view in the title bar's centre.
+- The title-bar icons lose the macOS 26 glass capsule (`sharedBackgroundVisibility(.hidden)`; new `plainOnMac()` for
+  the channel's New channel item). iPhone/iPad unchanged.
+- Batch checks still to run: thread regression (title-bar Search must still be found as `search`), iOS build
+  (shared `WorkspaceShell`, `ChannelNavigatorView`), 900pt with a long channel title (the centred field could meet it).
+

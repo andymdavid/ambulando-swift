@@ -62,7 +62,8 @@ struct MacSidebarContent: View {
         let context = model.context
         SidebarRow(label: "Home", selected: inPlace && context.isHome, identifier: "sidebar.home", accessibilityLabel: "All workspace activity",
                    action: { model.choosePlace(.home) }) {
-            WorkspaceAvatar(label: model.selectedWorkspace?.label ?? "A", size: Amb.SidebarLayout.iconSlot)
+            // A house, like Toolbox's icon below it; the workspace's own monogram heads the sidebar (UX lab).
+            Image(systemName: "house").font(.amb(.caption)).foregroundStyle(Amb.mutedForeground)
         }
         // Toolbox works across the workspace, not in a place, so it's a destination of its own rather than a tab.
         SidebarRow(label: "Toolbox", selected: model.mode == .toolbox, identifier: "sidebar.toolbox", action: { model.show(.toolbox) }) {

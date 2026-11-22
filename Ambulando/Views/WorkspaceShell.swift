@@ -351,8 +351,10 @@ private struct ShellToolbar: ViewModifier {
                 ToolbarItem(placement: .trailingBar) {
                     HStack(spacing: toolbarSpacing) {
                         SyncIndicator()
+                        #if os(iOS)   // UX lab: on the Mac, Search is the field centred in the title bar (MacTitleBarSearch)
                         Button { search() } label: { Image(systemName: "magnifyingglass") }
                             .accessibilityLabel("Search").accessibilityIdentifier("search")
+                        #endif
                         NotificationsButton { showNotifications() }
                         if let pin {
                             PinToggleButton(type: pin.type, id: pin.id, workspace: pin.workspace)
@@ -503,12 +505,27 @@ struct IdentityBanner: View {
     }
 }
 
-/// Keep native toolbar layout and overflow; suppress only the iOS 26 shared glass backplates.
+/// Keep native toolbar layout and overflow; suppress only the shared glass backplates (iOS 26, and macOS 26 in the lab).
 private extension ToolbarContent {
     @ToolbarContentBuilder
     func restrainedMobileBackground() -> some ToolbarContent {
         #if os(iOS)
         if #available(iOS 26.0, *) { self.sharedBackgroundVisibility(.hidden) }
+        else { self }
+        #else
+        // UX lab: on the Mac too: plain icons in the title bar, no glass capsule around them.
+        if #available(macOS 26.0, *) { self.sharedBackgroundVisibility(.hidden) }
+        else { self }
+        #endif
+    }
+}
+
+extension ToolbarContent {
+    /// UX lab: a title-bar item drawn as a plain icon on the Mac (no macOS 26 glass backplate); unchanged elsewhere.
+    @ToolbarContentBuilder
+    func plainOnMac() -> some ToolbarContent {
+        #if os(macOS)
+        if #available(macOS 26.0, *) { self.sharedBackgroundVisibility(.hidden) }
         else { self }
         #else
         self
