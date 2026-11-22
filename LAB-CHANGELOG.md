@@ -669,3 +669,13 @@ done, notification detail, Search (iPhone). The round 6 composer (6.4) and Membe
   size and assignee menus, the Edit sheet's write, subtasks, comments, created by), and Members uses the access settings
   page's calls (channel grants read, grant, change, revoke). Nothing new on Tower for either.
 - On hold: 6.3 document screen and 6.5 Deck.
+
+### Batch checks (6.0b–6.0g, 2026-11-22)
+- Thread regression: only the known failure ("synced reply must render in actual thread"); the title-bar Search is
+  still found as `search`. `MacDeckComposerCheck` and `MacKanbanCheck` pass (both run with `-AmbulandoMacThreadRegression`).
+- iOS build passes (shared `WorkspaceShell`, `ChannelNavigatorView`, `SidebarViews`, `AppModel+Sections`,
+  `ToolboxViews`, `TasksViews`, `DocsViews`, `AmbHover`, `AmbButtons`, `ChatLayout`). No iPad check needed: the shared
+  changes are Mac-only or inert there.
+- Captures: the command menu in dark; 900pt with the 380pt sidebar and a channel open, the centred field clear of the
+  window title. Not covered: a channel name long enough to reach the field (the sample has none).
+- Seen: the Test app sometimes launches with no window until it is opened again (twice in four launches). Not yet traced.
