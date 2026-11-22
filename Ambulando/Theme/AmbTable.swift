@@ -182,14 +182,15 @@ struct AmbBulkBarMenu<Items: View>: View {
 /// A toolbar's main action ("New task"), shortened to its + in a narrow window.
 struct AmbTablePrimaryButton: View {
     let title: String
+    var systemImage = "plus"
     let identifier: String
     let action: () -> Void
 
     var body: some View {
         ViewThatFits(in: .horizontal) {
-            Button(action: action) { Label(title, systemImage: "plus").fixedSize() }
+            Button(action: action) { Label(title, systemImage: systemImage).fixedSize() }
                 .buttonStyle(.ambPrimary).accessibilityIdentifier(identifier)
-            Button(action: action) { Image(systemName: "plus") }
+            Button(action: action) { Image(systemName: systemImage) }
                 .buttonStyle(.ambPrimary).ambTooltip(title).accessibilityLabel(title).accessibilityIdentifier(identifier)
         }
     }

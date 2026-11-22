@@ -177,6 +177,9 @@ Goal: Linear-level polish for the Mac app without changing what the product does
   lists where to go and what to do, then narrows to places and stored tasks, docs, files and messages as you type.
   Faster than a sheet, and one place for jumping as well as finding. iPhone and iPad keep the Search sheet.
 
+- **Files is a table like Tasks and Docs** (Mac): Name, Kind, Size, Channel, Updated; folders open in place; no tick
+  boxes, since Tower has no bulk file actions yet.
+
 ## Deferred
 
 - **Flatten the Deck (Phase 5).** Four stacked layers (page, section panel, row card, tiles). Two is enough.

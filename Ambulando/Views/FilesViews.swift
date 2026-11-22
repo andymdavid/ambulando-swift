@@ -34,8 +34,65 @@ struct FilesView: View {
     private var scopeId: String? { model.context.scopeId }
     @State private var snapshot = LiveQuery<FilesSnapshot>(initial: FilesSnapshot())
     @State private var uploading = false
+    /// UX lab (Mac): the table's search, sort and grouping (MacFileList).
+    @State private var search = ""
+    @AppStorage("files.list.sort.v1") private var fileSort = "updated"
+    @AppStorage("files.list.group.v1") private var fileGrouping = "channel"
 
     var body: some View {
+        files
+        .overlay {
+            if snapshot.loaded && snapshot.value.groups.isEmpty && snapshot.value.uploads.isEmpty {
+                EmptyNote(title: "No files", systemImage: "folder", detail: model.isUnlocked ? "Files in this scope appear here. Tap + to upload." : "Unlock to load files.")
+            }
+        }
+        .navigationTitle("Files")
+        .safeAreaInset(edge: .top, spacing: 0) {
+            ListHeaderBar {
+                #if os(macOS)
+                // UX lab: the Tasks and Docs toolbar; Upload is a labelled primary button.
+                MacFileListControls(search: $search, sort: sortBinding, grouping: groupingBinding)
+                Spacer()
+                AmbTablePrimaryButton(title: "Upload", systemImage: "arrow.up", identifier: "files.upload") { uploading = true }
+                #else
+                Spacer()
+                Button { uploading = true } label: { Image(systemName: "plus") }
+                    .buttonStyle(.ambIcon)
+                    .ambTooltip("Upload a file").accessibilityLabel("Upload").accessibilityIdentifier("files.upload")
+                #endif
+            }
+        }
+        .sheet(isPresented: $uploading) { UploadSheet(workspace: workspace, choice: snapshot.value.choice, context: context) }
+        .refreshable { model.openFiles(workspace, scopeId: scopeId, force: true) }
+        .task(id: model.context) { start(); model.openFiles(workspace, scopeId: scopeId) }
+        // UX lab: `-UXOpen file:<name>` (sample app only), for captures.
+        .onChange(of: snapshot.value.groups) { _, groups in
+            let files = groups.flatMap { $0.loose + $0.folders.flatMap(\.files) }
+            UXLabOpen.record(kind: "file", among: files.map { ($0.id, $0.displayName) }, model: model)
+        }
+        .onChange(of: model.identity) { _, state in if case .unlocked = state { model.openFiles(workspace, scopeId: scopeId) } }
+    }
+
+    #if os(macOS)
+    private var sortBinding: Binding<MacFileSort> {
+        Binding { MacFileSort(rawValue: fileSort) ?? .updated } set: { fileSort = $0.rawValue }
+    }
+    private var groupingBinding: Binding<MacFileGrouping> {
+        Binding { MacFileGrouping(rawValue: fileGrouping) ?? .channel } set: { fileGrouping = $0.rawValue }
+    }
+    #endif
+
+    @ViewBuilder private var files: some View {
+        #if os(macOS)
+        // UX lab: Files as a table, the same as Tasks and Docs (MacFileList).
+        MacFileList(workspace: workspace, snapshot: snapshot.value, search: search, sort: sortBinding.wrappedValue,
+                    grouping: groupingBinding.wrappedValue, sortBinding: sortBinding)
+        #else
+        list
+        #endif
+    }
+
+    private var list: some View {
         List {
             if !snapshot.value.uploads.isEmpty {
                 Section("Uploading") {
@@ -65,29 +122,6 @@ struct FilesView: View {
         }
         .groupedList()
         .scrollContentBackground(.hidden)
-        .overlay {
-            if snapshot.loaded && snapshot.value.groups.isEmpty && snapshot.value.uploads.isEmpty {
-                EmptyNote(title: "No files", systemImage: "folder", detail: model.isUnlocked ? "Files in this scope appear here. Tap + to upload." : "Unlock to load files.")
-            }
-        }
-        .navigationTitle("Files")
-        .safeAreaInset(edge: .top, spacing: 0) {
-            ListHeaderBar {
-                Spacer()
-                Button { uploading = true } label: { Image(systemName: "plus") }
-                    .buttonStyle(.ambIcon)
-                    .ambTooltip("Upload a file").accessibilityLabel("Upload").accessibilityIdentifier("files.upload")
-            }
-        }
-        .sheet(isPresented: $uploading) { UploadSheet(workspace: workspace, choice: snapshot.value.choice, context: context) }
-        .refreshable { model.openFiles(workspace, scopeId: scopeId, force: true) }
-        .task(id: model.context) { start(); model.openFiles(workspace, scopeId: scopeId) }
-        // UX lab: `-UXOpen file:<name>` (sample app only), for captures.
-        .onChange(of: snapshot.value.groups) { _, groups in
-            let files = groups.flatMap { $0.loose + $0.folders.flatMap(\.files) }
-            UXLabOpen.record(kind: "file", among: files.map { ($0.id, $0.displayName) }, model: model)
-        }
-        .onChange(of: model.identity) { _, state in if case .unlocked = state { model.openFiles(workspace, scopeId: scopeId) } }
     }
 
     private func fileRow(_ file: FileRecord) -> some View {

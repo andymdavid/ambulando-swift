@@ -679,3 +679,14 @@ done, notification detail, Search (iPhone). The round 6 composer (6.4) and Membe
 - Captures: the command menu in dark; 900pt with the 380pt sidebar and a channel open, the centred field clear of the
   window title. Not covered: a channel name long enough to reach the field (the sample has none).
 - Seen: the Test app sometimes launches with no window until it is opened again (twice in four launches). Not yet traced.
+
+### 6.1 Files as a table (`feat(mac): Files as a table, as Tasks and Docs`)
+- New `MacFileList`: toolbar Search files, Sort (Updated, Name, Size, Kind) and Group (Channel, Kind, None), remembered
+  (`files.list.sort.v1`, `files.list.group.v1`); Upload is a labelled primary button opening today's upload sheet.
+  Labels row Name / Kind / Size / Channel / Updated; narrow windows drop Channel, then Kind, then Size.
+- Folders sit first in their channel and open in place (remembered); while searching, a file in a folder says "in …".
+  Rows: type badge (extension), name, Kind as a word from the file's type, readable size. Click opens; ••• and
+  right-click: Open, Quick Look (once on this Mac), Download (to Downloads, shown in Finder), Copy reference.
+  Uploads in progress sit at the top of their channel with their status. No tick boxes (no bulk file actions on Tower).
+- Shared: `FilesView` picks the table on the Mac (iPhone/iPad keep the list); `AmbTablePrimaryButton` gains
+  `systemImage` (default +). Not done: Space for Quick Look (needs keyboard row selection, which the tables don't have yet).
