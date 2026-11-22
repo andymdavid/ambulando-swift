@@ -726,3 +726,11 @@ done, notification detail, Search (iPhone). The round 6 composer (6.4) and Membe
 - Try it in the Test app with `-AmbulandoFixtureAdmin -AmbulandoFixtureGroups` (the sample Tower answers grants only
   then; it starts with none). `-UXMembers <text>` opens the popover at launch with that text typed.
 - Not done: the footer's "Invite to the workspace…" and "Channel settings" links (it says to use Workspace settings).
+
+### Batch checks (6.1, 6.2, 6.4, 6.6, 2026-11-22)
+- Thread regression: only the known failure. `MacDeckComposerCheck`, `MacKanbanCheck` and `MacCommentMentionCheck`
+  (task comment picker and send on the new task screen) pass. iOS build passes (shared `FilesViews`, `TasksViews`,
+  `ChannelConversationList`, `AmbTable`; the new screens are Mac-only). No iPad check needed.
+- Captures at 900pt, light: the task screen folds its properties under the title; Files drops Channel.
+- Found: at 900pt a long window title (a task's) runs under the centred title-bar search ("Review the native…").
+  Open: hide the window title (the place header already says where you are), or shorten it.
