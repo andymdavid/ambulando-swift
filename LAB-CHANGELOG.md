@@ -661,3 +661,11 @@ done, notification detail, Search (iPhone). The round 6 composer (6.4) and Membe
   covers them. New environment flag `ambHoverPaused` (set while the menu is open) clears and stops the shared hover
   fills (`ambHover`, `ambHoverRow`, Amb buttons, message rows). Shared theme files: iOS build at batch end; iPad unaffected
   (never paused).
+- The title-bar field shows ⌘ K (as Ari); ⌘F still opens the menu too. Dimming the title bar as well: undecided.
+
+### Round 6 decisions (2026-11-22)
+- Yes: 6.1 Files as a table; 6.2 task screen A (properties in a rail, folding to B's grid when narrow); 6.4 New task
+  composer; 6.6 Members popover. Checked against the code: A rearranges what the task screen already does (status,
+  size and assignee menus, the Edit sheet's write, subtasks, comments, created by), and Members uses the access settings
+  page's calls (channel grants read, grant, change, revoke). Nothing new on Tower for either.
+- On hold: 6.3 document screen and 6.5 Deck.

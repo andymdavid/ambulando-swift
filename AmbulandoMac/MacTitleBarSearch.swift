@@ -11,7 +11,7 @@ struct MacTitleBarSearch: View {
                 Image(systemName: "magnifyingglass").foregroundStyle(Amb.mutedForeground)
                 Text("Search or jump to…").foregroundStyle(Amb.mutedForeground)
                 Spacer(minLength: 8)
-                HStack(spacing: 3) { Keycap(text: "⌘"); Keycap(text: "F") }
+                HStack(spacing: 3) { Keycap(text: "⌘"); Keycap(text: "K") }
             }
             .font(.amb(.footnote))
             .padding(.horizontal, 10)
