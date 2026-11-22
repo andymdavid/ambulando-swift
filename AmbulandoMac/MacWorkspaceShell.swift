@@ -69,6 +69,7 @@ struct MacWorkspaceShell: View {
             let lab = FixtureEnvironment.requested ? UserDefaults.standard.string(forKey: "UXStartTab") : nil
             let stored = AppMode(stored: lab == "board" ? "tasks" : lab ?? storedMode)
             if model.mode != stored { model.mode = stored }
+            if MacCommandMenu.labRequest != nil { ui.showSearch = true }
         }
         // UX lab: Search as a field centred in the title bar (as Ari); the window toolbar drops centred SwiftUI items.
         .background(MacTitleBarSearchInstaller { [ui] in ui.showSearch = true })
@@ -81,11 +82,8 @@ struct MacWorkspaceShell: View {
             // No taller minimum than the smallest window: the form scrolls inside the sheet.
             SettingsView().frame(minWidth: 560, idealWidth: 640, minHeight: 420, idealHeight: 760)
         }
-        .sheet(isPresented: $ui.showSearch) {
-            if let workspace = model.selectedWorkspace, let store = model.store {
-                SearchView(workspace: workspace, store: store).frame(minWidth: 620, idealWidth: 720, minHeight: 520, idealHeight: 680)
-            }
-        }
+        // UX lab: Search is a command menu over the window (as Ari's ⌘K), not a sheet.
+        .overlay { if ui.showSearch, model.selectedWorkspace != nil { MacCommandMenu() } }
         .sheet(isPresented: $ui.showNotifications) {
             if let workspace = model.selectedWorkspace, let store = model.store {
                 NotificationsView(workspace: workspace, store: store).frame(minWidth: 520, idealWidth: 600, minHeight: 480, idealHeight: 680)

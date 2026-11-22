@@ -169,10 +169,11 @@ struct TasksView: View {
         .task(id: model.context) { start(); model.openTasks(workspace, scopeId: scopeId) }
         // UX lab: `-UXStartTab board` or `tasks` (sample app only) opens the board or the list, for screen captures.
         .onAppear {
-            if UXLabOpen.create(kind: "task") { creating = true }
+            if UXLabOpen.create(kind: "task") || UXComposeRequest.shared.take("task") { creating = true }
             guard FixtureEnvironment.requested, let tab = UserDefaults.standard.string(forKey: "UXStartTab") else { return }
             if tab == "board" { board = true } else if tab == "tasks" { board = false }
         }
+        .onChange(of: UXComposeRequest.shared.pending) { _, _ in if UXComposeRequest.shared.take("task") { createState = nil; creating = true } }
         .onChange(of: model.identity) { _, state in if case .unlocked = state { model.openTasks(workspace, scopeId: scopeId) } }
     }
 

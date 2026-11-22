@@ -67,7 +67,7 @@ struct MacTitleBarSearchInstaller: NSViewRepresentable {
 }
 
 /// One key of a shortcut, drawn as a small keycap (as Ari's ⌘ K).
-private struct Keycap: View {
+struct Keycap: View {
     let text: String
     var body: some View {
         Text(text).font(.amb(.caption2).weight(.medium)).foregroundStyle(Amb.mutedForeground)

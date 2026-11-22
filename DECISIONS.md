@@ -173,6 +173,10 @@ Goal: Linear-level polish for the Mac app without changing what the product does
 - **"New task" and "New document" are labelled primary buttons**, like "New thread" in a channel. What they open is
   still being designed (a compact composer is proposed).
 
+- **Search is a command menu on the Mac** (⌘K or ⌘F, or the title-bar field), as Ari: one field over the window that
+  lists where to go and what to do, then narrows to places and stored tasks, docs, files and messages as you type.
+  Faster than a sheet, and one place for jumping as well as finding. iPhone and iPad keep the Search sheet.
+
 ## Deferred
 
 - **Flatten the Deck (Phase 5).** Four stacked layers (page, section panel, row card, tiles). Two is enough.

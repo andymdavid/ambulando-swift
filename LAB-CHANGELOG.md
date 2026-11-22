@@ -643,3 +643,16 @@ done, notification detail, Search (iPhone). The round 6 composer (6.4) and Membe
 - The page lists apps only (workspace apps and your web apps), so the Mac calls it Apps, with a grid icon
   (`AppMode.toolboxTitle` / `toolboxImage`). The web app, iPhone and iPad still say Toolbox. For Pete: follow or not.
 
+### 6.0g Search is a command menu (`feat(mac): Search as a command menu, as Ari's ⌘K`)
+- New `MacCommandMenu` replaces the Mac Search sheet: a 620pt panel 18% down the window over a 40% black wash, field
+  "Type a command or search…". Before typing: Go to (Home, the sections, with their ⌘ shortcuts) and Actions (New
+  thread, New task, New document, Notifications, Settings, light/dark theme). Typing filters those, adds Places
+  (scopes, channels, DMs by name) and, from two letters, Tasks / Documents / Files / Messages from the local search
+  index (`StoreReader.search`). Rows: icon, label, faint hint, place or keycaps (`Keycap`, now shared). ↑↓ ↵ Esc via a
+  key monitor while open; hover selects; a click outside closes. ⌘K added in the Go menu beside Search… ⌘F.
+- New task / New document from outside their section: new `UXComposeRequest`, taken by the Tasks and Docs lists
+  (two one-line call sites in shared `TasksViews`/`DocsViews`; no effect on iPhone/iPad, which never set it).
+- `-UXCommand <text>` (sample app) opens the menu at launch with that text, for captures.
+- Known: the wash covers the window's content, not the title bar.
+- Batch checks still to run: iOS build (shared `TasksViews`, `DocsViews`, new `UXComposeRequest`), thread regression,
+  light/dark and 900pt captures. No iPad check needed (iPad keeps the sheet).

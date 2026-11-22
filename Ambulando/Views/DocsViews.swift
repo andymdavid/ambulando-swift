@@ -61,7 +61,8 @@ struct DocumentsView: View {
         .task(id: model.context) { start(); model.openDocs(workspace, scopeId: scopeId) }
         // UX lab: `-UXOpen doc:<title>` or `doc:new` (sample app only), for captures.
         .onChange(of: snapshot.value.docs) { _, docs in UXLabOpen.record(kind: "doc", among: docs.map { ($0.id, $0.title) }, model: model) }
-        .onAppear { if UXLabOpen.create(kind: "doc") { creating = true } }
+        .onAppear { if UXLabOpen.create(kind: "doc") || UXComposeRequest.shared.take("doc") { creating = true } }
+        .onChange(of: UXComposeRequest.shared.pending) { _, _ in if UXComposeRequest.shared.take("doc") { creating = true } }
         .onChange(of: model.identity) { _, state in if case .unlocked = state { model.openDocs(workspace, scopeId: scopeId) } }
     }
 

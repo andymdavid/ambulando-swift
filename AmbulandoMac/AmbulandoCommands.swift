@@ -55,6 +55,9 @@ struct AmbulandoCommands: Commands {
             Button("Search…") { ui.showSearch = true }
                 .keyboardShortcut("f", modifiers: .command)
                 .disabled(!ready || model.selectedWorkspace == nil)
+            Button("Command Menu…") { ui.showSearch.toggle() }   // UX lab: Ari's ⌘K
+                .keyboardShortcut("k", modifiers: .command)
+                .disabled(!ready || model.selectedWorkspace == nil)
             Button("Notifications…") { ui.showNotifications = true }
                 .keyboardShortcut("n", modifiers: [.command, .shift])
                 .disabled(!ready || model.selectedWorkspace == nil)
