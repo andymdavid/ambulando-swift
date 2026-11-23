@@ -466,7 +466,8 @@ struct MacTaskList: View {
     private func actions(_ row: TaskRow) -> [NativeMessageAction] {
         let changeable = canChange(row)
         func mark(_ current: Bool) -> String { current ? "checkmark" : "" }
-        var items = [NativeMessageAction("Open", "arrow.up.right.square") { pushRoute(WorkRoute.task(workspaceId: workspace.id, taskId: row.id)) }]
+        var items = [NativeMessageAction("Open", "arrow.up.right.square") { pushRoute(WorkRoute.task(workspaceId: workspace.id, taskId: row.id)) },
+                     model.pinAction(.task, row.id, in: workspace)]
         guard changeable else { return items }
         items += [
             NativeMessageAction("Edit title and description…", "pencil") { edit(row) },

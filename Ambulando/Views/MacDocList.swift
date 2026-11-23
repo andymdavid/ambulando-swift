@@ -230,6 +230,7 @@ struct MacDocList: View {
         var items = [
             NativeMessageAction("Open", "arrow.up.right.square") { pushRoute(WorkRoute.doc(workspaceId: workspace.id, docId: doc.id)) },
             NativeMessageAction("Copy reference", "link") { Pasteboard.copy(DocumentActionText.reference(title: doc.title, docId: doc.id)) },
+            model.pinAction(.document, doc.id, in: workspace),
         ]
         guard canChange else { return items }
         items += [

@@ -763,6 +763,15 @@ done, notification detail, Search (iPhone). The round 6 composer (6.4) and Membe
 - Checks: the thread regression and rich formatting checks look at the Inbox menu only where it exists (lab edits).
   `-AmbulandoMacPopupCheck` (MacDividerCheck) still needs the Inbox menu and will fail; expected.
 - Apps and canvases are workspace-wide on Tower (no scope), so they're the same on every Deck.
+- Fix (Andy: cramped, and empty when little is happening): more room (40pt sides, 36pt between greeting, drawers and
+  columns; 1080pt wide); the three columns run to the foot of the window with hairlines between them; rows are three
+  lines (title, what's happening, state · time) with more padding; six per column, then "N more"; an empty column
+  shows a mark and a line saying what would appear. In a place the Deck now also shows everyone's tasks in progress
+  there and tasks done there in the last two weeks (`items(team:)`); Needs you stays yours, and Activity is unchanged.
+- Pinning (Andy: "lost the ability to pin?"): it was only the pin in the window's title bar. New `AmbPinAction`: Pin to
+  Deck / Unpin from Deck in the ••• menus of task and document rows; the task and document crumb rows show the pin;
+  the title-bar pin goes on Mac tasks and documents (shared `SurfaceShell`, `#if os(macOS)`). Channels and
+  conversations keep theirs (title bar, thread header).
 
 ### 6.10 Activity page (`feat(mac): Activity, the workspace's work in progress`)
 - Round 8 (https://claude.ai/artifact/Y7n4F4tTJt1BcMRr8y5K9G), 8.1 approved. New `MacActivity.swift`: Activity in the

@@ -60,6 +60,7 @@ struct MacTaskDetail: View {
         let channel = snapshot.value.row.flatMap { snapshot.value.choice.channelName($0.task.channelId) }
         return MacRecordCrumbs(place: channel.map { "#\($0)" }, detail: parentTitle.map { "Parent: \($0)" },
                                escape: !(editingDescription || titleFocused)) {
+            PinToggleButton(type: .task, id: taskId, workspace: workspace).buttonStyle(.plain).ambTooltip("Pin to Deck")
             if let row = snapshot.value.row, canChange {
                 NativeMessageActions(items: actions(row), identifier: "task.actions", label: "Task actions", help: "More actions")
                     .frame(width: 28, height: 24)

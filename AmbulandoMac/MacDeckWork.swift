@@ -17,7 +17,7 @@ struct MacDeckWork: View {
     @State private var detail: NotificationItem?
 
     /// Each column shows this many items; the rest are on the Activity page.
-    static let perColumn = 5
+    static let perColumn = 6
 
     private var origin: String? { model.connection.flatMap { try? TowerOrigin($0.origin).description } }
 
@@ -28,13 +28,14 @@ struct MacDeckWork: View {
             GeometryReader { geometry in
                 let wide = geometry.size.width >= 760
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 26) {
+                    VStack(alignment: .leading, spacing: 36) {
                         greeting(needs: needs)
                         drawers(columns: wide ? 4 : 2)
-                        columns(items, wide: wide)
+                        // The columns run to the foot of the window, so a quiet place still reads as three lanes.
+                        columns(items, wide: wide, minHeight: wide ? max(geometry.size.height - 330, 260) : 0)
                     }
-                    .frame(maxWidth: 1000, alignment: .leading)
-                    .padding(.horizontal, 28).padding(.top, 24).padding(.bottom, 32)
+                    .frame(maxWidth: 1080, alignment: .leading)
+                    .padding(.horizontal, 40).padding(.top, 32).padding(.bottom, 28)
                     .frame(maxWidth: .infinity)
                 }
             }
@@ -179,17 +180,24 @@ struct MacDeckWork: View {
     }
 
     private func placeItems() -> [MacActivityItem] {
-        let all = activity.value.items(now: ServerClock.shared.now(origin: origin), seen: nil)
+        let all = activity.value.items(now: ServerClock.shared.now(origin: origin), seen: nil, team: true)
         guard let channels = placeChannels else { return all }
         return all.filter { $0.channelId.map(channels.contains) ?? false }
     }
 
-    @ViewBuilder private func columns(_ items: [MacActivityItem], wide: Bool) -> some View {
-        VStack(alignment: .trailing, spacing: 10) {
-            let layout = wide ? AnyLayout(HStackLayout(alignment: .top, spacing: 24)) : AnyLayout(VStackLayout(alignment: .leading, spacing: 22))
-            layout {
-                ForEach(MacActivityItem.Section.allCases) { section in
-                    column(section, items.filter { $0.section == section })
+    @ViewBuilder private func columns(_ items: [MacActivityItem], wide: Bool, minHeight: CGFloat) -> some View {
+        VStack(alignment: .trailing, spacing: 12) {
+            if wide {
+                HStack(alignment: .top, spacing: 0) {
+                    ForEach(Array(MacActivityItem.Section.allCases.enumerated()), id: \.element) { index, section in
+                        if index > 0 { Rectangle().fill(Amb.border).frame(width: 1).frame(minHeight: minHeight) }
+                        column(section, items.filter { $0.section == section }, minHeight: minHeight)
+                            .padding(.leading, index == 0 ? 0 : 20).padding(.trailing, index == 2 ? 0 : 20)
+                    }
+                }
+            } else {
+                VStack(alignment: .leading, spacing: 28) {
+                    ForEach(MacActivityItem.Section.allCases) { section in column(section, items.filter { $0.section == section }, minHeight: 0) }
                 }
             }
             Button { model.show(.activity) } label: {
@@ -200,43 +208,56 @@ struct MacDeckWork: View {
         }
     }
 
-    private func column(_ section: MacActivityItem.Section, _ rows: [MacActivityItem]) -> some View {
+    private func column(_ section: MacActivityItem.Section, _ rows: [MacActivityItem], minHeight: CGFloat) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(section.title).font(.amb(.footnote).weight(.semibold))
-                    .foregroundStyle(section == .needs && !rows.isEmpty ? Amb.brandOrange : Amb.secondaryForeground)
+                Text(section.title).font(.amb(.subheadline).weight(.semibold))
+                    .foregroundStyle(section == .needs && !rows.isEmpty ? Amb.brandOrange : Amb.foreground)
                 Text("\(rows.count)").font(.amb(.footnote)).foregroundStyle(Amb.faint)
             }
-            .padding(.horizontal, 6).padding(.bottom, 6)
-            Rectangle().fill(Amb.border).frame(height: 1)
+            .padding(.bottom, 10)
             if rows.isEmpty {
-                Text(section.empty).font(.amb(.footnote)).foregroundStyle(Amb.faint).padding(.horizontal, 6).padding(.vertical, 10)
+                VStack(spacing: 8) {
+                    Image(systemName: section.emptySymbol).font(.amb(.title3)).foregroundStyle(Amb.faint)
+                    Text(section.deckEmpty).font(.amb(.footnote)).foregroundStyle(Amb.mutedForeground).multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity).padding(.vertical, 36)
             } else {
+                Rectangle().fill(Amb.border).frame(height: 1)
                 ForEach(rows.prefix(Self.perColumn)) { row($0) }
+                if rows.count > Self.perColumn {
+                    Button { model.show(.activity) } label: {
+                        Text("\(rows.count - Self.perColumn) more").font(.amb(.footnote)).foregroundStyle(Amb.mutedForeground)
+                    }
+                    .buttonStyle(.plain).padding(.top, 10)
+                }
             }
         }
-        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .frame(maxWidth: .infinity, minHeight: minHeight, alignment: .topLeading)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("deck.column.\(section.rawValue)")
     }
 
-    /// Two lines at most: the title, then who or what and when (agents' state in their colour).
+    /// Up to three lines: the title; what's happening (an agent's latest line, who has the task, the notice); state and time.
     private func row(_ item: MacActivityItem) -> some View {
         Button { if let note = model.openActivityItem(item) { detail = note } } label: {
-            HStack(alignment: .top, spacing: 9) {
-                mark(item.mark).frame(width: 18).padding(.top, 1)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(item.title).font(.amb(.subheadline)).foregroundStyle(Amb.foreground).lineLimit(1)
+            HStack(alignment: .top, spacing: 10) {
+                mark(item.mark).frame(width: 20).padding(.top, 1)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(item.title).font(.amb(.subheadline).weight(.medium)).foregroundStyle(Amb.foreground).lineLimit(2)
+                    if !item.detail.isEmpty {
+                        Text(item.detail).font(.amb(.footnote)).foregroundStyle(Amb.secondaryForeground).lineLimit(1)
+                    }
                     HStack(spacing: 4) {
                         Text(item.tag.label).foregroundStyle(item.tag.tinted ? item.tag.color : Amb.mutedForeground)
                         Text("·").foregroundStyle(Amb.faint)
                         Text(ChatTime.label(item.iso)).foregroundStyle(Amb.mutedForeground)
                     }
-                    .font(.amb(.footnote)).lineLimit(1)
+                    .font(.amb(.caption)).lineLimit(1)
                 }
                 Spacer(minLength: 0)
             }
-            .padding(.horizontal, 6).padding(.vertical, 8)
+            .padding(.horizontal, 4).padding(.vertical, 12)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -247,7 +268,7 @@ struct MacDeckWork: View {
     @ViewBuilder private func mark(_ mark: MacActivityItem.Mark) -> some View {
         switch mark {
         case .person(let npub):
-            PersonAvatar(person: activity.value.people.person(npub), size: 18, agent: activity.value.people.isAgent(npub))
+            PersonAvatar(person: activity.value.people.person(npub), size: 20, agent: activity.value.people.isAgent(npub))
         case .task(let state):
             TaskStatusRing(state: state)
         case .symbol(let name):
@@ -282,6 +303,24 @@ struct MacDeckWork: View {
         Task {
             let channels = (try? await store.reader.channels(workspaceId: w))?.map(\.id) ?? []
             model.openAgents(workspace, channelIds: channels)
+        }
+    }
+}
+
+extension MacActivityItem.Section {
+    /// The Deck's empty column: a mark and one line that says what would appear there.
+    var emptySymbol: String {
+        switch self {
+        case .needs: "checkmark.circle"
+        case .progress: "circle.dashed"
+        case .finished: "flag"
+        }
+    }
+    var deckEmpty: String {
+        switch self {
+        case .needs: "Nothing needs you here."
+        case .progress: "Nothing is in progress here.\nAgents at work and tasks underway appear here."
+        case .finished: "Nothing finished here in the last two weeks."
         }
     }
 }

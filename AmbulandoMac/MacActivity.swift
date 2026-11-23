@@ -111,7 +111,10 @@ extension MacActivitySnapshot {
     /// A finished turn stays in Just finished this long.
     static let finishedWindow: TimeInterval = 7 * 24 * 3600
 
-    func items(now serverNow: Date, seen: Date?) -> [MacActivityItem] {
+    /// `team`: the Deck's view of a place, which also shows everyone's tasks in progress there and tasks done in the
+    /// last two weeks, so a quiet place still shows what's moving. Activity (team false) is only what's yours.
+    func items(now serverNow: Date, seen: Date?, team: Bool = false) -> [MacActivityItem] {
+        let finishedWindow = team ? 14 * 24 * 3600 : Self.finishedWindow
         var out: [MacActivityItem] = []
         let viewer = viewer
         // Tasks first: a task in Review on you replaces its own assignment notification.
@@ -127,10 +130,17 @@ extension MacActivitySnapshot {
                                            detail: mine ? "Assigned to you · in Review" : "You created it · in Review",
                                            tag: .review, who: task.assignedToNpub, channelId: task.channelId, date: date, iso: task.updatedAt,
                                            target: .task(task.id)))
-            } else if state == .inProgress && mine {
+            } else if state == .inProgress && (mine || team) {
                 out.append(MacActivityItem(id: "task.\(task.id)", section: .progress, mark: .task(state), title: task.title,
-                                           detail: "Your task · In progress", tag: .inProgress, who: task.assignedToNpub,
+                                           detail: mine ? "Your task" : task.assignedToNpub.map { people.name($0) } ?? "Unassigned",
+                                           tag: .inProgress, who: task.assignedToNpub,
                                            channelId: task.channelId, date: date, iso: task.updatedAt, target: .task(task.id)))
+            } else if team && state == .done && serverNow.timeIntervalSince(date) <= finishedWindow {
+                let by = task.assignedToNpub ?? task.createdByNpub
+                out.append(MacActivityItem(id: "task.\(task.id)", section: .finished, mark: .task(state), title: task.title,
+                                           detail: by.map { $0 == viewer ? "You" : people.name($0) } ?? "Task done",
+                                           tag: .finished, who: by, channelId: task.channelId, date: date, iso: task.updatedAt,
+                                           target: .task(task.id)))
             }
         }
         // Unread notifications need you, except conversation updates (the Chat tab's unread already covers those).
@@ -178,7 +188,7 @@ extension MacActivitySnapshot {
             case .failed, .cancelled:
                 (section, title, detail, tag) = (.finished, "\(agent) didn't finish \(thread)", line.isEmpty ? a.state.capitalized : line, .failed)
             }
-            if section == .finished && serverNow.timeIntervalSince(date) > Self.finishedWindow { continue }
+            if section == .finished && serverNow.timeIntervalSince(date) > finishedWindow { continue }
             var item = MacActivityItem(id: "agent.\(a.id)", section: section, mark: .person(a.agentNpub), title: title, detail: detail,
                                        tag: tag, who: a.agentNpub, channelId: a.channelId, date: date, iso: a.updatedAt,
                                        target: a.threadId.map { .thread(channelId: a.channelId, threadId: $0) } ?? .thread(channelId: a.channelId, threadId: ""))

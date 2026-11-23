@@ -21,8 +21,12 @@ extension ToolbarPin {
     static func work(_ route: WorkRoute?, workspace: WorkspaceRecord?) -> ToolbarPin? {
         guard let route, let workspace, route.workspaceId == workspace.id else { return nil }
         switch route {
+        #if os(macOS)
+        case .task, .doc: return nil   // UX lab: on the Mac their crumb row holds the pin, by the record
+        #else
         case .task(_, let id): return ToolbarPin(type: .task, id: id, workspace: workspace)
         case .doc(_, let id): return ToolbarPin(type: .document, id: id, workspace: workspace)
+        #endif
         case .channel(_, let id): return ToolbarPin(type: .channel, id: id, workspace: workspace)
         case .thread(_, _, let id), .threadById(_, let id): return ToolbarPin(type: .thread, id: id, workspace: workspace)
         default: return nil

@@ -49,7 +49,9 @@ struct MacDocumentSurface: View {
                     // UX lab: the record's crumb row in the main window (a document window has no back). Esc stays
                     // with the editor.
                     VStack(spacing: 0) {
-                        MacRecordCrumbs(place: place, escape: false)
+                        MacRecordCrumbs(place: place, escape: false) {
+                            PinToggleButton(type: .document, id: docId, workspace: workspace).buttonStyle(.plain).ambTooltip("Pin to Deck")
+                        }
                         DocumentView(docId: docId, workspace: workspace, store: store)
                             .environment(\.macDocumentSession, session)
                     }
