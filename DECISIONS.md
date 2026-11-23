@@ -191,6 +191,12 @@ Goal: Linear-level polish for the Mac app without changing what the product does
 - **One way back from a record** (Mac): an opened task, file or document starts with "‹ Tasks / #channel"; the window's
   glass back arrow is hidden there. Esc goes back where it isn't editing.
 
+- **Activity: the workspace's work in progress** (Mac): a sidebar row under Home (with how many things need you) that
+  opens one page, no tabs: Needs you (agents waiting, tasks in Review on you, unread notifications), In progress
+  (agents working or queued, your tasks in progress), Just finished (agent turns this week). Tabs sort by kind; this
+  sorts by where the work stands, for people and agents alike. Rows open the record in its place. Only stored data:
+  nothing new on Tower. A split-view Inbox was rejected: it would compete with places and tabs.
+
 ## Deferred
 
 - **Flatten the Deck (Phase 5).** Four stacked layers (page, section panel, row card, tiles). Two is enough.

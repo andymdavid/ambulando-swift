@@ -140,6 +140,11 @@ struct MacWorkspaceShell: View {
             SectionStack(section: section, path: $model.toolboxPath, showSettings: $ui.showSettings, contextBar: false, banner: { banners }) {
                 workspaceSurface { ToolboxView(workspace: $0, store: $1) }
             }
+        case .activity:
+            // UX lab: its rows open records in their own places, so it keeps no stack of its own.
+            SectionStack(section: section, path: .constant([]), showSettings: $ui.showSettings, contextBar: false, banner: { banners }) {
+                workspaceSurface { MacActivityView(workspace: $0, store: $1) }
+            }
         }
     }
 

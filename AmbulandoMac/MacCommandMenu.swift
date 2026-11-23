@@ -136,6 +136,8 @@ struct MacCommandMenu: View {
     private var goTo: [Item] {
         var items = [Item(id: "go.home", icon: "house", label: "Home", hint: "All workspace activity", keys: ["⇧", "⌘", "H"]) {
             model.choosePlace(.home)
+        }, Item(id: "go.activity", icon: AppMode.activity.systemImage, label: AppMode.activity.title, hint: "What needs you, and work in progress") {
+            model.show(.activity)
         }]
         for (index, section) in AppMode.visible(agents: showAgents, context: showContext).enumerated() {
             items.append(Item(id: "go.\(section.rawValue)", icon: section.systemImage, label: section.title,

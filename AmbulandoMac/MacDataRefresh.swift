@@ -102,6 +102,10 @@ final class MacDataRefresh {
                                 keys.insert(WorkspaceSync.contextTreeKey(workspace.id, scope))
                                 await sync.refreshContextTree(connection, workspace, scopeId: scope, force: true)
                             }
+                        case .activity:
+                            keys.insert(WorkspaceSync.agentsKey(workspace.id))
+                            await sync.refreshAgents(connection, workspace, channelIds: channels.map(\.id), force: true)
+                            await sync.refreshNotifications(connection, workspace, priority: .visible, force: true)
                         case .toolbox:
                             keys.insert(WorkspaceSync.toolboxKey(workspace.id))
                             await sync.refreshToolbox(connection, workspace, force: true)

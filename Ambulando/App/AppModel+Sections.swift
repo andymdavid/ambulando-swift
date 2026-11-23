@@ -6,6 +6,8 @@ import Foundation
 /// shared Workspace → Scope → Channel context except Toolbox (the member's own WApps).
 enum AppMode: String, CaseIterable, Codable {
     case deck, chat, tasks, docs, files, agents, context, toolbox
+    /// UX lab (Mac): the workspace's work in progress (Activity in the sidebar); never a tab or in the section bar.
+    case activity
 
     /// A saved section from any build. Builds 3–8 had an Inbox tab; Deck's Inbox card replaces it.
     init(stored: String?) {
@@ -22,6 +24,7 @@ enum AppMode: String, CaseIterable, Codable {
         case .agents: "Agents"
         case .context: "Context"
         case .toolbox: Self.toolboxTitle
+        case .activity: "Activity"
         }
     }
 
@@ -35,6 +38,7 @@ enum AppMode: String, CaseIterable, Codable {
         case .agents: "sparkles"
         case .context: "point.3.connected.trianglepath.dotted"
         case .toolbox: Self.toolboxImage
+        case .activity: "waveform.path.ecg"
         }
     }
 
@@ -53,7 +57,7 @@ enum AppMode: String, CaseIterable, Codable {
     static let contextPreference = "sections.context"
 
     static func visible(agents: Bool, context: Bool) -> [AppMode] {
-        allCases.filter { ($0 != .agents || agents) && ($0 != .context || context) }
+        allCases.filter { $0 != .activity && ($0 != .agents || agents) && ($0 != .context || context) }
     }
 }
 
@@ -86,6 +90,7 @@ extension AppModel {
         case .agents: \.agentsPath
         case .context: \.contextPath
         case .toolbox: \.toolboxPath
+        case .activity: nil
         }
     }
 
@@ -96,7 +101,7 @@ extension AppModel {
 
     /// Back to a section's first screen (tapping the current section again, as on a tab bar).
     func popToRoot(_ mode: AppMode) {
-        if let key = Self.pathKey(mode) { self[keyPath: key] = [] } else { chatPath = [] }
+        if let key = Self.pathKey(mode) { self[keyPath: key] = [] } else if mode == .chat { chatPath = [] }
     }
 
     func resetSectionPaths() {

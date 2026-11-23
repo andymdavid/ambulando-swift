@@ -65,6 +65,13 @@ struct MacSidebarContent: View {
             // A house, like Toolbox's icon below it; the workspace's own monogram heads the sidebar (UX lab).
             Image(systemName: "house").font(.amb(.caption)).foregroundStyle(Amb.mutedForeground)
         }
+        // UX lab (round 8): the workspace's work in progress, with how many things need you.
+        SidebarRow(label: AppMode.activity.title, selected: model.mode == .activity, identifier: "sidebar.activity",
+                   action: { model.show(.activity) }) {
+            Image(systemName: AppMode.activity.systemImage).font(.amb(.caption)).foregroundStyle(Amb.mutedForeground)
+        } status: {
+            MacActivityCount()
+        } rowAction: { EmptyView() }
         // Apps (the Toolbox) work across the workspace, not in a place, so it's a destination of its own rather than a tab.
         SidebarRow(label: AppMode.toolboxTitle, selected: model.mode == .toolbox, identifier: "sidebar.toolbox", action: { model.show(.toolbox) }) {
             Image(systemName: AppMode.toolbox.systemImage).font(.amb(.caption)).foregroundStyle(Amb.mutedForeground)
@@ -118,7 +125,7 @@ struct MacSidebarContent: View {
     }
 
     /// A place row shows as selected unless Toolbox (which has no place) is open.
-    private var inPlace: Bool { model.mode != .toolbox }
+    private var inPlace: Bool { !model.mode.isPlaceless }
 
     /// Direct messages with people (DMs with only agents are under Solo), at the bottom of the sidebar.
     @ViewBuilder private func directMessages(_ nav: NavigationSnapshot) -> some View {

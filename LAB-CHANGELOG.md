@@ -748,6 +748,25 @@ done, notification detail, Search (iPhone). The round 6 composer (6.4) and Membe
 - Shown up, not changed: a document keeps its own button row (Open in New Window, Document actions, Edit) under the
   crumb; it goes with the document screen (6.3, on hold).
 
+### 6.10 Activity page (`feat(mac): Activity, the workspace's work in progress`)
+- Round 8 (https://claude.ai/artifact/Y7n4F4tTJt1BcMRr8y5K9G), 8.1 approved. New `MacActivity.swift`: Activity in the
+  sidebar under Home, before Apps, with the Needs you count; a page with no tabs (as Apps). Toolbar: All / Needs you /
+  In progress / Finished, Who and Where menus. Three sections, newest first:
+  - Needs you: an agent's turn waiting for you; tasks in Review assigned to you or created by you; unread notifications
+    except conversation updates (a task's assignment notice gives way to its Review row).
+  - In progress: agents working or queued, with their latest public line; your tasks in progress.
+  - Just finished: the newest turn per agent and conversation that completed, failed or stopped in the last 7 days
+    (older failures that newer work replaced are left out, as in the thread); a dot marks those since you last looked
+    (remembered on this Mac).
+- Rows open the conversation, task or notification target in its own place (`openInChat`, `openRecord`,
+  `openNotification`). Opening the page fetches every channel's agent turns and the notifications.
+- Shared: `AppMode.activity` (left out of `visible`, so never a tab, ⌘ number or iPhone section; iPhone/iPad never
+  open it); `popToRoot` only clears Chat for Chat. Mac: `isPlaceless` (Apps and Activity) replaces the Toolbox checks;
+  ⌘K Go to lists Activity; Refresh covers it. `-UXStartTab activity` opens it; `-AmbulandoFixtureAgentActivity` adds
+  Rick at work.
+- Not done: ‹ Activity back from an opened row (the crumb names the record's section); the Deck's version (8.2b).
+- Batch checks to add: iOS build (shared `AppModel+Sections`, `WorkspaceShell`), thread regression (sidebar order).
+
 ### To do next session: the file screen (round 7 mockup)
 - Opening a file still shows the old grouped form (icon, text/plain · 48 bytes, Channel and Updated rows, Download).
   Design it as the task screen was: a preview of the file (image, text, PDF; Quick Look where the system can), name,

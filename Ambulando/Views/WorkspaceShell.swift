@@ -113,7 +113,7 @@ struct WorkspaceShell: View {
         switch section {
         case .chat:
             ChatStack(showSettings: $showSettings) { banners }
-        case .deck:
+        case .deck, .activity:   // Activity is Mac only (UX lab); never reached here
             SectionStack(section: section, path: $model.deckPath, showSettings: $showSettings, banner: { banners }) {
                 workspaceSurface { DeckView(workspace: $0, store: $1) }
             }

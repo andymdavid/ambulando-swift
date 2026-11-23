@@ -40,7 +40,7 @@ struct MacSoloSection: View {
         let unread = nav.unread.contains(channel.id)
         return TimelineView(.periodic(from: .now, by: 15)) { context in
             let working = isWorking(channel, now: context.date)
-            SidebarRow(label: label, selected: model.mode != .toolbox && model.context.channelId == channel.id, unread: unread,
+            SidebarRow(label: label, selected: !model.mode.isPlaceless && model.context.channelId == channel.id, unread: unread,
                        accessibilityLabel: label + (working ? ", agent working" : ""), identifier: "sidebar.solo.\(label)",
                        action: { model.choosePlace(WorkContext(scopeId: channel.scopeId, channelId: channel.id)) }) {
                 if let agent {

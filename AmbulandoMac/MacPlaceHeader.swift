@@ -9,7 +9,7 @@ struct MacPlaceHeader: View {
     @Environment(MacUI.self) private var ui
     let sections: [AppMode]
 
-    private var tabs: [AppMode] { sections.filter { $0 != .toolbox } }
+    private var tabs: [AppMode] { sections.filter { !$0.isPlaceless } }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -48,13 +48,13 @@ struct MacPlaceHeader: View {
         model.navigation.value.channel(model.context.channelId).flatMap { SidebarNavigation.isDirectMessageChannel($0) ? $0 : nil }
     }
 
-    private var showsTabs: Bool { model.mode != .toolbox }
+    private var showsTabs: Bool { !model.mode.isPlaceless }
 
     @ViewBuilder private var crumb: some View {
         let nav = model.navigation.value
         HStack(spacing: 6) {
-            if model.mode == .toolbox {
-                Text(AppMode.toolboxTitle).fontWeight(.semibold).foregroundStyle(Amb.foreground)
+            if model.mode.isPlaceless {
+                Text(model.mode.title).fontWeight(.semibold).foregroundStyle(Amb.foreground)
             } else if let dm = directMessage {
                 Text(SoloDirectory.shared.contains(dm.id) ? "Solo" : "Direct messages").foregroundStyle(Amb.mutedForeground)
                 Text("/").foregroundStyle(Amb.faint)
@@ -104,7 +104,7 @@ extension AppModel {
     /// Replaces the web's rule that a sidebar choice opens Deck unless the view is locked. Toolbox ignores the place,
     /// so choosing one from Toolbox opens its Deck.
     func choosePlace(_ next: WorkContext) {
-        let destination: AppMode = mode == .toolbox ? .deck : mode
+        let destination: AppMode = mode.isPlaceless ? .deck : mode
         selectContext(next)
         if destination == .deck { deckPath = []; deckInboxRequests &+= 1 }
         mode = destination
