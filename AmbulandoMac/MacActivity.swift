@@ -202,6 +202,7 @@ extension MacActivityItem {
 
 struct MacActivityView: View {
     @Environment(AppModel.self) private var model
+    @Environment(MacUI.self) private var ui
     let workspace: WorkspaceRecord
     let store: LocalStore
 
@@ -288,6 +289,10 @@ struct MacActivityView: View {
             AmbTableToolbarMenu(symbol: "number", title: "Where", values: [nil] + places.map(Optional.some),
                                 label: { $0.map(label) ?? "Everywhere" }, selection: $place, identifier: "activity.where")
             Spacer(minLength: 0)
+            // The bell opens this page; the full list (archive, categories, mark all read) stays one click away.
+            Button("All notifications") { ui.showNotifications = true }
+                .buttonStyle(.ambGhost).font(.amb(.footnote).weight(.medium))
+                .accessibilityIdentifier("activity.notifications")
         }
     }
 
@@ -302,11 +307,11 @@ struct MacActivityView: View {
                 Text(section == .finished && newCount > 0 ? "\(newCount) since you last looked" : "\(rows.count)")
                     .font(.amb(.footnote)).foregroundStyle(Amb.faint)
             }
-            .padding(.bottom, 6)
+            .padding(.horizontal, 8).padding(.bottom, 6)
             .accessibilityAddTraits(.isHeader)
             Rectangle().fill(Amb.border).frame(height: 1)
             if rows.isEmpty {
-                Text(section.empty).font(.amb(.footnote)).foregroundStyle(Amb.faint).padding(.vertical, 10)
+                Text(section.empty).font(.amb(.footnote)).foregroundStyle(Amb.faint).padding(.horizontal, 8).padding(.vertical, 10)
             } else {
                 ForEach(rows) { row($0) }
             }
@@ -337,9 +342,7 @@ struct MacActivityView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .ambHoverRow(radius: Amb.radiusControl)
-        .padding(.horizontal, -8)
-        .overlay(alignment: .bottom) { Rectangle().fill(Amb.border).frame(height: 1).padding(.horizontal, 0) }
+        .modifier(AmbTableRule())   // hover fill edge to edge, flush between the rules
         .accessibilityIdentifier("activity.row")
     }
 

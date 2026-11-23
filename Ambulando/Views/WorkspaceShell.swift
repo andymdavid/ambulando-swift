@@ -387,7 +387,7 @@ private struct ShellToolbar: ViewModifier {
     /// The Mac's notifications sheet belongs to the window, like Search.
     private func showNotifications() {
         #if os(macOS)
-        ui.showNotifications = true
+        model.show(.activity)   // UX lab: the bell opens Activity; its toolbar keeps the full Notifications list
         #else
         notifying = true
         #endif

@@ -766,6 +766,10 @@ done, notification detail, Search (iPhone). The round 6 composer (6.4) and Membe
   Rick at work.
 - Not done: ‹ Activity back from an opened row (the crumb names the record's section); the Deck's version (8.2b).
 - Batch checks to add: iOS build (shared `AppModel+Sections`, `WorkspaceShell`), thread regression (sidebar order).
+- Fix (Andy): row hover wasn't flush with the rules. Rows now use the tables' `AmbTableRule` (fill edge to edge between
+  the hairlines); headings and empty lines take the rows' 8pt inset.
+- The title-bar bell opens Activity on the Mac (was the Notifications sheet). The sheet (archive, categories, mark all
+  read) stays one click away: "All notifications" at the end of Activity's toolbar, and ⌘K › Notifications.
 
 ### To do next session: the file screen (round 7 mockup)
 - Opening a file still shows the old grouped form (icon, text/plain · 48 bytes, Channel and Updated rows, Download).
