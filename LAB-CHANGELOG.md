@@ -787,7 +787,18 @@ done, notification detail, Search (iPhone). The round 6 composer (6.4) and Membe
 - The title-bar bell opens Activity on the Mac (was the Notifications sheet). The sheet (archive, categories, mark all
   read) stays one click away: "All notifications" at the end of Activity's toolbar, and ⌘K › Notifications.
 
-### To do next session: the file screen (round 7 mockup)
-- Opening a file still shows the old grouped form (icon, text/plain · 48 bytes, Channel and Updated rows, Download).
-  Design it as the task screen was: a preview of the file (image, text, PDF; Quick Look where the system can), name,
-  kind, size, channel, who uploaded it and when; Download, Quick Look and Open in default app as buttons; the 6.7 crumb.
+### 6.8 The file screen (`feat(mac): the file screen shows the file`)
+- Round 7 (https://claude.ai/artifact/XyPhSnMpV4cStNWsvfzpke), layout A, built with my recommendations (Andy: "let's get
+  this all done"). New `MacFileDetail` (`FileDetailView` picks it on the Mac; iPhone/iPad keep the list). The 6.7 crumb
+  row with ••• (Save As…, Share…, Copy reference, Show in Finder once downloaded); the type badge, name and plain kind
+  ("Text · 48 bytes"), the description if any; Download (primary; progress with Cancel, then "Saved … · Show in
+  Finder", or the error with Try again), Quick Look (Space; the system panel) and Open in <the Mac's default app>.
+- The preview: fetched on opening up to 25 MB (the same checked download as Download, kept in the cache), Show preview
+  above that, Unlock to preview while locked. Drawn here: images on a checkerboard with their pixel size, PDFs in
+  PDFKit, text/CSV/code in mono with line numbers (first 256 KB), anything else as Quick Look's thumbnail; archives,
+  apps and disk images say there's no preview. `QLPreviewView` was tried first and draws blank inside SwiftUI.
+- Properties rail at 900pt and wider (a grid under the name when narrower): Kind, Size, Channel, Folder; Uploaded by
+  (only when Tower's record names an uploader: `created_by_actor_npub`, `created_by_npub` or `uploaded_by_npub`; the
+  sample has none, so the row is absent), Uploaded, Updated; Checksum (SHA-256, shortened).
+- Shared: `FileKind.type` loses `private`; `FileDetailView` gains a Mac branch. Nothing new on Tower.
+- Batch checks to add: iOS build (shared `FilesViews`, `MacFileList`).

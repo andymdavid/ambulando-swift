@@ -386,7 +386,7 @@ private struct FileBadge: View {
 
 /// How the table names a file's type.
 enum FileKind {
-    private static func type(_ file: FileRecord) -> UTType? {
+    static func type(_ file: FileRecord) -> UTType? {
         if let mime = file.contentType, let type = UTType(mimeType: mime) { return type }
         let ext = (file.displayName as NSString).pathExtension
         return ext.isEmpty ? nil : UTType(filenameExtension: ext)

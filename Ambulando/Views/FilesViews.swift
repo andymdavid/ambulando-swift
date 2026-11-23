@@ -195,6 +195,15 @@ struct FileDetailView: View {
     @State private var exporting = false
 
     var body: some View {
+        #if os(macOS)
+        // UX lab (round 7, layout A): the Mac's file screen shows the file; iPhone and iPad keep this list.
+        MacFileDetail(fileId: fileId, workspace: workspace, store: store)
+        #else
+        list
+        #endif
+    }
+
+    private var list: some View {
         List {
             if let file = snapshot.value.file {
                 Section {

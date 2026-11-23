@@ -188,6 +188,9 @@ Goal: Linear-level polish for the Mac app without changing what the product does
 - **A channel shows who has access** (Mac): the faces by New thread are members, not recent posters, and open a
   Members popover to add, change or remove access. Same Tower calls as channel access settings.
 
+- **The file screen shows the file** (Mac): name, kind and Download / Quick Look / Open in <app> on top, the preview
+  below (fetched automatically up to 25 MB), properties in a rail as on a task. Uploaded by shows only when Tower's
+  record says who; there is no other source.
 - **One way back from a record** (Mac): an opened task, file or document starts with "‹ Tasks / #channel"; the window's
   glass back arrow is hidden there. Esc goes back where it isn't editing.
 
