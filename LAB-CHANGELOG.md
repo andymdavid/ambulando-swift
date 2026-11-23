@@ -802,3 +802,12 @@ done, notification detail, Search (iPhone). The round 6 composer (6.4) and Membe
   sample has none, so the row is absent), Uploaded, Updated; Checksum (SHA-256, shortened).
 - Shared: `FileKind.type` loses `private`; `FileDetailView` gains a Mac branch. Nothing new on Tower.
 - Batch checks to add: iOS build (shared `FilesViews`, `MacFileList`).
+
+### Batch checks (6.8–6.10, 2026-11-23)
+- iOS build passes (shared `AppModel+Sections`, `WorkspaceShell`, `DeckViews`, `FilesViews`, `MacFileList`).
+- Thread regression: only the known failure. `MacDeckComposerCheck` passes on the new Deck (New thread keeps
+  `deck.inbox.new`).
+- `MacAgentActivityCheck` (with `-AmbulandoFixtureAgentActivityStall`) fails "Timed out: the reviewed conversation
+  opens", and fails the same way on 9cb1186 (before this batch), so it predates these changes. Not traced.
+- `-AmbulandoMacPopupCheck` needs the Inbox menu the Mac Deck no longer has (expected; not run).
+- Not done this batch: 900pt and light/dark captures of Activity, the Deck and the file screen.
