@@ -28,7 +28,7 @@ struct DeckView: View {
 
     var body: some View {
         #if os(macOS)
-        MacDeckDashboard(workspace: workspace, store: store).navigationTitle("Deck")
+        MacDeckWork(workspace: workspace, store: store).navigationTitle("Deck")   // UX lab (round 8): the place's work
         #else
         let cards = cards
         VStack(spacing: 0) {
@@ -1081,7 +1081,7 @@ private extension View {
     }
 }
 
-private struct MacDeckLaunchers: Equatable, Sendable {
+struct MacDeckLaunchers: Equatable, Sendable {
     var name: String?
     var apps: [PersonalWappRecord] = []
     var napplets: [InstalledNapplet] = []
@@ -1183,8 +1183,8 @@ private struct MacDeckWelcome: View {
     }
 }
 
-private struct MacLauncherItem: Identifiable {
-    enum Logo { case app([LauncherLogoSource], initials: String), person(PersonDisplay) }
+struct MacLauncherItem: Identifiable {
+    enum Logo { case app([LauncherLogoSource], initials: String), person(PersonDisplay), symbol(String) }
     let id: String
     let title: String
     let subtitle: String
@@ -1192,12 +1192,14 @@ private struct MacLauncherItem: Identifiable {
     let logo: Logo
     let identifier: String
     var nappletKey: String? = nil
+    /// UX lab: opens something other than a link (a canvas, a pinned record).
+    var action: (() -> Void)? = nil
 }
 
 /// sol `.launcher-stack-panel`: collapsed, only the first launcher is a real card, with up to two card edges behind
 /// it when there are more. Clicking the stack expands every launcher as a list (a popover over the Deck, so the
 /// dashboard layout does not move; click outside or Escape closes it). A single launcher opens directly.
-private struct MacLauncherStack<Footer: View>: View {
+struct MacLauncherStack<Footer: View>: View {
     @Environment(AppModel.self) private var model
     let kind: String
     let noun: String
@@ -1232,7 +1234,7 @@ private struct MacLauncherStack<Footer: View>: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .disabled(items.count == 1 && first.url == nil && first.nappletKey == nil)
+        .disabled(items.count == 1 && first.url == nil && first.nappletKey == nil && first.action == nil)
         .ambTooltip(items.count == 1 ? first.title : "Show all \(items.count) \(noun)")
         .accessibilityLabel(items.count == 1 ? "\(first.title), \(first.subtitle)" : "\(first.title) and \(items.count - 1) more \(noun)")
         .accessibilityHint(items.count == 1 ? "Opens in the browser" : "Shows every launcher")
@@ -1243,8 +1245,8 @@ private struct MacLauncherStack<Footer: View>: View {
                     ForEach(items) { item in
                         Button { launch(item) } label: { MacLauncherPill(item: item, workspace: workspace) }
                             .buttonStyle(.plain)
-                            .disabled(item.url == nil && item.nappletKey == nil)
-                            .opacity(item.url == nil && item.nappletKey == nil ? 0.58 : 1)
+                            .disabled(item.url == nil && item.nappletKey == nil && item.action == nil)
+                            .opacity(item.url == nil && item.nappletKey == nil && item.action == nil ? 0.58 : 1)
                             .accessibilityIdentifier(item.identifier)
                     }
                     footer()
@@ -1257,6 +1259,7 @@ private struct MacLauncherStack<Footer: View>: View {
 
     private func launch(_ item: MacLauncherItem) {
         expanded = nil
+        if let action = item.action { action(); return }
         if let key = item.nappletKey {
             model.toolboxPath.append(.webContent(workspaceId: workspace.id, source: .installedNapplet(key: key, title: item.title)))
             model.show(.toolbox)
@@ -1265,7 +1268,7 @@ private struct MacLauncherStack<Footer: View>: View {
 }
 
 /// sol `.launcher-pill`: logo ring, title and one line of detail.
-private struct MacLauncherPill: View {
+struct MacLauncherPill: View {
     let item: MacLauncherItem
     let workspace: WorkspaceRecord
     var body: some View {
@@ -1274,6 +1277,9 @@ private struct MacLauncherPill: View {
                 switch item.logo {
                 case .app(let sources, let initials): LauncherLogoView(sources: sources, initials: initials, workspace: workspace)
                 case .person(let person): PersonAvatar(person: person, size: 38)
+                case .symbol(let name):
+                    Image(systemName: name).font(.amb(.subheadline)).foregroundStyle(Amb.secondaryForeground)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity).background(Amb.muted)
                 }
             }
             .frame(width: 38, height: 38)
@@ -1294,7 +1300,7 @@ private struct MacLauncherPill: View {
     }
 }
 
-private struct MacLauncherAddPill: View {
+struct MacLauncherAddPill: View {
     let title: String
     var body: some View {
         Label(title, systemImage: "plus").font(.amb(.subheadline).weight(.semibold)).foregroundStyle(Amb.mutedForeground)

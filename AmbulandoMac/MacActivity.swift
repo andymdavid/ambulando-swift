@@ -376,17 +376,7 @@ struct MacActivityView: View {
     // MARK: Actions
 
     private func open(_ item: MacActivityItem) {
-        switch item.target {
-        case .thread(let channel, let thread):
-            model.openInChat(channelId: channel, threadId: thread.isEmpty ? nil : thread)
-        case .task(let id):
-            model.openRecord(kind: "task", id: id)
-        case .notification(let note):
-            if case .detail = model.openNotification(note) {
-                detail = note
-                if note.isUnread { model.changeNotification(.markRead, note) }
-            }
-        }
+        if let note = model.openActivityItem(item) { detail = note }
     }
 
     private func start() {
@@ -402,6 +392,24 @@ struct MacActivityView: View {
             model.openAgents(workspace, channelIds: channels)
             model.openNotifications()
         }
+    }
+}
+
+extension AppModel {
+    /// Opens an Activity row's record in its own place; returns a notification that has no screen, to show as text.
+    func openActivityItem(_ item: MacActivityItem) -> NotificationItem? {
+        switch item.target {
+        case .thread(let channel, let thread):
+            openInChat(channelId: channel, threadId: thread.isEmpty ? nil : thread)
+        case .task(let id):
+            openRecord(kind: "task", id: id)
+        case .notification(let note):
+            if case .detail = openNotification(note) {
+                if note.isUnread { changeNotification(.markRead, note) }
+                return note
+            }
+        }
+        return nil
     }
 }
 

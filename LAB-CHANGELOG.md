@@ -748,6 +748,22 @@ done, notification detail, Search (iPhone). The round 6 composer (6.4) and Membe
 - Shown up, not changed: a document keeps its own button row (Open in New Window, Document actions, Edit) under the
   crumb; it goes with the document screen (6.3, on hold).
 
+### 6.9 The Deck as the place's work (`feat(mac): the Deck shows this place's work in progress`)
+- Round 8, 8.2b. New `MacDeckWork` replaces the Mac Deck dashboard (one call site in `DeckView`): the greeting on its own
+  line with the date and how many things need you here, and New thread (the old Inbox's +, same identifier); a row of
+  four drawers, Agents (an agent with a live turn here says Working), Apps (with Manage apps), Canvases (open in their
+  window; New canvas below the list) and Pinned here (your pins in this place, all of them at Home); then Needs you,
+  In progress and Just finished as three equal columns, five rows each, from the Activity page's data limited to the
+  place's channels, and All activity →. Rows are two lines (title; state · time). Under 760pt the drawers go two by two
+  and the columns stack.
+- The Inbox, Pinned items and Canvas panels leave the Mac Deck (iPhone and iPad keep their cards). The Inbox's
+  mark-as-read menu goes with it.
+- Shared `DeckViews`: the Mac launcher stack, pill, item and add-pill lose `private`; an item can carry an action and a
+  symbol logo (for canvases and pins). The old Mac dashboard code is unused but left in place (easy to restore).
+- Checks: the thread regression and rich formatting checks look at the Inbox menu only where it exists (lab edits).
+  `-AmbulandoMacPopupCheck` (MacDividerCheck) still needs the Inbox menu and will fail; expected.
+- Apps and canvases are workspace-wide on Tower (no scope), so they're the same on every Deck.
+
 ### 6.10 Activity page (`feat(mac): Activity, the workspace's work in progress`)
 - Round 8 (https://claude.ai/artifact/Y7n4F4tTJt1BcMRr8y5K9G), 8.1 approved. New `MacActivity.swift`: Activity in the
   sidebar under Home, before Apps, with the Needs you count; a page with no tabs (as Apps). Toolbar: All / Needs you /

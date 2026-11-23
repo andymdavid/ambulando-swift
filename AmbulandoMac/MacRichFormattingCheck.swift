@@ -51,10 +51,12 @@ extension MacThreadRegression {
 
     static func richFormattingCheck(_ window: NSWindow, model: AppModel) async throws {
         TextScale.shared.reset()
-        guard let readMenu = find(window, "deck.inbox.readMenu") else { throw Failure(description: "Missing Inbox read-actions menu") }
-        let menuFrame = frame(of: readMenu)
-        print("INBOX_MENU_FRAME width=\(menuFrame.width) height=\(menuFrame.height)")
-        try require(menuFrame.width > 0 && menuFrame.width <= 56 && menuFrame.height <= 48, "Inbox read-actions menu stays compact")
+        // UX lab (round 8): no Inbox on the Mac Deck; checked only where it still exists.
+        if let readMenu = find(window, "deck.inbox.readMenu") {
+            let menuFrame = frame(of: readMenu)
+            print("INBOX_MENU_FRAME width=\(menuFrame.width) height=\(menuFrame.height)")
+            try require(menuFrame.width > 0 && menuFrame.width <= 56 && menuFrame.height <= 48, "Inbox read-actions menu stays compact")
+        }
         let emphasis = InlineText.attributed(MarkdownBlocks.inline("Regular **bold** regular"))
         for run in emphasis.runs {
             let text = String(emphasis[run.range].characters)

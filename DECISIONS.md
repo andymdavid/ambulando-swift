@@ -196,6 +196,9 @@ Goal: Linear-level polish for the Mac app without changing what the product does
   (agents working or queued, your tasks in progress), Just finished (agent turns this week). Tabs sort by kind; this
   sorts by where the work stands, for people and agents alike. Rows open the record in its place. Only stored data:
   nothing new on Tower. A split-view Inbox was rejected: it would compete with places and tabs.
+- **The Deck is the place's work** (Mac): greeting, drawers (Agents, Apps, Canvases, Pinned here), then Needs you, In
+  progress and Just finished, five each. Sorting by where work stands means the Deck no longer repeats the tabs (the
+  Inbox feed did). Pins are filtered to the place; apps and canvases are workspace-wide on Tower.
 
 ## Deferred
 
